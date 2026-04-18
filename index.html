@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>La Reserva — Sistema de Comandas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0b140f; --bg-card: #0f1e15; --bg-card-hover: #142a1c; --bg-surface: #1a3324;
+      --emerald: #2ecc71; --emerald-dark: #27ae60; --gold: #f0c040; --red: #e74c3c; --red-dark: #c0392b;
+      --text-pri: #e8f0ec; --text-sec: #8fa89a; --text-mut: #5a7566;
+      --border: rgba(46, 204, 113, 0.12); --transition: 0.2s;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: 'Poppins', sans-serif; background: var(--bg-deep); color: var(--text-pri); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg-deep); } ::-webkit-scrollbar-thumb { background: var(--emerald-dark); border-radius: 3px; }
+    .header { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, var(--bg-deep), rgba(11,20,15,0.97)); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 12px 16px; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--emerald), #a8edca); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-sub { font-size: 0.6rem; color: var(--text-mut); text-transform: uppercase; letter-spacing: 2px; }
+    .badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); }
+    .bg-mes { background: rgba(46,204,113,0.1); color: var(--emerald); }
+    .bg-coc { background: rgba(240,192,64,0.1); color: var(--gold); }
+    .bg-caj { background: rgba(52,152,219,0.1); color: #3498db; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+    .landing { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; }
+    .landing-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; text-decoration: none; color: var(--text-pri); width: 100%; max-width: 320px; margin-bottom: 16px; }
+    .landing-card:active { transform: scale(0.97); }
+    .landing-icon { font-size: 2rem; }
+    .landing-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+    .app-view { padding: 16px 16px 100px; }
+    .sub-view { display: none; } .sub-view.active { display: block; }
+    .sec-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
+    .btn { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-sec); font-weight: 700; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .btn.sel { background: var(--emerald); color: var(--bg-deep); border-color: var(--emerald); }
+    .btn span { font-size: 0.5rem; font-weight: 400; text-transform: uppercase; }
+    .dot-gold { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+    .tab { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-sec); font-size: 0.8rem; white-space: nowrap; cursor: pointer; }
+    .tab.act { background: var(--emerald-dark); color: #fff; }
+    .subcat { font-size: 0.7rem; color: var(--emerald); text-transform: uppercase; margin: 12px 0 8px; }
+    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .item.has { border-color: var(--emerald-dark); background: rgba(46,204,113,0.06); }
+    .i-name { font-size: 0.85rem; } .i-price { font-size: 0.7rem; color: var(--gold); }
+    .q-ctrl { display: flex; align-items: center; gap: 8px; }
+    .q-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-surface); color: var(--emerald); font-weight: 700; cursor: pointer; }
+    .q-val { min-width: 20px; text-align: center; color: var(--emerald); font-weight: 700; }
+    .summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-deep); padding: 16px; display: none; border-top: 1px solid var(--border); }
+    .summary.vis { display: block; }
+    .sum-bar { background: var(--emerald); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: var(--bg-deep); }
+    .s-btn { background: var(--bg-deep); color: var(--emerald); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; border: none; }
+    .modal.open { display: flex; }
+    .m-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; border: 1px solid var(--border); max-height: 80vh; overflow-y: auto; }
+    .m-head { display: flex; justify-content: space-between; margin-bottom: 16px; font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; }
+    .m-close { background: none; border: none; color: var(--text-sec); font-size: 1.2rem; cursor: pointer; }
+    .m-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; }
+    .m-tot { display: flex; justify-content: space-between; padding: 12px 0; font-weight: 700; color: var(--gold); border-top: 1px solid var(--border); margin-top: 8px; }
+    .btn-full { width: 100%; padding: 14px; background: var(--emerald); color: var(--bg-deep); border: none; border-radius: 8px; font-weight: 700; margin-top: 12px; cursor: pointer; }
+    .btn-red { background: var(--red-dark); color: #fff; }
+    .input-text { width: 100%; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); color: #fff; border-radius: 8px; margin-bottom: 16px; outline: none; }
+    .select-box { width: 100%; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); color: #fff; border-radius: 8px; margin-bottom: 16px; }
+    .bill-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+    .b-head { background: var(--bg-surface); padding: 12px; display: flex; justify-content: space-between; font-weight: 700; color: var(--emerald); border-bottom: 1px solid var(--border); }
+    .b-body { padding: 12px; }
+    .b-foot { padding: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 700; }
+    .caja-tabs { display: flex; gap: 8px; margin-top: 12px; }
+    .caja-tab { flex: 1; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+    .caja-tab.act { background: #3498db; color: #fff; border-color: #3498db; }
+    .daily-header { background: var(--bg-card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; text-align: center; }
+    .daily-title { font-size: 0.8rem; color: var(--text-sec); }
+    .daily-total { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); font-weight: 700; margin: 8px 0; }
+    .daily-date { font-size: 0.75rem; color: var(--text-mut); }
+    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--emerald-dark); padding: 12px 20px; border-radius: 8px; z-index: 999; font-size: 0.8rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    #landing, #app-mesero, #app-cocina, #app-caja { display: none; }
+  </style>
+</head>
+<body>
+  <!-- LANDING -->
+  <div id="landing" class="landing">
+    <div class="landing-logo">La Reserva</div>
+    <div class="landing-sub">Sistema de Comandas</div>
+    <a href="/mesero" class="landing-card"><div class="landing-icon">📋</div><div class="landing-title">Mesero</div></a>
+    <a href="/cocina" class="landing-card"><div class="landing-icon">👨‍🍳</div><div class="landing-title">Cocina</div></a>
+    <a href="/caja" class="landing-card"><div class="landing-icon">💰</div><div class="landing-title">Caja (Admin)</div></a>
+  </div>
+
+  <!-- MESERO APP -->
+  <div id="app-mesero">
+    <header class="header">
+      <div class="header-top">
+        <div><div class="logo">La Reserva</div><div class="logo-sub" id="meseroNameHeader">Panel del Mesero</div></div>
+        <div class="badge bg-mes"><div class="dot"></div>Mesero</div>
+      </div>
+    </header>
+    <section class="app-view">
+      <div class="sec-title">Mesa</div>
+      <div class="grid" id="m-grid"></div>
+      <div class="sec-title">Menú</div>
+      <div class="tabs" id="m-cats"></div>
+      <div id="m-menu"></div>
+    </section>
+    <div class="summary" id="m-sum">
+      <div class="sum-bar" onclick="openOrderModal()">
+        <div><div id="s-cnt" style="font-weight:700">0 ítems</div><div id="s-tot" style="font-size:0.7rem">$0</div></div>
+        <button class="s-btn" onclick="event.stopPropagation(); sendOrder()">ENVIAR →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COCINA APP -->
+  <div id="app-cocina">
+    <header class="header">
+      <div class="header-top">
+        <div><div class="logo">La Reserva</div><div class="logo-sub">Cocina</div></div>
+        <div class="badge bg-coc"><div class="dot"></div>Cocina</div>
+      </div>
+    </header>
+    <section class="app-view">
+      <div id="c-orders"></div>
+      <div id="c-empty" style="text-align:center; padding:40px; color:var(--text-mut);">Esperando pedidos...</div>
+    </section>
+  </div>
+
+  <!-- CAJA APP -->
+  <div id="app-caja">
+    <header class="header">
+      <div class="header-top">
+        <div><div class="logo">La Reserva</div><div class="logo-sub">Caja</div></div>
+        <div class="badge bg-caj"><div class="dot"></div>Caja</div>
+      </div>
+      <div class="caja-tabs">
+        <div class="caja-tab act" id="tab-cuentas" onclick="switchCaja('cuentas')">Cuentas</div>
+        <div class="caja-tab" id="tab-venta" onclick="switchCaja('venta')">Venta Diaria</div>
+        <div class="caja-tab" id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
+      </div>
+    </header>
+    <section class="app-view sub-view active" id="v-cuentas">
+      <div class="sec-title">Cuentas Abiertas</div>
+      <div id="cj-bills"></div>
+      <div id="cj-empty" style="text-align:center; padding:40px; color:var(--text-mut);">No hay cuentas abiertas</div>
+    </section>
+    <section class="app-view sub-view" id="v-venta">
+      <div class="daily-header">
+        <div class="daily-title">Total Venta Diaria</div>
+        <div class="daily-total" id="d-tot">$0</div>
+        <div class="daily-date" id="d-date">Fecha: -</div>
+      </div>
+      <button class="btn-full" style="background:#2980b9; margin-top:0" onclick="exportExcel()">⬇️ DESCARGAR EXCEL</button>
+      <button class="btn-full btn-red" style="margin-bottom:12px" onclick="resetDaily()">🔄 REINICIAR VENTA DIARIA</button>
+      <div class="sec-title" style="margin-top:24px">Transacciones</div>
+      <div id="d-txs"></div>
+    </section>
+    <section class="app-view sub-view" id="v-inventario">
+      <div class="sec-title">Gestión de Inventario</div>
+      <div id="cj-inv"></div>
+    </section>
+  </div>
+
+  <!-- MODALS -->
+  <div id="authModal" class="modal"><div class="m-content" id="authContent"></div></div>
+  <div id="orderModal" class="modal"><div class="m-content">
+    <div class="m-head">Confirmar Pedido <button class="m-close" onclick="closeM('orderModal')">✕</button></div>
+    <div id="om-items"></div><div class="m-tot"><span>Total</span><span id="om-tot">$0</span></div>
+    <button class="btn-full" onclick="sendOrder()">ENVIAR A COCINA</button>
+  </div></div>
+  <div id="payModal" class="modal"><div class="m-content">
+    <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
+    <div id="pm-body" style="font-size:0.8rem; margin-bottom:12px; max-height:150px; overflow-y:auto;"></div>
+    <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
+    <label style="font-size:0.8rem; color:var(--text-sec); display:block; margin-bottom:4px;">Método de Pago:</label>
+    <select id="pm-method" class="select-box">
+      <option value="Efectivo">💵 Efectivo</option>
+      <option value="Nequi">📱 Nequi</option>
+      <option value="Daviplata">📱 Daviplata</option>
+      <option value="Datafono">💳 Datáfono</option>
+    </select>
+    <button class="btn-full btn-red" onclick="confirmPayment()">CERRAR Y LIBERAR MESA</button>
+  </div></div>
+
+  <div id="dispatchAlertModal" class="modal" style="z-index:9999;"><div class="m-content" style="text-align:center; background:#0b140f; border:2px solid var(--emerald)">
+    <div style="font-size:4rem; margin-bottom:8px; animation: pulse-dot 1s infinite">✅</div>
+    <div class="m-head" style="justify-content:center; color:var(--emerald); font-size:1.8rem; margin-bottom:4px">¡PEDIDO LISTO!</div>
+    <div style="font-size:1.8rem; font-weight:800; margin-bottom:24px; color:#fff" id="da-mesa">MESA -</div>
+    <button class="btn-full" style="font-size:1.1rem; padding:18px" onclick="closeM('dispatchAlertModal')">ACEPTAR</button>
+  </div></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const path = window.location.pathname;
+    let mode = 'landing';
+    if(path==='/mesero') mode='mesero'; else if(path==='/cocina') mode='cocina'; else if(path==='/caja') mode='caja';
+    if(mode==='landing'){ document.getElementById('landing').style.display='flex'; }
+
+    const fc = n => '$' + n.toLocaleString('es-CO');
+    const MENU = {
+      'Bebidas': [ {n:'Coca-Cola', p:5000}, {n:'Coronita', p:8000}, {n:'Jugo Natural', p:7000}, {n:'Sprite', p:5000}, {n:'Agua Cristal', p:3000}, {n:'Club Colombia', p:7000}, {n:'Limonada', p:6000} ],
+      'Licores': [ {n:'Aguardiente (Copa)', p:5000}, {n:'Aguardiente (Media)', p:45000}, {n:'Tequila (Trago)', p:15000}, {n:'Ron Viejo (Trago)', p:10000}, {n:'Whisky Old Parr', p:220000} ],
+      'Comidas': [ {n:'Patacones', p:12000}, {n:'Filete Miñón', p:45000}, {n:'Hamburguesa', p:18000}, {n:'Alitas BBQ (x6)', p:16000}, {n:'Picada Mixta', p:35000}, {n:'Ceviche', p:28000} ]
+    };
+    const PR = {}; Object.values(MENU).flat().forEach(i => PR[i.n] = i.p);
+
+    function showToast(m){ 
+      const t = document.createElement('div'); t.className='toast'; t.textContent=m; 
+      document.body.appendChild(t); setTimeout(()=>t.remove(), 3000); 
+    }
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function beep(f1, f2, vol=0.3, type='sine'){ 
+      if(audioCtx.state==='suspended') audioCtx.resume();
+      const n = audioCtx.currentTime;
+      [f1,f2].forEach((f,i)=>{
+        if(!f) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination); o.frequency.value=f; o.type=type;
+        g.gain.setValueAtTime(vol, n+(i*0.2)); g.gain.exponentialRampToValueAtTime(0.001, n+(i*0.2)+0.4);
+        o.start(n+(i*0.2)); o.stop(n+(i*0.2)+0.4);
+      });
+    }
+
+    if(mode !== 'landing') {
+      const socket = io();
+      let state = { bills:{}, orders:[], sales:[], daily: {total:0, date:''}, inv:{} };
+      let selTb=null, curCat='Bebidas', myOrder={}, myName='';
+      let payTb=null;
+
+      socket.on('all-bills', b => { state.bills=b; render(); });
+      socket.on('active-orders', o => { state.orders=o; render(); });
+      socket.on('all-inventory', i => { state.inv=i; render(); });
+      socket.on('daily-sales-update', s => { state.sales=s.transactions; state.daily=s; render(); });
+      socket.on('order-received', o => { state.orders.push(o); if(mode==='cocina') { beep(700, 900); showToast('🔔 Nuevo pedido mesa '+o.mesa); } render(); });
+      socket.on('order-dispatched', d => {
+        state.orders = state.orders.filter(x=>x.id!==d.id);
+        if(mode==='mesero' && d.mesero === myName) {
+          beep(800, 1000, 1.0, 'square'); // Volumen al 100% y onda cuadrada (mucho más fuerte)
+          if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]); // Vibrate pattern
+          document.getElementById('da-mesa').textContent = 'MESA ' + d.mesa;
+          openM('dispatchAlertModal');
+        }
+        render();
+      });
+      socket.on('account-closed', d => { if(mode==='mesero') showToast('Caja cerró mesa '+d.mesa); });
+
+      // Init Modals Auth
+      if(mode==='mesero'){
+        const a=document.getElementById('authModal'), c=document.getElementById('authContent');
+        c.innerHTML = `<div class="sec-title">Identifícate</div>
+        <select id="mName" class="select-box"><option value="Patico">Patico</option><option value="Ximena">Ximena</option></select>
+        <input type="password" id="mPwd" class="input-text" placeholder="Clave...">
+        <button class="btn-full" onclick="saveName()">ENTRAR</button>`;
+        a.classList.add('open');
+        window.saveName = () => {
+           const n=document.getElementById('mName').value;
+           const p=document.getElementById('mPwd').value;
+           if((n==='Patico' && p==='2828') || (n==='Ximena' && p==='9090')) {
+             myName=n; document.getElementById('meseroNameHeader').textContent=`Mesero: ${n}`; a.classList.remove('open'); render();
+           } else {
+             showToast('❌ Clave incorrecta');
+           }
+        };
+      }
+      if(mode==='caja'){
+        const a=document.getElementById('authModal'), c=document.getElementById('authContent');
+        c.innerHTML = `<div class="sec-title">Clave de Caja</div><input type="password" id="cPwd" class="input-text" placeholder="****"><button class="btn-full" onclick="loginCaja()">ENTRAR</button>`;
+        a.classList.add('open');
+        window.loginCaja = () => {
+          socket.emit('verify-caja-password', document.getElementById('cPwd').value, ok => {
+            if(ok) a.classList.remove('open'); else showToast('❌ Clave incorrecta');
+          });
+        };
+      }
+
+      window.openM = i => document.getElementById(i).classList.add('open');
+      window.closeM = i => document.getElementById(i).classList.remove('open');
+
+      function render(){
+        if(mode==='mesero'){
+          document.getElementById('app-mesero').style.display='block';
+          if(!myName) return;
+          // Tables
+          const tg = document.getElementById('m-grid'); tg.innerHTML='';
+          for(let i=1; i<=10; i++){
+            const b=document.createElement('button'); b.className='btn'+(selTb===i?' sel':'');
+            b.innerHTML=`${state.bills[i]?'<div class="dot-gold"></div>':''}${i}<span>Mesa</span>`;
+            b.onclick = () => { selTb=i; render(); }; tg.appendChild(b);
+          }
+          // Cats
+          const tc = document.getElementById('m-cats'); tc.innerHTML='';
+          Object.keys(MENU).forEach(c => {
+            const b=document.createElement('button'); b.className='tab'+(curCat===c?' act':'');
+            b.textContent=c; b.onclick=()=>{ curCat=c; render(); }; tc.appendChild(b);
+          });
+          // Menu
+          const tm = document.getElementById('m-menu'); tm.innerHTML='';
+          MENU[curCat].forEach(i => {
+            const md = myOrder[i.n];
+            const q = md ? md.qty : 0;
+            const note = md && md.note ? md.note : '';
+            const left = state.inv[i.n] === undefined ? 0 : state.inv[i.n];
+            const maxed = q >= left;
+            const ex = left === 0;
+            const d = document.createElement('div'); d.className='item'+(q>0?' has':'');
+            d.innerHTML=`<div style="flex:1"><div class="i-name">${i.n} ${ex?'<span style="color:var(--red);font-size:0.7rem;margin-left:6px;font-weight:700">AGOTADO</span>':'<span style="color:var(--text-sec);font-size:0.7rem;margin-left:6px">Quedan '+left+'</span>'}</div><div class="i-price">${fc(i.p)}</div>
+            ${q>0 ? `<div style="font-size:0.65rem; color:var(--gold); margin-top:4px; font-weight:600; cursor:pointer" onclick="addNote('${i.n}')">📝 ${note||'Añadir nota especial'}</div>` : ''}</div>
+            <div class="q-ctrl"><button class="q-btn" onclick="cQ('${i.n}',-1)">-</button><span class="q-val">${q}</span><button class="q-btn" ${maxed?'disabled style="opacity:0.3"':''} onclick="cQ('${i.n}',1)">+</button></div>`;
+            tm.appendChild(d);
+          });
+          // Sum
+          const tot = Object.entries(myOrder).reduce((s,[n,md])=>s+(PR[n]*md.qty),0);
+          const cnt = Object.values(myOrder).reduce((s,md)=>s+md.qty,0);
+          const bs = document.getElementById('m-sum');
+          if(cnt>0){ bs.classList.add('vis'); document.getElementById('s-cnt').textContent=`${cnt} ítems | Mesa ${selTb||'?'}`; document.getElementById('s-tot').textContent=fc(tot); }
+          else bs.classList.remove('vis');
+        }
+
+        if(mode==='cocina'){
+          document.getElementById('app-cocina').style.display='block';
+          const oc = document.getElementById('c-orders'); oc.innerHTML='';
+          document.getElementById('c-empty').style.display = state.orders.length ? 'none' : 'block';
+          [...state.orders].reverse().forEach(o => {
+            const d=document.createElement('div'); d.className='bill-card';
+            d.innerHTML=`<div class="b-head"><span>Mesa ${o.mesa}</span><span style="color:#8fa89a; font-size:0.8rem">${o.hora}</span></div>
+            <div class="b-body">${o.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
+              <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name}</span><strong>x${i.qty}</strong></div>
+              ${i.note ? `<div style="font-size:0.75rem; color:var(--emerald); background:rgba(46,204,113,0.1); padding:2px 6px; border-radius:4px; margin-top:4px">📝 ${i.note}</div>` : ''}
+              </div>`).join('')}</div>
+            <div style="padding:12px; border-top:1px solid var(--border)"><button class="btn-full" style="margin:0" onclick="disp(${o.id})">DESPACHAR</button></div>`;
+            oc.appendChild(d);
+          });
+        }
+
+        if(mode==='caja'){
+          document.getElementById('app-caja').style.display='block';
+          const bc = document.getElementById('cj-bills'); bc.innerHTML='';
+          const be = document.getElementById('cj-empty');
+          const bills = Object.entries(state.bills);
+          be.style.display = bills.length ? 'none' : 'block';
+          bills.forEach(([m,b]) => {
+            const d=document.createElement('div'); d.className='bill-card';
+            d.innerHTML=`<div class="b-head"><span>Mesa ${m}</span><span style="color:#8fa89a; font-size:0.8rem">${b.mesero} | ${b.openedAt}</span></div>
+            <div class="b-body">${b.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
+              <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name} x${i.qty}</span><span>${fc(i.price*i.qty)}</span></div>
+              ${i.note ? `<div style="font-size:0.7rem; color:var(--text-sec)">📝 ${i.note}</div>` : ''}
+              </div>`).join('')}</div>
+            <div class="b-foot"><span>TOTAL:</span><span style="color:var(--gold)">${fc(b.total)}</span></div>
+            <div style="padding:0 12px 12px"><button class="btn-full btn-red" style="margin:0" onclick="openP(${m})">COBRAR Y CERRAR CUENTA</button></div>`;
+            bc.appendChild(d);
+          });
+          // Venta diaria
+          document.getElementById('d-tot').textContent = fc(state.daily.total);
+          document.getElementById('d-date').textContent = 'Fecha: ' + state.daily.date;
+          const dt = document.getElementById('d-txs'); dt.innerHTML='';
+          [...state.sales].reverse().forEach(s => {
+            const d=document.createElement('div'); d.className='bill-card';
+            d.innerHTML=`<div class="b-head"><span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span></div>
+            <div class="b-body" style="font-size:0.75rem"><div style="color:var(--text-sec); margin-bottom:4px">${s.mesero} | ${s.closedAt} | ${s.paymentMethod}</div>
+            ${s.items.map(i=>`${i.name} x${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}</div>`;
+            dt.appendChild(d);
+          });
+
+          // Inventario
+          const ic = document.getElementById('cj-inv'); ic.innerHTML='';
+          Object.keys(MENU).forEach(cat => {
+            ic.innerHTML += `<div class="subcat" style="margin-top:16px;">${cat}</div>`;
+            MENU[cat].forEach(i => {
+              const cur = state.inv[i.n] || 0;
+              ic.innerHTML += `<div class="item">
+                <div class="i-name">${i.n}</div>
+                <div class="q-ctrl" style="gap:4px">
+                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', -5)">-5</button>
+                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', -1)">-1</button>
+                  <span class="q-val" style="min-width:30px">${cur}</span>
+                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', 1)">+1</button>
+                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', 5)">+5</button>
+                </div>
+              </div>`;
+            });
+          });
+        }
+      }
+
+      // Actions
+      window.cQ = (n,d) => { 
+        if(!myOrder[n]) myOrder[n] = {qty: 0, note: ''};
+        const q=myOrder[n].qty+d; 
+        if(q<=0) delete myOrder[n]; 
+        else myOrder[n].qty=q; 
+        render(); 
+      };
+      window.addNote = (n) => {
+        if(!myOrder[n]) return;
+        const txt = prompt('Escribe una nota interna para '+n+' (ej: Sin cebolla, bien asado):', myOrder[n].note);
+        if(txt !== null){ myOrder[n].note = txt.trim(); render(); }
+      };
+      window.openOrderModal = () => {
+        if(!selTb){ showToast('Selecciona mesa'); return; }
+        const om = document.getElementById('om-items'); om.innerHTML='';
+        let tot=0;
+        Object.entries(myOrder).forEach(([n,md])=>{ 
+          const s=PR[n]*md.qty; tot+=s; 
+          om.innerHTML+=`<div class="m-item" style="flex-direction:column; align-items:flex-start">
+            <div style="width:100%; display:flex; justify-content:space-between"><span>${n} x${md.qty}</span><span>${fc(s)}</span></div>
+            ${md.note ? `<div style="font-size:0.7rem; color:var(--text-sec)">📝 ${md.note}</div>` : ''}
+          </div>`; 
+        });
+        document.getElementById('om-tot').textContent=fc(tot); openM('orderModal');
+      };
+      window.sendOrder = () => {
+        socket.emit('new-order', { mesa:selTb, mesero:myName, items:Object.entries(myOrder).map(([n,md])=>({name:n, qty:md.qty, price:PR[n], note:md.note})) });
+        myOrder={}; selTb=null; closeM('orderModal'); showToast('✅ Pedido Enviado'); render();
+      };
+      window.disp = id => socket.emit('dispatch-order', id);
+      window.switchCaja = t => {
+        ['cuentas','venta','inventario'].forEach(x => {
+          const v=document.getElementById('v-'+x); if(v) v.classList.remove('active');
+          const tEl=document.getElementById('tab-'+x); if(tEl) tEl.classList.remove('act');
+        });
+        document.getElementById('v-'+t).classList.add('active'); 
+        document.getElementById('tab-'+t).classList.add('act');
+      };
+      window.updateInv = (n, d) => {
+        const val = (state.inv[n] || 0) + d;
+        if(val >= 0) socket.emit('update-inventory', { [n]: val });
+      };
+      window.openP = m => {
+        payTb = m; const b = state.bills[m]; document.getElementById('pm-title').textContent=`Cobrar Mesa ${m}`;
+        document.getElementById('pm-body').innerHTML = b.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
+          <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name} x${i.qty}</span><span>${fc(i.price*i.qty)}</span></div>
+          ${i.note ? `<div style="font-size:0.7rem; color:var(--emerald); background:rgba(46,204,113,0.1); padding:2px 6px; border-radius:4px; margin-top:4px">📝 ${i.note}</div>` : ''}
+          </div>`).join('');
+        document.getElementById('pm-tot').textContent = fc(b.total); openM('payModal');
+      };
+      window.confirmPayment = () => {
+        const pm = document.getElementById('pm-method').value;
+        socket.emit('close-account', { mesa: payTb, paymentMethod: pm });
+        closeM('payModal'); showToast('💰 Cuenta Cerrada: ' + pm);
+      };
+      window.exportExcel = () => { window.location.href = '/api/export-daily'; };
+      window.resetDaily = () => {
+        if(confirm('¿Estás seguro de que quieres reiniciar la venta de hoy? (¡Recuerda descargar el Excel primero!)')) {
+          socket.emit('reset-daily');
+          showToast('🔄 Venta diaria reiniciada');
+        }
+      };
+    }
+  </script>
+</body>
+</html>

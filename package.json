@@ -1,0 +1,14 @@
+{
+  "name": "la-reserva-bar",
+  "version": "1.0.0",
+  "description": "Sistema de Comandas en Tiempo Real - La Reserva",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "exceljs": "^4.4.0"
+  }
+}
