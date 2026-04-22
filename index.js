@@ -5,44 +5,67 @@ const { Server } = require('socket.io');
 const path = require('path');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// ── Database Connection ──
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/la-reserva';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('📁 Conectado a MongoDB'))
+  .catch(err => console.error('❌ Error de conexión MongoDB:', err));
+
+// ── Schemas ──
+const OrderSchema = new mongoose.Schema({
+  id: Number, mesa: Number, items: Array, mesero: String, hora: String, timestamp: Number
+});
+const BillSchema = new mongoose.Schema({
+  mesa: Number, items: Array, total: Number, mesero: String, openedAt: String
+});
+const SaleSchema = new mongoose.Schema({
+  mesa: Number, mesero: String, items: Array, total: Number, paymentMethod: String, openedAt: String, closedAt: String, timestamp: { type: Number, default: Date.now }
+});
+const InventorySchema = new mongoose.Schema({
+  itemName: String, stock: Number
+});
+const ConfigSchema = new mongoose.Schema({ key: String, value: Object });
+
+const Order = mongoose.model('Order', OrderSchema);
+const Bill = mongoose.model('Bill', BillSchema);
+const Sale = mongoose.model('Sale', SaleSchema);
+const Inventory = mongoose.model('Inventory', InventorySchema);
+const Config = mongoose.model('Config', ConfigSchema);
+
+// ── Menu ──
 let MENU = {
   'Bebidas': [ {n:'Coca-Cola', p:5000}, {n:'Coronita', p:8000}, {n:'Jugo Natural', p:7000}, {n:'Sprite', p:5000}, {n:'Agua Cristal', p:3000}, {n:'Club Colombia', p:7000}, {n:'Limonada', p:6000} ],
   'Licores': [ {n:'Aguardiente (Copa)', p:5000}, {n:'Aguardiente (Media)', p:45000}, {n:'Tequila (Trago)', p:15000}, {n:'Ron Viejo (Trago)', p:10000}, {n:'Whisky Old Parr', p:220000} ],
   'Comidas': [ {n:'Patacones', p:12000}, {n:'Filete Miñón', p:45000}, {n:'Hamburguesa', p:18000}, {n:'Alitas BBQ (x6)', p:16000}, {n:'Picada Mixta', p:35000}, {n:'Ceviche', p:28000} ]
 };
 
-// ── Persistent Menu Schema ──
-const ConfigSchema = new mongoose.Schema({ key: String, value: Object });
-const Config = mongoose.model('Config', ConfigSchema);
-
 async function initMenu() {
   const cfg = await Config.findOne({ key: 'menu' });
-  if(cfg) MENU = cfg.value;
+  if (cfg) MENU = cfg.value;
 }
-initMenu();
-
-// ── Routes ──
-app.get('/api/menu', (req, res) => res.json(MENU));
-app.post('/api/menu', express.json(), async (req, res) => {
-  MENU = req.body;
-  await Config.findOneAndUpdate({ key: 'menu' }, { value: MENU }, { upsert: true });
-  io.emit('menu-updated', MENU);
-  res.json({ ok: true });
-});
-
-// ── State (Removed legacy in-memory Maps/Arrays) ──
-// Data is now handled by MongoDB via Mongoose models
 
 // Caja password
 const CAJA_PASSWORD = '0707';
 
 // ── Initialization (Global) ──
 let dailyDate = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+// ── Routes ──
+app.use(express.json());
+
+app.get('/api/menu', (req, res) => res.json(MENU));
+app.post('/api/menu', async (req, res) => {
+  MENU = req.body;
+  await Config.findOneAndUpdate({ key: 'menu' }, { value: MENU }, { upsert: true });
+  io.emit('menu-updated', MENU);
+  res.json({ ok: true });
+});
 
 // ── Excel Export ──
 app.get('/api/export-daily', async (req, res) => {
@@ -104,35 +127,13 @@ app.get('/api/export-daily', async (req, res) => {
   }
 });
 
-// ── Socket.io ──
-const mongoose = require('mongoose');
+// ── Static files ──
+app.use(express.static(path.join(__dirname)));
 
-// ── Database Connection ──
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/la-reserva';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('📁 Conectado a MongoDB'))
-  .catch(err => console.error('❌ Error de conexión MongoDB:', err));
-
-// ── Schemas ──
-const OrderSchema = new mongoose.Schema({
-  id: Number, mesa: Number, items: Array, mesero: String, hora: String, timestamp: Number
-});
-const BillSchema = new mongoose.Schema({
-  mesa: Number, items: Array, total: Number, mesero: String, openedAt: String
-});
-const SaleSchema = new mongoose.Schema({
-  mesa: Number, mesero: String, items: Array, total: Number, paymentMethod: String, openedAt: String, closedAt: String, timestamp: { type: Number, default: Date.now }
-});
-const InventorySchema = new mongoose.Schema({
-  itemName: String, stock: Number
-});
-
-const Order = mongoose.model('Order', OrderSchema);
-const Bill = mongoose.model('Bill', BillSchema);
-const Sale = mongoose.model('Sale', SaleSchema);
-const Inventory = mongoose.model('Inventory', InventorySchema);
-
-// ── Socket Logic ──
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/mesero', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/cocina', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/caja', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ── Socket.io ──
 io.on('connection', async (socket) => {
@@ -157,6 +158,7 @@ io.on('connection', async (socket) => {
     transactions: sales 
   });
   socket.emit('all-inventory', inventory);
+  socket.emit('menu-updated', MENU);
 
   // Inventario manual update
   socket.on('update-inventory', async (data) => {
@@ -276,6 +278,9 @@ io.on('connection', async (socket) => {
 
   socket.on('disconnect', () => console.log(`❌ Cliente desconectado: ${socket.id}`));
 });
+
+// Initialize menu from DB after connection
+mongoose.connection.once('open', () => initMenu());
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
