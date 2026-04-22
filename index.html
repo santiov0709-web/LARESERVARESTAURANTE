@@ -222,6 +222,122 @@
     /* Utilities */
     [style*="display: none"] { display: none !important; }
     .hide { display: none !important; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+    .tab { 
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-sec); border-radius: 10px; padding: 8px 18px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: var(--transition);
+    }
+    .tab.act { background: var(--emerald); color: var(--bg-deep); border-color: var(--emerald); }
+    .tab:hover:not(.act) { border-color: var(--emerald-glow); color: var(--text-pri); }
+
+    /* Caja Tabs */
+    .caja-tabs { display: flex; gap: 0; border-top: 1px solid var(--border); margin-top: 12px; }
+    .caja-tab {
+      flex: 1; text-align: center; padding: 10px 4px;
+      font-size: 0.75rem; font-weight: 600; color: var(--text-mut);
+      cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition);
+    }
+    .caja-tab.act { color: var(--emerald); border-bottom-color: var(--emerald); }
+    .caja-tab:hover:not(.act) { color: var(--text-sec); }
+
+    /* Sub Views */
+    .sub-view { display: none; }
+    .sub-view.active { display: block; }
+
+    /* Modals */
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .m-head {
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 16px; color: var(--text-pri);
+    }
+    .m-close {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-sec); border-radius: 8px; padding: 4px 10px;
+      cursor: pointer; font-size: 1rem; transition: var(--transition);
+    }
+    .m-close:hover { background: var(--red); color: #fff; border-color: var(--red); }
+    .m-tot {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin-bottom: 16px; font-weight: 700; font-size: 1.1rem;
+    }
+    .m-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 0.85rem;
+    }
+
+    /* Bill Cards */
+    .bill-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: 16px; margin-bottom: 16px; overflow: hidden;
+      transition: var(--transition);
+    }
+    .bill-card:hover { border-color: var(--emerald-glow); }
+    .b-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; background: rgba(16,185,129,0.05);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700; font-size: 0.95rem;
+    }
+    .b-body { padding: 12px 16px; }
+    .b-foot {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      font-weight: 700;
+    }
+
+    /* Qty control */
+    .q-ctrl { display: flex; align-items: center; gap: 8px; }
+    .q-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+      color: #fff; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center;
+    }
+    .q-btn:hover:not([disabled]) { background: var(--emerald); border-color: var(--emerald); color: var(--bg-deep); }
+    .q-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .q-val { min-width: 24px; text-align: center; font-weight: 700; font-size: 1rem; }
+
+    /* Subcategory label */
+    .subcat {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--text-mut); font-weight: 700; margin-bottom: 10px; margin-top: 4px;
+    }
+
+    /* Daily Stats */
+    .daily-header {
+      text-align: center; padding: 28px 20px; margin-bottom: 20px;
+    }
+    .daily-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-sec); margin-bottom: 8px; }
+    .daily-total { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 800; color: var(--gold); line-height: 1; }
+    .daily-date { font-size: 0.75rem; color: var(--text-mut); margin-top: 8px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; padding: 12px 24px; border-radius: 12px;
+      font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+      animation: slide-up 0.3s ease; pointer-events: none;
+      background: rgba(15,30,24,0.95); border: 1px solid var(--emerald-glow);
+      color: var(--text-pri);
+    }
+
+    /* Pulse dot animation for dispatch modal */
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); } 
+      50% { transform: scale(1.2); }
+    }
   </style>
 </head>
 <body>
@@ -373,6 +489,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    const fc = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(n);
     const path = window.location.pathname;
     let mode = 'landing';
     if(path==='/mesero') mode='mesero'; else if(path==='/cocina') mode='cocina'; else if(path==='/caja') mode='caja';
@@ -671,7 +788,7 @@
       };
       window.disp = id => socket.emit('dispatch-order', id);
       window.switchCaja = t => {
-        ['cuentas','venta','inventario'].forEach(x => {
+        ['cuentas','venta','inventario','config'].forEach(x => {
           const v=document.getElementById('v-'+x); if(v) v.classList.remove('active');
           const tEl=document.getElementById('tab-'+x); if(tEl) tEl.classList.remove('act');
         });
