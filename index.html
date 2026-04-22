@@ -8,822 +8,858 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ── Variables ── */
     :root {
-      /* Palette: Emerald, Gold, Obsidian */
-      --bg-deep: #050a08;
+      --bg-deep:    #050a08;
       --bg-surface: #0b1411;
-      --bg-glass: rgba(15, 30, 24, 0.7);
-      --bg-glass-hover: rgba(25, 50, 40, 0.85);
-      --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.3);
-      --gold: #fbbf24;
-      --red: #f43f5e;
-      --text-pri: #f8fafc;
-      --text-sec: #94a3b8;
-      --text-mut: #475569;
-      --border: rgba(16, 185, 129, 0.1);
-      --border-bright: rgba(16, 185, 129, 0.3);
-      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --bg-glass:   rgba(15, 30, 24, 0.75);
+      --bg-glass-h: rgba(25, 50, 40, 0.9);
+      --emerald:    #10b981;
+      --em-glow:    rgba(16, 185, 129, 0.25);
+      --gold:       #fbbf24;
+      --red:        #f43f5e;
+      --blue:       #38bdf8;
+      --txt1:       #f8fafc;
+      --txt2:       #94a3b8;
+      --txt3:       #475569;
+      --border:     rgba(16, 185, 129, 0.12);
+      --border-b:   rgba(16, 185, 129, 0.35);
+      --shadow:     0 8px 32px rgba(0,0,0,0.7);
+      --tr:         0.25s cubic-bezier(.4,0,.2,1);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-    
-    html, body { 
-      height: 100%; 
-      font-family: 'Poppins', sans-serif; 
-      background: var(--bg-deep); 
-      color: var(--text-pri); 
-      overflow-x: hidden; 
-      -webkit-tap-highlight-color: transparent; 
+    /* ── Reset ── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+    html, body {
+      height:100%; font-family:'Poppins',sans-serif;
+      background:var(--bg-deep); color:var(--txt1);
+      overflow-x:hidden; -webkit-tap-highlight-color:transparent;
     }
+    button { font-family:'Poppins',sans-serif; }
+    input, select, textarea { font-family:'Poppins',sans-serif; }
+    a { text-decoration:none; color:inherit; }
 
-    /* Glass Panels */
+    /* ── Glass util ── */
     .glass {
-      background: var(--bg-glass);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      box-shadow: var(--glass-shadow);
-      border-radius: 16px;
+      background:var(--bg-glass); backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px); border:1px solid var(--border);
+      box-shadow:var(--shadow); border-radius:16px;
     }
 
-    .header { 
-      position: sticky; 
-      top: 0; 
-      z-index: 100; 
-      background: rgba(5, 10, 8, 0.8);
-      backdrop-filter: blur(20px); 
-      border-bottom: 1px solid var(--border); 
-      padding: 16px 20px; 
+    /* ── Header ── */
+    .header {
+      position:sticky; top:0; z-index:100;
+      background:rgba(5,10,8,0.85); backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border); padding:14px 18px;
     }
+    .header-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .logo { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:800; background:linear-gradient(135deg,var(--emerald),#6ee7b7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .logo-sub { font-size:0.62rem; color:var(--txt3); text-transform:uppercase; letter-spacing:3px; font-weight:600; }
+    .badge { display:flex; align-items:center; gap:7px; padding:5px 12px; border-radius:99px; font-size:0.73rem; font-weight:600; border:1px solid; }
+    .badge-mes { color:var(--emerald); border-color:var(--em-glow); }
+    .badge-coc { color:var(--gold);    border-color:rgba(251,191,36,.2); }
+    .badge-caj { color:var(--blue);    border-color:rgba(56,189,248,.2); }
+    .dot { width:7px; height:7px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
 
-    .logo { 
-      font-family: 'Playfair Display', serif; 
-      font-size: 1.6rem; 
-      font-weight: 800; 
-      background: linear-gradient(135deg, var(--emerald), #6ee7b7); 
-      -webkit-background-clip: text; 
-      background-clip: text;
-      -webkit-text-fill-color: transparent; 
-      letter-spacing: -0.5px;
+    /* ── Landing ── */
+    .landing {
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      min-height:100vh; padding:28px; text-align:center;
+      background:radial-gradient(ellipse at top,#142a22 0%,var(--bg-deep) 70%);
     }
-
-    .logo-sub { font-size: 0.65rem; color: var(--text-mut); text-transform: uppercase; letter-spacing: 3px; font-weight: 600; }
-
-    .badge { 
-      display: flex; align-items: center; gap: 8px; 
-      padding: 6px 12px; border-radius: 99px; 
-      font-size: 0.75rem; font-weight: 600; 
-      border: 1px solid var(--border); 
-      background: rgba(255,255,255,0.03);
+    .landing-logo { font-family:'Playfair Display',serif; font-size:3.2rem; font-weight:800; margin-bottom:4px; background:linear-gradient(135deg,#fff,var(--emerald)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .landing-sub { font-size:0.85rem; color:var(--emerald); letter-spacing:5px; text-transform:uppercase; margin-bottom:48px; opacity:.8; }
+    .landing-card {
+      display:flex; align-items:center; gap:18px; padding:22px 24px;
+      width:100%; max-width:380px; margin-bottom:14px;
+      border:1px solid var(--border); border-radius:18px;
+      background:var(--bg-glass); backdrop-filter:blur(14px);
+      cursor:pointer; transition:var(--tr);
     }
-    .bg-mes { color: var(--emerald); border-color: var(--emerald-glow); }
-    .bg-coc { color: var(--gold); border-color: rgba(251, 191, 36, 0.2); }
-    .bg-caj { color: #38bdf8; border-color: rgba(56, 189, 248, 0.2); }
+    .landing-card:hover { border-color:var(--border-b); background:var(--bg-glass-h); transform:translateY(-4px); box-shadow:0 12px 30px rgba(0,0,0,.5); }
+    .landing-card:active { transform:scale(.97); }
+    .l-icon { font-size:2.4rem; }
+    .l-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:#fff; }
+    .l-desc  { font-size:0.7rem; color:var(--txt3); margin-top:2px; }
 
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+    /* ── App view ── */
+    .app-view { padding:20px 16px 130px; max-width:820px; margin:0 auto; }
 
-    /* Landing Refactor */
-    .landing { 
-      display: flex; flex-direction: column; align-items: center; justify-content: center; 
-      min-height: 100vh; padding: 24px; text-align: center; 
-      background: radial-gradient(circle at top, #142a22 0%, var(--bg-deep) 70%);
-    }
-    .landing-logo { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 800; margin-bottom: 4px; }
-    .landing-sub { font-size: 0.9rem; color: var(--emerald); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 48px; opacity: 0.8; }
-    
-    .landing-card { 
-      display: flex; align-items: center; gap: 20px; 
-      padding: 24px; width: 100%; max-width: 380px; 
-      margin-bottom: 16px; border: 1px solid var(--border);
-      transition: var(--transition);
-      cursor: pointer;
-    }
-    .landing-card:hover { 
-      border-color: var(--emerald-glow); 
-      background: var(--bg-glass-hover);
-      transform: translateY(-4px); 
-    }
-    .landing-card:active { transform: scale(0.98); }
-    .landing-icon { font-size: 2.5rem; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5)); }
-    .landing-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #fff; }
+    /* ── Section title ── */
+    .sec { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; margin-bottom:14px; color:var(--txt2); display:flex; align-items:center; gap:10px; }
+    .sec::after { content:''; flex:1; height:1px; background:var(--border); }
 
-    /* Table Map */
+    /* ── Table Map ── */
     .table-map {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-      gap: 12px;
-      padding: 20px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 20px;
-      margin-bottom: 24px;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(68px,1fr));
+      gap:10px; padding:16px; background:rgba(0,0,0,.25);
+      border-radius:18px; margin-bottom:22px;
     }
     .table-node {
-      aspect-ratio: 1;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1.2rem;
-      transition: var(--transition);
-      position: relative;
-      border: 1px solid var(--border);
-      background: var(--bg-surface);
-      cursor: pointer;
+      aspect-ratio:1; border-radius:12px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      font-weight:700; font-size:1.15rem; transition:var(--tr);
+      border:1px solid var(--border); background:var(--bg-surface); cursor:pointer;
     }
-    .table-node[data-status="free"] { color: var(--text-mut); }
-    .table-node[data-status="busy"] { 
-      background: var(--emerald-glow); 
-      color: var(--emerald); 
-      border-color: var(--emerald);
-      box-shadow: 0 0 15px var(--emerald-glow);
-    }
-    .table-node[data-status="ready"] { 
-      background: rgba(251, 191, 36, 0.15); 
-      color: var(--gold); 
-      border-color: var(--gold);
-      animation: pulse-gold 2s infinite;
-    }
-    .table-node .label { font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; margin-top: 2px; }
-    
-    @keyframes pulse-gold {
-      0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-    }
+    .table-node .lbl { font-size:0.55rem; text-transform:uppercase; opacity:.65; margin-top:2px; }
+    .table-node[data-s="free"]  { color:var(--txt3); }
+    .table-node[data-s="busy"]  { background:var(--em-glow); color:var(--emerald); border-color:var(--emerald); box-shadow:0 0 14px var(--em-glow); }
+    .table-node[data-s="order"] { background:rgba(251,191,36,.12); color:var(--gold); border-color:var(--gold); animation:pulse-gold 2s infinite; }
+    @keyframes pulse-gold { 0%{box-shadow:0 0 0 0 rgba(251,191,36,.4)} 70%{box-shadow:0 0 0 10px rgba(251,191,36,0)} 100%{box-shadow:0 0 0 0 rgba(251,191,36,0)} }
 
-    .app-view { padding: 24px 20px 120px; max-width: 800px; margin: 0 auto; }
-    .sec-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-sec); display: flex; align-items: center; gap: 10px; }
-    .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-    /* Header Improvements */
-    .header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    
-    /* Menu Items */
-    .item { 
-      display: flex; align-items: center; justify-content: space-between; 
-      padding: 16px; background: var(--bg-surface); 
-      border: 1px solid var(--border); border-radius: 12px; 
-      margin-bottom: 12px; transition: var(--transition);
+    /* ── Menu Items ── */
+    .item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px; background:var(--bg-surface);
+      border:1px solid var(--border); border-radius:12px;
+      margin-bottom:10px; transition:var(--tr);
     }
-    .item:hover { border-color: var(--emerald-glow); transform: translateX(4px); }
-    .item.has { border-color: var(--emerald); background: rgba(16, 185, 129, 0.05); }
-    
-    .i-name { font-size: 0.95rem; font-weight: 500; } 
-    .i-price { font-size: 0.8rem; color: var(--gold); font-weight: 600; margin-top: 2px; }
-    
-    /* Order Summary Bar */
-    .summary { 
-      position: fixed; bottom: 24px; left: 16px; right: 16px; 
-      z-index: 150; display: none; 
-      animation: slide-up 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    }
-    .summary.vis { display: block; }
-    .sum-bar { 
-      background: var(--emerald); border-radius: 16px; 
-      padding: 14px 20px; display: flex; justify-content: space-between; 
-      align-items: center; color: var(--bg-deep); 
-      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
-    }
-    .s-btn { 
-      background: var(--bg-deep); color: #fff; border: none; 
-      padding: 10px 20px; border-radius: 10px; 
-      font-weight: 700; cursor: pointer; letter-spacing: 1px;
-    }
+    .item:hover { border-color:var(--border-b); transform:translateX(3px); }
+    .item.has   { border-color:var(--emerald); background:rgba(16,185,129,.06); }
+    .i-name  { font-size:0.92rem; font-weight:500; }
+    .i-price { font-size:0.78rem; color:var(--gold); font-weight:600; margin-top:2px; }
 
-    @keyframes slide-up { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-    /* Modals & Inputs */
-    .m-content { 
-      background: var(--bg-surface); border: 1px solid var(--border-bright); 
-      box-shadow: 0 0 40px rgba(0,0,0,0.6); 
-      border-radius: 24px; width: 100%; max-width: 420px; padding: 24px; 
+    /* ── Qty controls ── */
+    .qc { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .qb {
+      width:32px; height:32px; border-radius:8px;
+      background:rgba(255,255,255,.07); border:1px solid var(--border);
+      color:#fff; font-size:1.1rem; font-weight:700;
+      cursor:pointer; transition:var(--tr); display:flex; align-items:center; justify-content:center;
     }
-    .input-text, .select-box { 
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border); 
-      color: #fff; border-radius: 12px; padding: 14px; 
-      width: 100%; margin-bottom: 16px; transition: var(--transition);
+    .qb:hover:not([disabled]) { background:var(--emerald); border-color:var(--emerald); color:var(--bg-deep); }
+    .qb[disabled] { opacity:.3; cursor:not-allowed; }
+    .qv { min-width:22px; text-align:center; font-weight:700; }
+
+    /* ── Category Tabs ── */
+    .tabs { display:flex; gap:8px; margin-bottom:18px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab {
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      color:var(--txt2); border-radius:10px; padding:7px 16px;
+      font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap;
+      transition:var(--tr); flex-shrink:0;
     }
-    .input-text:focus { border-color: var(--emerald); background: rgba(255,255,255,0.08); outline: none; }
+    .tab.act { background:var(--emerald); color:var(--bg-deep); border-color:var(--emerald); }
 
-    .btn-full { 
-      background: var(--emerald); color: var(--bg-deep); 
-      border: none; border-radius: 12px; 
-      padding: 16px; font-weight: 700; font-size: 1rem; 
-      cursor: pointer; transition: var(--transition); 
+    /* ── Floating summary bar ── */
+    .sum-wrap {
+      position:fixed; bottom:20px; left:14px; right:14px; z-index:150;
+      display:none; animation:slide-up .35s cubic-bezier(.18,.89,.32,1.28);
     }
-    .btn-full:hover { filter: brightness(1.1); transform: translateY(-2px); }
-    .btn-full:active { transform: translateY(0); }
-    .btn-red { background: var(--red); color: #fff; }
-
-    /* Utilities */
-    [style*="display: none"] { display: none !important; }
-    .hide { display: none !important; }
-
-    /* Tabs */
-    .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
-    .tab { 
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-      color: var(--text-sec); border-radius: 10px; padding: 8px 18px;
-      font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-      transition: var(--transition);
+    .sum-wrap.vis { display:block; }
+    .sum-bar {
+      background:var(--emerald); border-radius:16px; padding:13px 18px;
+      display:flex; justify-content:space-between; align-items:center;
+      color:var(--bg-deep); box-shadow:0 10px 28px rgba(16,185,129,.35);
     }
-    .tab.act { background: var(--emerald); color: var(--bg-deep); border-color: var(--emerald); }
-    .tab:hover:not(.act) { border-color: var(--emerald-glow); color: var(--text-pri); }
-
-    /* Caja Tabs */
-    .caja-tabs { display: flex; gap: 0; border-top: 1px solid var(--border); margin-top: 12px; }
-    .caja-tab {
-      flex: 1; text-align: center; padding: 10px 4px;
-      font-size: 0.75rem; font-weight: 600; color: var(--text-mut);
-      cursor: pointer; border-bottom: 2px solid transparent; transition: var(--transition);
+    .s-btn {
+      background:var(--bg-deep); color:#fff; border:none;
+      padding:9px 18px; border-radius:10px; font-weight:700;
+      cursor:pointer; letter-spacing:1px; font-size:0.82rem;
     }
-    .caja-tab.act { color: var(--emerald); border-bottom-color: var(--emerald); }
-    .caja-tab:hover:not(.act) { color: var(--text-sec); }
+    @keyframes slide-up { from{transform:translateY(80px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-    /* Sub Views */
-    .sub-view { display: none; }
-    .sub-view.active { display: block; }
-
-    /* Modals */
+    /* ── Modals ── */
     .modal {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
-      align-items: center; justify-content: center; padding: 20px;
+      display:none; position:fixed; inset:0; z-index:500;
+      background:rgba(0,0,0,.78); backdrop-filter:blur(10px);
+      align-items:center; justify-content:center; padding:16px;
     }
-    .modal.open { display: flex; }
-    .m-head {
-      display: flex; align-items: center; justify-content: space-between;
-      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
-      margin-bottom: 16px; color: var(--text-pri);
+    .modal.open { display:flex; }
+    .mc {
+      background:var(--bg-surface); border:1px solid var(--border-b);
+      border-radius:22px; width:100%; max-width:420px; padding:24px;
+      box-shadow:0 0 50px rgba(0,0,0,.6);
     }
-    .m-close {
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-      color: var(--text-sec); border-radius: 8px; padding: 4px 10px;
-      cursor: pointer; font-size: 1rem; transition: var(--transition);
-    }
-    .m-close:hover { background: var(--red); color: #fff; border-color: var(--red); }
-    .m-tot {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-      margin-bottom: 16px; font-weight: 700; font-size: 1.1rem;
-    }
-    .m-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
-      font-size: 0.85rem;
-    }
+    .mh { display:flex; align-items:center; justify-content:space-between; font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; margin-bottom:16px; }
+    .mx { background:rgba(255,255,255,.05); border:1px solid var(--border); color:var(--txt2); border-radius:8px; padding:3px 10px; cursor:pointer; font-size:1rem; transition:var(--tr); }
+    .mx:hover { background:var(--red); color:#fff; border-color:var(--red); }
+    .mt { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:14px; font-weight:700; font-size:1.05rem; }
+    .mi { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:0.85rem; }
 
-    /* Bill Cards */
-    .bill-card {
-      background: var(--bg-glass); border: 1px solid var(--border);
-      border-radius: 16px; margin-bottom: 16px; overflow: hidden;
-      transition: var(--transition);
+    /* ── Inputs ── */
+    .inp, .sel {
+      background:rgba(255,255,255,.06); border:1px solid var(--border);
+      color:#fff; border-radius:12px; padding:13px 14px;
+      width:100%; margin-bottom:14px; font-size:0.9rem; transition:var(--tr);
     }
-    .bill-card:hover { border-color: var(--emerald-glow); }
-    .b-head {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 16px; background: rgba(16,185,129,0.05);
-      border-bottom: 1px solid var(--border);
-      font-weight: 700; font-size: 0.95rem;
-    }
-    .b-body { padding: 12px 16px; }
-    .b-foot {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-top: 1px solid var(--border);
-      font-weight: 700;
-    }
+    .inp:focus { border-color:var(--emerald); outline:none; background:rgba(255,255,255,.09); }
+    .sel option { background:var(--bg-surface); }
 
-    /* Qty control */
-    .q-ctrl { display: flex; align-items: center; gap: 8px; }
-    .q-btn {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: rgba(255,255,255,0.08); border: 1px solid var(--border);
-      color: #fff; font-size: 1.1rem; font-weight: 700;
-      cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center;
+    /* ── Buttons ── */
+    .btn {
+      background:var(--emerald); color:var(--bg-deep);
+      border:none; border-radius:12px; padding:15px;
+      font-weight:700; font-size:0.95rem; cursor:pointer;
+      transition:var(--tr); width:100%; display:block;
     }
-    .q-btn:hover:not([disabled]) { background: var(--emerald); border-color: var(--emerald); color: var(--bg-deep); }
-    .q-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .q-val { min-width: 24px; text-align: center; font-weight: 700; font-size: 1rem; }
+    .btn:hover { filter:brightness(1.1); transform:translateY(-2px); }
+    .btn:active { transform:translateY(0); }
+    .btn-red  { background:var(--red); color:#fff; }
+    .btn-blue { background:#2980b9; color:#fff; }
+    .btn-sm { padding:9px 14px; font-size:0.8rem; width:auto; }
 
-    /* Subcategory label */
-    .subcat {
-      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
-      color: var(--text-mut); font-weight: 700; margin-bottom: 10px; margin-top: 4px;
+    /* ── Bill Cards ── */
+    .card {
+      background:var(--bg-glass); border:1px solid var(--border);
+      border-radius:16px; margin-bottom:14px; overflow:hidden; transition:var(--tr);
     }
+    .card:hover { border-color:var(--border-b); }
+    .card-h { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; border-bottom:1px solid var(--border); font-weight:700; font-size:0.92rem; }
+    .card-b { padding:12px 16px; }
+    .card-f { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--border); font-weight:700; }
 
-    /* Daily Stats */
-    .daily-header {
-      text-align: center; padding: 28px 20px; margin-bottom: 20px;
+    /* ── Caja tabs ── */
+    .caja-tabs { display:flex; border-top:1px solid var(--border); margin-top:10px; }
+    .caja-tab {
+      flex:1; text-align:center; padding:9px 4px;
+      font-size:0.72rem; font-weight:600; color:var(--txt3);
+      cursor:pointer; border-bottom:2px solid transparent; transition:var(--tr);
     }
-    .daily-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-sec); margin-bottom: 8px; }
-    .daily-total { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 800; color: var(--gold); line-height: 1; }
-    .daily-date { font-size: 0.75rem; color: var(--text-mut); margin-top: 8px; }
+    .caja-tab.act { color:var(--emerald); border-bottom-color:var(--emerald); }
 
-    /* Toast */
+    /* ── Sub-views ── */
+    .sub { display:none; }
+    .sub.on { display:block; }
+
+    /* ── Sub-category label ── */
+    .scat { font-size:0.68rem; text-transform:uppercase; letter-spacing:2px; color:var(--txt3); font-weight:700; margin:14px 0 8px; }
+
+    /* ── Daily stats ── */
+    .day-box { text-align:center; padding:26px 20px; margin-bottom:18px; }
+    .day-lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:3px; color:var(--txt2); margin-bottom:6px; }
+    .day-val { font-family:'Playfair Display',serif; font-size:2.8rem; font-weight:800; color:var(--gold); line-height:1; }
+    .day-dt  { font-size:0.72rem; color:var(--txt3); margin-top:6px; }
+
+    /* ── Toast ── */
     .toast {
-      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
-      z-index: 9999; padding: 12px 24px; border-radius: 12px;
-      font-size: 0.85rem; font-weight: 600; white-space: nowrap;
-      animation: slide-up 0.3s ease; pointer-events: none;
-      background: rgba(15,30,24,0.95); border: 1px solid var(--emerald-glow);
-      color: var(--text-pri);
+      position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+      z-index:9990; padding:10px 22px; border-radius:12px;
+      font-size:0.82rem; font-weight:600; white-space:nowrap;
+      background:rgba(11,20,17,.96); border:1px solid var(--border-b);
+      color:var(--txt1); pointer-events:none; animation:slide-up .3s ease;
     }
 
-    /* Pulse dot animation for dispatch modal */
-    @keyframes pulse-dot {
-      0%, 100% { transform: scale(1); } 
-      50% { transform: scale(1.2); }
-    }
+    /* ── Dispatch modal special ── */
+    .dispatch-icon { font-size:4rem; margin-bottom:8px; animation:pop .6s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+    /* ── Cocina order cards ── */
+    .ord-card { background:var(--bg-glass); border:1px solid var(--border); border-radius:16px; margin-bottom:14px; overflow:hidden; }
+    .ord-h { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; border-bottom:1px solid var(--border); font-weight:700; background:rgba(251,191,36,.05); }
+    .ord-b { padding:12px 16px; }
+    .ord-row { display:flex; justify-content:space-between; align-items:flex-start; flex-direction:column; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+
+    /* ── Note badge ── */
+    .note-badge { display:inline-block; background:rgba(16,185,129,.12); color:var(--emerald); border-radius:6px; padding:2px 8px; font-size:0.72rem; margin-top:3px; }
+    .note-link  { font-size:0.7rem; color:var(--emerald); cursor:pointer; margin-top:5px; }
+
+    /* ── Stock badge ── */
+    .stk-ok  { font-size:0.72rem; color:var(--txt2); margin-left:6px; }
+    .stk-no  { font-size:0.72rem; color:var(--red); margin-left:6px; font-weight:700; }
   </style>
 </head>
 <body>
-  <!-- LANDING -->
-  <div id="landing" class="landing">
-    <div class="landing-logo logo">La Reserva</div>
-    <div class="landing-sub">Sistema de Comandas</div>
-    
-    <div style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px">
-      <a href="/mesero" class="landing-card glass">
-        <div class="landing-icon">📋</div>
-        <div>
-          <div class="landing-title">Meseros</div>
-          <div style="font-size:0.7rem; color:var(--text-mut)">Toma de pedidos y mapa de mesas</div>
-        </div>
-      </a>
-      
-      <a href="/cocina" class="landing-card glass">
-        <div class="landing-icon">👨‍🍳</div>
-        <div>
-          <div class="landing-title">Cocina</div>
-          <div style="font-size:0.7rem; color:var(--text-mut)">Producción y despacho real-time</div>
-        </div>
-      </a>
-      
-      <a href="/caja" class="landing-card glass">
-        <div class="landing-icon">💰</div>
-        <div>
-          <div class="landing-title">Caja (Admin)</div>
-          <div style="font-size:0.7rem; color:var(--text-mut)">Cuentas, inventario y reportes</div>
-        </div>
-      </a>
+
+<!-- ══════════ LANDING ══════════ -->
+<div id="pg-landing" class="landing" style="display:none">
+  <div class="landing-logo">La Reserva</div>
+  <div class="landing-sub">Sistema de Comandas</div>
+
+  <div style="width:100%;max-width:390px;display:flex;flex-direction:column;gap:10px">
+    <a href="/mesero" class="landing-card">
+      <div class="l-icon">📋</div>
+      <div>
+        <div class="l-title">Meseros</div>
+        <div class="l-desc">Toma de pedidos y mapa de mesas</div>
+      </div>
+    </a>
+    <a href="/cocina" class="landing-card">
+      <div class="l-icon">👨‍🍳</div>
+      <div>
+        <div class="l-title">Cocina</div>
+        <div class="l-desc">Producción y despacho en tiempo real</div>
+      </div>
+    </a>
+    <a href="/caja" class="landing-card">
+      <div class="l-icon">💰</div>
+      <div>
+        <div class="l-title">Caja / Admin</div>
+        <div class="l-desc">Cuentas, inventario y reportes</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ══════════ MESERO ══════════ -->
+<div id="pg-mesero" style="display:none">
+  <header class="header">
+    <div class="header-row">
+      <div><div class="logo">La Reserva</div><div class="logo-sub" id="mes-sub">Panel del Mesero</div></div>
+      <div class="badge badge-mes"><div class="dot"></div>Mesero</div>
+    </div>
+  </header>
+  <section class="app-view">
+    <div class="sec">📍 Mapa de Mesas</div>
+    <div class="table-map" id="mes-map"></div>
+
+    <div id="mes-order-area" style="display:none">
+      <div class="sec">🍽️ Menú — Mesa <span id="mes-mesa-lbl"></span></div>
+      <div class="tabs" id="mes-cats"></div>
+      <div id="mes-menu"></div>
+    </div>
+  </section>
+  <div class="sum-wrap" id="mes-sum">
+    <div class="sum-bar" onclick="openOrderModal()">
+      <div>
+        <div id="s-cnt" style="font-weight:700">0 ítems</div>
+        <div id="s-tot" style="font-size:0.72rem">$0</div>
+      </div>
+      <button class="s-btn" onclick="event.stopPropagation();sendOrder()">ENVIAR →</button>
     </div>
   </div>
+</div>
 
-  <!-- MESERO APP -->
-  <div id="app-mesero">
-    <header class="header">
-      <div class="header-top">
-        <div><div class="logo">La Reserva</div><div class="logo-sub" id="meseroNameHeader">Panel del Mesero</div></div>
-        <div class="badge bg-mes"><div class="dot"></div>Mesero</div>
-      </div>
-    </header>
-    <section class="app-view">
-      <div class="sec-title">📍 Mapa de Mesas</div>
-      <div class="table-map" id="m-map"></div>
-      
-      <div id="m-order-area" style="display:none">
-        <div class="sec-title">🍽️ Selección de Menú — Mesa <span id="m-title-mesa"></span></div>
-        <div class="tabs" id="m-cats"></div>
-        <div id="m-menu"></div>
-      </div>
-    </section>
-    <div class="summary" id="m-sum">
-      <div class="sum-bar" onclick="openOrderModal()">
-        <div><div id="s-cnt" style="font-weight:700">0 ítems</div><div id="s-tot" style="font-size:0.7rem">$0</div></div>
-        <button class="s-btn" onclick="event.stopPropagation(); sendOrder()">ENVIAR →</button>
-      </div>
+<!-- ══════════ COCINA ══════════ -->
+<div id="pg-cocina" style="display:none">
+  <header class="header">
+    <div class="header-row">
+      <div><div class="logo">La Reserva</div><div class="logo-sub">Cocina</div></div>
+      <div class="badge badge-coc"><div class="dot"></div>Cocina</div>
     </div>
-  </div>
+  </header>
+  <section class="app-view">
+    <div id="coc-orders"></div>
+    <div id="coc-empty" style="text-align:center;padding:60px 20px;color:var(--txt3)">
+      <div style="font-size:3rem;margin-bottom:12px">🍳</div>
+      <div style="font-size:1rem">Esperando pedidos...</div>
+    </div>
+  </section>
+</div>
 
-  <!-- COCINA APP -->
-  <div id="app-cocina">
-    <header class="header">
-      <div class="header-top">
-        <div><div class="logo">La Reserva</div><div class="logo-sub">Cocina</div></div>
-        <div class="badge bg-coc"><div class="dot"></div>Cocina</div>
-      </div>
-    </header>
-    <section class="app-view">
-      <div id="c-orders"></div>
-      <div id="c-empty" style="text-align:center; padding:40px; color:var(--text-mut);">Esperando pedidos...</div>
-    </section>
-  </div>
+<!-- ══════════ CAJA ══════════ -->
+<div id="pg-caja" style="display:none">
+  <header class="header">
+    <div class="header-row">
+      <div><div class="logo">La Reserva</div><div class="logo-sub">Caja</div></div>
+      <div class="badge badge-caj"><div class="dot"></div>Caja</div>
+    </div>
+    <div class="caja-tabs">
+      <div class="caja-tab act" id="ctab-cuentas"   onclick="setCajaTab('cuentas')">Cuentas</div>
+      <div class="caja-tab"     id="ctab-venta"     onclick="setCajaTab('venta')">Venta</div>
+      <div class="caja-tab"     id="ctab-inventario" onclick="setCajaTab('inventario')">Inventario</div>
+      <div class="caja-tab"     id="ctab-config"    onclick="setCajaTab('config')">Menú</div>
+    </div>
+  </header>
 
-  <!-- CAJA APP -->
-  <div id="app-caja">
-    <header class="header">
-      <div class="header-top">
-        <div><div class="logo">La Reserva</div><div class="logo-sub">Caja</div></div>
-        <div class="badge bg-caj"><div class="dot"></div>Caja</div>
-      </div>
-      <div class="caja-tabs">
-        <div class="caja-tab act" id="tab-cuentas" onclick="switchCaja('cuentas')">Cuentas</div>
-        <div class="caja-tab" id="tab-venta" onclick="switchCaja('venta')">Venta Diaria</div>
-        <div class="caja-tab" id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
-        <div class="caja-tab" id="tab-config" onclick="switchCaja('config')">Menú</div>
-      </div>
-    </header>
-    <section class="app-view sub-view active" id="v-cuentas">
-      <div class="sec-title">Cuentas Abiertas</div>
-      <div id="cj-bills"></div>
-      <div id="cj-empty" style="text-align:center; padding:40px; color:var(--text-mut);">No hay cuentas abiertas</div>
-    </section>
-    <section class="app-view sub-view" id="v-venta">
-      <div class="daily-header glass">
-        <div class="daily-title">Total Venta Diaria</div>
-        <div class="daily-total" id="d-tot">$0</div>
-        <div class="daily-date" id="d-date">Fecha: -</div>
-        <div style="font-size:0.7rem; color:var(--emerald); margin-top:4px">📈 <span id="d-count">0</span> transacciones hoy</div>
-      </div>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px">
-        <button class="btn-full" style="background:#2980b9; margin-top:0; font-size:0.8rem" onclick="exportExcel()">⬇️ EXCEL</button>
-        <button class="btn-full btn-red" style="margin:0; font-size:0.8rem" onclick="resetDaily()">🔄 REINICIAR</button>
-      </div>
-      <div class="sec-title" style="margin-top:24px">Transacciones</div>
-      <div id="d-txs"></div>
-    </section>
-    <section class="app-view sub-view" id="v-inventario">
-      <div class="sec-title">Gestión de Inventario</div>
-      <div id="cj-inv"></div>
-    </section>
-    <section class="app-view sub-view" id="v-config">
-      <div class="sec-title">Configuración del Menú</div>
-      <div id="cj-menu-list"></div>
-      <button class="btn-full" style="background:#34495e" onclick="saveMenuToServer()">💾 GUARDAR CAMBIOS DEL MENÚ</button>
-    </section>
-  </div>
+  <!-- Cuentas -->
+  <section class="app-view sub on" id="cv-cuentas">
+    <div class="sec">Cuentas Abiertas</div>
+    <div id="caj-bills"></div>
+    <div id="caj-bills-empty" style="text-align:center;padding:50px 0;color:var(--txt3)">
+      <div style="font-size:2.5rem;margin-bottom:10px">🪑</div>
+      <div>No hay cuentas abiertas</div>
+    </div>
+  </section>
 
-  <!-- MODALS -->
-  <div id="authModal" class="modal"><div class="m-content" id="authContent"></div></div>
-  <div id="orderModal" class="modal"><div class="m-content">
-    <div class="m-head">Confirmar Pedido <button class="m-close" onclick="closeM('orderModal')">✕</button></div>
-    <div id="om-items"></div><div class="m-tot"><span>Total</span><span id="om-tot">$0</span></div>
-    <button class="btn-full" onclick="sendOrder()">ENVIAR A COCINA</button>
-  </div></div>
-  <div id="payModal" class="modal"><div class="m-content">
-    <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
-    <div id="pm-body" style="font-size:0.8rem; margin-bottom:12px; max-height:150px; overflow-y:auto;"></div>
-    <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
-    <div style="display:flex; gap:8px; margin-bottom:12px">
-      <button class="btn-full" style="background:#25D366; color:white; flex:1" onclick="shareBill()">📲 WHATSAPP</button>
-      <select id="pm-method" class="select-box" style="flex:1.5; margin:0">
+  <!-- Venta diaria -->
+  <section class="app-view sub" id="cv-venta">
+    <div class="day-box glass">
+      <div class="day-lbl">Total Venta Diaria</div>
+      <div class="day-val" id="d-total">$0</div>
+      <div class="day-dt"  id="d-date">Fecha: —</div>
+      <div style="font-size:0.72rem;color:var(--emerald);margin-top:6px">📈 <span id="d-cnt">0</span> transacciones hoy</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <button class="btn btn-blue btn-sm" onclick="exportExcel()">⬇️ EXPORTAR EXCEL</button>
+      <button class="btn btn-red  btn-sm" onclick="resetDaily()">🔄 REINICIAR DÍA</button>
+    </div>
+    <div class="sec" style="margin-top:8px">Transacciones</div>
+    <div id="d-txs"></div>
+  </section>
+
+  <!-- Inventario -->
+  <section class="app-view sub" id="cv-inventario">
+    <div class="sec">Gestión de Inventario</div>
+    <div id="caj-inv"></div>
+  </section>
+
+  <!-- Config Menú -->
+  <section class="app-view sub" id="cv-config">
+    <div class="sec">Configuración del Menú</div>
+    <div id="caj-menu-edit"></div>
+    <button class="btn" style="background:#34495e" onclick="saveMenu()">💾 GUARDAR MENÚ</button>
+  </section>
+</div>
+
+<!-- ══════════ MODALES ══════════ -->
+
+<!-- Auth -->
+<div id="mod-auth" class="modal">
+  <div class="mc" id="mod-auth-body"></div>
+</div>
+
+<!-- Confirm Order -->
+<div id="mod-order" class="modal">
+  <div class="mc">
+    <div class="mh">Confirmar Pedido <button class="mx" onclick="closeM('mod-order')">✕</button></div>
+    <div id="mod-order-items"></div>
+    <div class="mt"><span>Total</span><span id="mod-order-tot">$0</span></div>
+    <button class="btn" onclick="sendOrder()">ENVIAR A COCINA 🍳</button>
+  </div>
+</div>
+
+<!-- Payment -->
+<div id="mod-pay" class="modal">
+  <div class="mc">
+    <div class="mh" id="mod-pay-title">Cerrar Cuenta <button class="mx" onclick="closeM('mod-pay')">✕</button></div>
+    <div id="mod-pay-body" style="max-height:180px;overflow-y:auto;margin-bottom:12px"></div>
+    <div class="mt"><span>Total a Pagar</span><span id="mod-pay-tot">$0</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn" style="background:#25D366;flex:1" onclick="shareWhatsApp()">📲 WhatsApp</button>
+      <select id="pay-method" class="sel" style="flex:1.5;margin:0">
         <option value="Efectivo">💵 Efectivo</option>
         <option value="Nequi">📱 Nequi</option>
         <option value="Daviplata">📱 Daviplata</option>
         <option value="Datafono">💳 Datáfono</option>
       </select>
     </div>
-    <button class="btn-full btn-red" onclick="confirmPayment()">CERRAR Y LIBERAR MESA</button>
-  </div></div>
+    <button class="btn btn-red" onclick="confirmPay()">CERRAR Y LIBERAR MESA</button>
+  </div>
+</div>
 
-  <div id="dispatchAlertModal" class="modal" style="z-index:9999;"><div class="m-content" style="text-align:center; background:#0b140f; border:2px solid var(--emerald)">
-    <div style="font-size:4rem; margin-bottom:8px; animation: pulse-dot 1s infinite">✅</div>
-    <div class="m-head" style="justify-content:center; color:var(--emerald); font-size:1.8rem; margin-bottom:4px">¡PEDIDO LISTO!</div>
-    <div style="font-size:1.8rem; font-weight:800; margin-bottom:24px; color:#fff" id="da-mesa">MESA -</div>
-    <button class="btn-full" style="font-size:1.1rem; padding:18px" onclick="closeM('dispatchAlertModal')">ACEPTAR</button>
-  </div></div>
+<!-- Dispatch alert -->
+<div id="mod-dispatch" class="modal" style="z-index:9000">
+  <div class="mc" style="text-align:center;border-color:var(--emerald);background:#080f0b">
+    <div class="dispatch-icon">✅</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--emerald);margin-bottom:4px">¡PEDIDO LISTO!</div>
+    <div id="mod-dispatch-mesa" style="font-size:1.8rem;font-weight:800;margin-bottom:22px">MESA —</div>
+    <button class="btn" style="font-size:1rem;padding:16px" onclick="closeM('mod-dispatch')">ACEPTAR</button>
+  </div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const fc = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(n);
-    const path = window.location.pathname;
-    let mode = 'landing';
-    if(path==='/mesero') mode='mesero'; else if(path==='/cocina') mode='cocina'; else if(path==='/caja') mode='caja';
-    if(mode==='landing'){ document.getElementById('landing').style.display='flex'; }
+<!-- ══════════ SCRIPTS ══════════ -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* ── Helpers ── */
+const fc = n => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(n);
+const $  = id => document.getElementById(id);
+const openM  = id => $(id).classList.add('open');
+const closeM = id => $(id).classList.remove('open');
 
-    let MENU = {};
-    let PR = {};
-    
-    async function loadMenu() {
-      const resp = await fetch('/api/menu');
-      MENU = await resp.json();
-      Object.values(MENU).flat().forEach(i => PR[i.n] = i.p);
-      if(typeof render === 'function') render();
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+/* ── Audio ── */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function beep(type, vol = 0.3) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const n = audioCtx.currentTime;
+  const tones = type==='new' ? [440,880] : type==='ready' ? [554,659,880] : [220,110];
+  tones.forEach((f,i) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = f; o.type = type==='ready' ? 'triangle':'sine';
+    g.gain.setValueAtTime(vol, n+i*.15);
+    g.gain.exponentialRampToValueAtTime(0.001, n+i*.15+.3);
+    o.start(n+i*.15); o.stop(n+i*.15+.3);
+  });
+}
+
+/* ── Routing ── */
+const PATH = window.location.pathname;
+let MODE = 'landing';
+if (PATH==='/mesero') MODE='mesero';
+else if (PATH==='/cocina') MODE='cocina';
+else if (PATH==='/caja') MODE='caja';
+
+$('pg-landing').style.display  = MODE==='landing' ? 'flex' : 'none';
+$('pg-mesero').style.display   = MODE==='mesero'  ? 'block': 'none';
+$('pg-cocina').style.display   = MODE==='cocina'  ? 'block': 'none';
+$('pg-caja').style.display     = MODE==='caja'    ? 'block': 'none';
+
+if (MODE === 'landing') {
+  // nothing else needed
+} else {
+/* ── State ── */
+let MENU = {}, PR = {};
+let state = { orders:[], bills:{}, sales:[], daily:{total:0,count:0,date:'—'}, inv:{} };
+let selTab = null, curCat = '', myOrder = {}, myName = '';
+let payMesa = null;
+
+/* ── Socket ── */
+const socket = io();
+
+socket.on('menu-updated', m => {
+  MENU = m; PR = {};
+  Object.values(m).flat().forEach(i => PR[i.n] = i.p);
+  if (!curCat || !MENU[curCat]) curCat = Object.keys(MENU)[0] || '';
+  render();
+});
+socket.on('active-orders', os => { state.orders = os; render(); });
+socket.on('all-bills',     bs => { state.bills  = bs; render(); });
+socket.on('all-inventory', iv => { state.inv    = iv; render(); });
+socket.on('daily-sales-update', d => {
+  state.daily = d; state.sales = d.transactions || [];
+  $('d-cnt').textContent = state.sales.length;
+  render();
+});
+socket.on('order-received', o => {
+  state.orders.push(o);
+  if (MODE==='cocina') { beep('new'); showToast('🔔 Nuevo pedido — Mesa '+o.mesa); }
+  render();
+});
+socket.on('order-dispatched', d => {
+  state.orders = state.orders.filter(x => x.id !== d.id);
+  if (MODE==='mesero' && d.mesero === myName) {
+    beep('ready', 1.0);
+    if (navigator.vibrate) navigator.vibrate([300,100,300,100,500]);
+    $('mod-dispatch-mesa').textContent = 'MESA ' + d.mesa;
+    openM('mod-dispatch');
+  }
+  render();
+});
+socket.on('account-closed', d => {
+  if (MODE==='mesero') showToast('💰 Caja cerró Mesa '+d.mesa);
+});
+
+/* ── Auth ── */
+if (MODE==='mesero') {
+  $('mod-auth-body').innerHTML = `
+    <div class="sec" style="margin-bottom:16px">Identifícate</div>
+    <select id="auth-name" class="sel">
+      <option value="Patico">Patico</option>
+      <option value="Ximena">Ximena</option>
+    </select>
+    <input type="password" id="auth-pwd" class="inp" placeholder="Clave...">
+    <button class="btn" onclick="doLogin()">ENTRAR</button>`;
+  openM('mod-auth');
+  window.doLogin = () => {
+    const n = $('auth-name').value;
+    const p = $('auth-pwd').value;
+    const ok = (n==='Patico'&&p==='2828') || (n==='Ximena'&&p==='9090');
+    if (ok) {
+      myName = n;
+      $('mes-sub').textContent = 'Mesero: ' + n;
+      closeM('mod-auth'); render();
+    } else {
+      showToast('❌ Clave incorrecta'); beep('error');
     }
-    loadMenu();
+  };
+  $('auth-pwd').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+}
 
-    function showToast(m){ 
-      const t = document.createElement('div'); t.className='toast glass'; t.textContent=m; 
-      document.body.appendChild(t); setTimeout(()=>t.remove(), 3000); 
-    }
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(type, vol=0.3){ 
-      if(audioCtx.state==='suspended') audioCtx.resume();
-      const n = audioCtx.currentTime;
-      let tones = [];
-      if(type==='new') tones = [440, 880];      // Notification
-      if(type==='ready') tones = [554, 659, 880]; // Success/Ready
-      if(type==='error') tones = [220, 110];      // Error
-      
-      tones.forEach((f,i)=>{
-        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.connect(g); g.connect(audioCtx.destination); o.frequency.value=f; 
-        o.type = type === 'ready' ? 'triangle' : 'sine';
-        g.gain.setValueAtTime(vol, n+(i*0.15)); g.gain.exponentialRampToValueAtTime(0.001, n+(i*0.15)+0.3);
-        o.start(n+(i*0.15)); o.stop(n+(i*0.15)+0.3);
-      });
-    }
+if (MODE==='caja') {
+  $('mod-auth-body').innerHTML = `
+    <div class="sec" style="margin-bottom:16px">Clave de Caja</div>
+    <input type="password" id="auth-caja" class="inp" placeholder="****">
+    <button class="btn" onclick="doCajaLogin()">ENTRAR</button>`;
+  openM('mod-auth');
+  window.doCajaLogin = () => {
+    socket.emit('verify-caja-password', $('auth-caja').value, ok => {
+      if (ok) closeM('mod-auth'); else { showToast('❌ Clave incorrecta'); beep('error'); }
+    });
+  };
+  $('auth-caja').addEventListener('keydown', e => { if(e.key==='Enter') doCajaLogin(); });
+}
 
-    function shareWhatsApp(mesa, items, total) {
-      const text = `*La Reserva — Su Cuenta*\n\n📍 Mesa: ${mesa}\n---\n${items.map(i => `• ${i.name} x${i.qty}: ${fc(i.price*i.qty)}`).join('\n')}\n---\n💰 *TOTAL: ${fc(total)}*\n\n¡Gracias por visitarnos!`;
-      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(url, '_blank');
-    }
-
-    if(mode !== 'landing') {
-      const socket = io();
-      let state = { bills:{}, orders:[], sales:[], daily: {total:0, date:''}, inv:{} };
-      let selTb=null, curCat='Bebidas', myOrder={}, myName='';
-      let payTb=null;
-
-      socket.on('all-bills', b => { state.bills=b; render(); });
-      socket.on('active-orders', o => { state.orders=o; render(); });
-      socket.on('all-inventory', i => { state.inv=i; render(); });
-      socket.on('daily-sales-update', s => { 
-        state.daily = s; 
-        state.sales = s.transactions; 
-        document.getElementById('d-count').textContent = s.transactions.length;
-        render(); 
-      });
-      socket.on('menu-updated', m => { MENU = m; showToast('🔄 Menú actualizado'); render(); });
-      socket.on('order-received', o => { state.orders.push(o); if(mode==='cocina') { beep('new'); showToast('🔔 Nuevo pedido mesa '+o.mesa); } render(); });
-      socket.on('order-dispatched', d => {
-        state.orders = state.orders.filter(x=>x.id!==d.id);
-        if(mode==='mesero' && d.mesero === myName) {
-          beep('ready', 1.0); // Volumen fuerte para aviso de despacho
-          if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]); // Vibrate pattern
-          document.getElementById('da-mesa').textContent = 'MESA ' + d.mesa;
-          openM('dispatchAlertModal');
-        }
+/* ══ RENDER ══ */
+function render() {
+  /* ── MESERO ── */
+  if (MODE==='mesero') {
+    if (!myName) return;
+    const map = $('mes-map');
+    map.innerHTML = '';
+    for (let i=1; i<=10; i++) {
+      const hasBill  = !!state.bills[i];
+      const hasOrder = state.orders.some(o => o.mesa == i);
+      const s = hasOrder ? 'order' : hasBill ? 'busy' : 'free';
+      const lbl = s==='free'?'libre': s==='busy'?'cuenta':'pedido';
+      const nd = document.createElement('div');
+      nd.className = 'table-node'; nd.setAttribute('data-s', s);
+      nd.innerHTML = `${i}<div class="lbl">${lbl}</div>`;
+      nd.onclick = () => {
+        selTab = i;
+        $('mes-mesa-lbl').textContent = i;
+        $('mes-order-area').style.display = 'block';
+        setTimeout(() => $('mes-order-area').scrollIntoView({behavior:'smooth',block:'start'}), 50);
         render();
-      });
-      socket.on('account-closed', d => { if(mode==='mesero') showToast('Caja cerró mesa '+d.mesa); });
-
-      // Init Modals Auth
-      if(mode==='mesero'){
-        const a=document.getElementById('authModal'), c=document.getElementById('authContent');
-        c.innerHTML = `<div class="sec-title">Identifícate</div>
-        <select id="mName" class="select-box"><option value="Patico">Patico</option><option value="Ximena">Ximena</option></select>
-        <input type="password" id="mPwd" class="input-text" placeholder="Clave...">
-        <button class="btn-full" onclick="saveName()">ENTRAR</button>`;
-        a.classList.add('open');
-        window.saveName = () => {
-           const n=document.getElementById('mName').value;
-           const p=document.getElementById('mPwd').value;
-           if((n==='Patico' && p==='2828') || (n==='Ximena' && p==='9090')) {
-             myName=n; document.getElementById('meseroNameHeader').textContent=`Mesero: ${n}`; a.classList.remove('open'); render();
-           } else {
-             showToast('❌ Clave incorrecta');
-           }
-        };
-      }
-      if(mode==='caja'){
-        const a=document.getElementById('authModal'), c=document.getElementById('authContent');
-        c.innerHTML = `<div class="sec-title">Clave de Caja</div><input type="password" id="cPwd" class="input-text" placeholder="****"><button class="btn-full" onclick="loginCaja()">ENTRAR</button>`;
-        a.classList.add('open');
-        window.loginCaja = () => {
-          socket.emit('verify-caja-password', document.getElementById('cPwd').value, ok => {
-            if(ok) a.classList.remove('open'); else showToast('❌ Clave incorrecta');
-          });
-        };
-      }
-
-      window.openM = i => document.getElementById(i).classList.add('open');
-      window.closeM = i => document.getElementById(i).classList.remove('open');
-
-      function render(){
-        if(mode==='mesero'){
-          document.getElementById('app-mesero').style.display='block';
-          if(!myName) return;
-
-          // Table Map Rendering
-          const map = document.getElementById('m-map');
-          map.innerHTML = '';
-          for(let i=1; i<=10; i++){
-            const hasBill = !!state.bills[i];
-            const hasOrder = state.orders.some(o => o.mesa == i);
-            let status = 'free';
-            if(hasBill) status = 'busy';
-            if(hasOrder) status = 'ready'; // Ready to be dispatched or already ordered
-
-            const node = document.createElement('div');
-            node.className = 'table-node';
-            node.setAttribute('data-status', status);
-            node.innerHTML = `${i}<div class="label">${status === 'free' ? 'Libre' : (status === 'busy' ? 'En Cuenta' : 'Pedido')}</div>`;
-            
-            node.onclick = () => {
-              selTb = i;
-              document.getElementById('m-order-area').style.display = 'block';
-              document.getElementById('m-title-mesa').textContent = i;
-              window.scrollTo({ top: document.getElementById('m-order-area').offsetTop - 100, behavior: 'smooth' });
-              render();
-            };
-            map.appendChild(node);
-          }
-
-          if(!selTb) return;
-
-          // Tabs
-          const tc = document.getElementById('m-cats'); tc.innerHTML='';
-          Object.keys(MENU).forEach(c => {
-            const b=document.createElement('button'); b.className='tab'+(curCat===c?' act':'');
-            b.textContent=c; b.onclick=()=>{ curCat=c; render(); }; tc.appendChild(b);
-          });
-
-          // Menu
-          const tm = document.getElementById('m-menu'); tm.innerHTML='';
-          MENU[curCat].forEach(i => {
-            const md = myOrder[i.n];
-            const q = md ? md.qty : 0;
-            const note = md && md.note ? md.note : '';
-            const left = state.inv[i.n] === undefined ? 0 : state.inv[i.n];
-            const maxed = q >= left;
-            const ex = left === 0;
-            const d = document.createElement('div'); d.className='item'+(q>0?' has':'');
-            d.innerHTML=`<div style="flex:1"><div class="i-name">${i.n} ${ex?'<span style="color:var(--red);font-size:0.75rem;margin-left:6px;font-weight:700">AGOTADO</span>':'<span style="color:var(--text-sec);font-size:0.75rem;margin-left:6px">Quedan '+left+'</span>'}</div><div class="i-price">${fc(i.p)}</div>
-            ${q>0 ? `<div style="font-size:0.7rem; color:var(--emerald); margin-top:6px; font-weight:600; cursor:pointer" onclick="addNote('${i.n}')">📝 ${note||'Añadir nota especial'}</div>` : ''}</div>
-            <div class="q-ctrl"><button class="q-btn" onclick="cQ('${i.n}',-1)">-</button><span class="q-val">${q}</span><button class="q-btn" ${maxed?'disabled style="opacity:0.3"':''} onclick="cQ('${i.n}',1)">+</button></div>`;
-            tm.appendChild(d);
-          });
-
-          // Sum
-          const tot = Object.entries(myOrder).reduce((s,[n,md])=>s+(PR[n]*md.qty),0);
-          const cnt = Object.values(myOrder).reduce((s,md)=>s+md.qty,0);
-          const bs = document.getElementById('m-sum');
-          if(cnt>0){ bs.classList.add('vis'); document.getElementById('s-cnt').textContent=`${cnt} ítems | Mesa ${selTb}`; document.getElementById('s-tot').textContent=fc(tot); }
-          else bs.classList.remove('vis');
-        }
-
-        if(mode==='cocina'){
-          document.getElementById('app-cocina').style.display='block';
-          const oc = document.getElementById('c-orders'); oc.innerHTML='';
-          document.getElementById('c-empty').style.display = state.orders.length ? 'none' : 'block';
-          [...state.orders].reverse().forEach(o => {
-            const d=document.createElement('div'); d.className='bill-card';
-            d.innerHTML=`<div class="b-head"><span>Mesa ${o.mesa}</span><span style="color:#8fa89a; font-size:0.8rem">${o.hora}</span></div>
-            <div class="b-body">${o.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
-              <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name}</span><strong>x${i.qty}</strong></div>
-              ${i.note ? `<div style="font-size:0.75rem; color:var(--emerald); background:rgba(46,204,113,0.1); padding:2px 6px; border-radius:4px; margin-top:4px">📝 ${i.note}</div>` : ''}
-              </div>`).join('')}</div>
-            <div style="padding:12px; border-top:1px solid var(--border)"><button class="btn-full" style="margin:0" onclick="disp(${o.id})">DESPACHAR</button></div>`;
-            oc.appendChild(d);
-          });
-        }
-
-        if(mode==='caja'){
-          document.getElementById('app-caja').style.display='block';
-          const bc = document.getElementById('cj-bills'); bc.innerHTML='';
-          const be = document.getElementById('cj-empty');
-          const bills = Object.entries(state.bills);
-          be.style.display = bills.length ? 'none' : 'block';
-          bills.forEach(([m,b]) => {
-            const d=document.createElement('div'); d.className='bill-card glass';
-            d.innerHTML=`<div class="b-head"><span>Mesa ${m}</span><span style="color:var(--text-sec); font-size:0.75rem">${b.mesero} | ${b.openedAt}</span></div>
-            <div class="b-body">${b.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
-              <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name} x${i.qty}</span><span>${fc(i.price*i.qty)}</span></div>
-              ${i.note ? `<div style="font-size:0.7rem; color:var(--text-sec)">📝 ${i.note}</div>` : ''}
-              </div>`).join('')}</div>
-            <div class="b-foot"><span>TOTAL:</span><span style="color:var(--gold)">${fc(b.total)}</span></div>
-            <div style="padding:0 12px 12px"><button class="btn-full btn-red" style="margin:0" onclick="openP(${m})">💰 COBRAR Y CERRAR</button></div>`;
-            bc.appendChild(d);
-          });
-
-          // Stats
-          document.getElementById('d-tot').textContent = fc(state.daily.total);
-          document.getElementById('d-date').textContent = 'F: ' + state.daily.date;
-          const dt = document.getElementById('d-txs'); dt.innerHTML='';
-          [...state.sales].reverse().forEach(s => {
-            const d=document.createElement('div'); d.className='bill-card glass';
-            d.innerHTML=`<div class="b-head"><span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span></div>
-            <div class="b-body" style="font-size:0.75rem"><div style="color:var(--text-sec); margin-bottom:4px">${s.mesero} | ${s.closedAt} | ${s.paymentMethod}</div>
-            ${s.items.map(i=>`${i.name} x${i.qty}`).join(', ')}</div>`;
-            dt.appendChild(d);
-          });
-
-          // Inventario
-          const ic = document.getElementById('cj-inv'); ic.innerHTML='';
-          Object.keys(MENU).forEach(cat => {
-            ic.innerHTML += `<div class="subcat" style="margin-top:16px;">${cat}</div>`;
-            MENU[cat].forEach(i => {
-              const cur = state.inv[i.n] || 0;
-              ic.innerHTML += `<div class="item glass">
-                <div class="i-name">${i.n}</div>
-                <div class="q-ctrl" style="gap:4px">
-                  <button class="q-btn" onclick="updateInv('${i.n}', -1)">-</button>
-                  <span class="q-val" style="min-width:30px">${cur}</span>
-                  <button class="q-btn" onclick="updateInv('${i.n}', 1)">+</button>
-                </div>
-              </div>`;
-            });
-          });
-
-          // Menu Management View
-          const mc = document.getElementById('cj-menu-list'); mc.innerHTML = '';
-          Object.entries(MENU).forEach(([cat, items]) => {
-            const catDiv = document.createElement('div');
-            catDiv.innerHTML = `<div class="subcat">${cat}</div>`;
-            items.forEach((it, idx) => {
-              const itemDiv = document.createElement('div');
-              itemDiv.className = 'item glass'; 
-              itemDiv.style.flexDirection = 'column'; itemDiv.style.alignItems = 'stretch';
-              itemDiv.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px">
-                  <input type="text" class="input-text" style="margin:0; flex:1; height:35px; padding:0 8px" value="${it.n}" onchange="editMenuItem('${cat}', ${idx}, 'n', this.value)">
-                  <input type="number" class="input-text" style="margin:0 0 0 8px; width:100px; height:35px; padding:0 8px" value="${it.p}" onchange="editMenuItem('${cat}', ${idx}, 'p', parseInt(this.value))">
-                </div>
-              `;
-              catDiv.appendChild(itemDiv);
-            });
-            mc.appendChild(catDiv);
-          });
-        }
-      }
-
-      window.editMenuItem = (cat, idx, key, val) => {
-        MENU[cat][idx][key] = val;
       };
-
-      window.saveMenuToServer = async () => {
-        const resp = await fetch('/api/menu', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(MENU)
-        });
-        if(resp.ok) showToast('✅ Menú guardado y actualizado');
-      };
-
-      // Actions
-      window.cQ = (n,d) => { 
-        if(!myOrder[n]) myOrder[n] = {qty: 0, note: ''};
-        const q=myOrder[n].qty+d; 
-        if(q<=0) delete myOrder[n]; 
-        else myOrder[n].qty=q; 
-        render(); 
-      };
-      window.addNote = (n) => {
-        if(!myOrder[n]) return;
-        const txt = prompt('Escribe una nota interna para '+n+' (ej: Sin cebolla, bien asado):', myOrder[n].note);
-        if(txt !== null){ myOrder[n].note = txt.trim(); render(); }
-      };
-      window.openOrderModal = () => {
-        if(!selTb){ showToast('Selecciona mesa'); return; }
-        const om = document.getElementById('om-items'); om.innerHTML='';
-        let tot=0;
-        Object.entries(myOrder).forEach(([n,md])=>{ 
-          const s=PR[n]*md.qty; tot+=s; 
-          om.innerHTML+=`<div class="m-item" style="flex-direction:column; align-items:flex-start">
-            <div style="width:100%; display:flex; justify-content:space-between"><span>${n} x${md.qty}</span><span>${fc(s)}</span></div>
-            ${md.note ? `<div style="font-size:0.7rem; color:var(--text-sec)">📝 ${md.note}</div>` : ''}
-          </div>`; 
-        });
-        document.getElementById('om-tot').textContent=fc(tot); openM('orderModal');
-      };
-      window.sendOrder = () => {
-        socket.emit('new-order', { mesa:selTb, mesero:myName, items:Object.entries(myOrder).map(([n,md])=>({name:n, qty:md.qty, price:PR[n], note:md.note})) });
-        myOrder={}; selTb=null; closeM('orderModal'); showToast('✅ Pedido Enviado'); render();
-      };
-      window.disp = id => socket.emit('dispatch-order', id);
-      window.switchCaja = t => {
-        ['cuentas','venta','inventario','config'].forEach(x => {
-          const v=document.getElementById('v-'+x); if(v) v.classList.remove('active');
-          const tEl=document.getElementById('tab-'+x); if(tEl) tEl.classList.remove('act');
-        });
-        document.getElementById('v-'+t).classList.add('active'); 
-        document.getElementById('tab-'+t).classList.add('act');
-      };
-      window.updateInv = (n, d) => {
-        const val = (state.inv[n] || 0) + d;
-        if(val >= 0) socket.emit('update-inventory', { [n]: val });
-      };
-      window.openP = m => {
-        payTb = m; const b = state.bills[m]; document.getElementById('pm-title').textContent=`Cobrar Mesa ${m}`;
-        document.getElementById('pm-body').innerHTML = b.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
-          <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name} x${i.qty}</span><span>${fc(i.price*i.qty)}</span></div>
-          ${i.note ? `<div style="font-size:0.7rem; color:var(--emerald); background:rgba(46,204,113,0.1); padding:2px 6px; border-radius:4px; margin-top:4px">📝 ${i.note}</div>` : ''}
-          </div>`).join('');
-        document.getElementById('pm-tot').textContent = fc(b.total); openM('payModal');
-      };
-      window.shareBill = () => {
-        const b = state.bills[payTb];
-        if(b) shareWhatsApp(payTb, b.items, b.total);
-      };
-      window.confirmPayment = () => {
-        const pm = document.getElementById('pm-method').value;
-        socket.emit('close-account', { mesa: payTb, paymentMethod: pm });
-        closeM('payModal'); showToast('💰 Cuenta Cerrada: ' + pm);
-      };
-      window.exportExcel = () => { window.location.href = '/api/export-daily'; };
-      window.resetDaily = () => {
-        if(confirm('¿Estás seguro de que quieres reiniciar la venta de hoy? (¡Recuerda descargar el Excel primero!)')) {
-          socket.emit('reset-daily');
-          showToast('🔄 Venta diaria reiniciada');
-        }
-      };
+      map.appendChild(nd);
     }
-  </script>
+
+    if (!selTab) return;
+
+    // Tabs
+    const tc = $('mes-cats'); tc.innerHTML = '';
+    Object.keys(MENU).forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'tab'+(curCat===c?' act':'');
+      b.textContent = c;
+      b.onclick = () => { curCat=c; render(); };
+      tc.appendChild(b);
+    });
+
+    // Menu items
+    const tm = $('mes-menu'); tm.innerHTML = '';
+    const cat = MENU[curCat] || [];
+    cat.forEach(it => {
+      const md  = myOrder[it.n] || null;
+      const q   = md ? md.qty : 0;
+      const note= md ? md.note||'' : '';
+      const stk = state.inv[it.n] === undefined ? 999 : state.inv[it.n];
+      const agotado = stk <= 0;
+      const maxed   = q >= stk;
+      const d = document.createElement('div');
+      d.className = 'item'+(q>0?' has':'');
+      d.innerHTML = `
+        <div style="flex:1;min-width:0">
+          <div class="i-name">${it.n}
+            ${agotado
+              ? '<span class="stk-no">AGOTADO</span>'
+              : stk<999 ? `<span class="stk-ok">Quedan ${stk}</span>` : ''}
+          </div>
+          <div class="i-price">${fc(it.p)}</div>
+          ${q>0 ? `<div class="note-link" onclick="addNote('${it.n}')">📝 ${note||'Añadir nota...'}</div>` : ''}
+        </div>
+        <div class="qc">
+          <button class="qb" onclick="cQ('${it.n}',-1)" ${q===0?'disabled':''}>−</button>
+          <span class="qv">${q}</span>
+          <button class="qb" onclick="cQ('${it.n}',1)"  ${agotado||maxed?'disabled':''}>+</button>
+        </div>`;
+      tm.appendChild(d);
+    });
+
+    // Summary bar
+    const tot = Object.entries(myOrder).reduce((s,[n,md])=>s+(PR[n]||0)*md.qty,0);
+    const cnt = Object.values(myOrder).reduce((s,md)=>s+md.qty,0);
+    const sw = $('mes-sum');
+    if (cnt>0) {
+      sw.classList.add('vis');
+      $('s-cnt').textContent = `${cnt} ítems | Mesa ${selTab}`;
+      $('s-tot').textContent = fc(tot);
+    } else { sw.classList.remove('vis'); }
+  }
+
+  /* ── COCINA ── */
+  if (MODE==='cocina') {
+    const oc = $('coc-orders'); oc.innerHTML = '';
+    $('coc-empty').style.display = state.orders.length ? 'none' : 'block';
+    [...state.orders].reverse().forEach(o => {
+      const d = document.createElement('div'); d.className='ord-card';
+      d.innerHTML = `
+        <div class="ord-h">
+          <span>Mesa ${o.mesa}</span>
+          <span style="color:var(--txt2);font-size:0.8rem">${o.mesero} · ${o.hora}</span>
+        </div>
+        <div class="ord-b">
+          ${o.items.map(it=>`
+            <div class="ord-row">
+              <div style="display:flex;justify-content:space-between;width:100%">
+                <span>${it.name}</span><strong>×${it.qty}</strong>
+              </div>
+              ${it.note?`<div class="note-badge">📝 ${it.note}</div>`:''}
+            </div>`).join('')}
+        </div>
+        <div style="padding:10px 16px">
+          <button class="btn" style="margin:0" onclick="dispatch(${o.id})">✅ DESPACHAR</button>
+        </div>`;
+      oc.appendChild(d);
+    });
+  }
+
+  /* ── CAJA ── */
+  if (MODE==='caja') {
+    // Bills
+    const bc = $('caj-bills'); bc.innerHTML = '';
+    const bills = Object.entries(state.bills);
+    $('caj-bills-empty').style.display = bills.length ? 'none' : 'block';
+    bills.forEach(([m,b]) => {
+      const d = document.createElement('div'); d.className='card';
+      d.innerHTML = `
+        <div class="card-h">
+          <span>Mesa ${m}</span>
+          <span style="color:var(--txt2);font-size:0.75rem">${b.mesero||''} · ${b.openedAt||''}</span>
+        </div>
+        <div class="card-b">
+          ${(b.items||[]).map(it=>`
+            <div class="mi">
+              <span>${it.name} ×${it.qty}${it.note?` <em style="color:var(--txt2);font-size:0.72rem">[${it.note}]</em>`:''}</span>
+              <span style="color:var(--gold)">${fc((it.price||0)*it.qty)}</span>
+            </div>`).join('')}
+        </div>
+        <div class="card-f"><span>TOTAL</span><span style="color:var(--gold)">${fc(b.total||0)}</span></div>
+        <div style="padding:0 16px 16px">
+          <button class="btn btn-red" style="margin:0" onclick="openPay(${m})">💰 COBRAR Y CERRAR</button>
+        </div>`;
+      bc.appendChild(d);
+    });
+
+    // Stats
+    $('d-total').textContent = fc(state.daily.total||0);
+    $('d-date').textContent  = 'Fecha: ' + (state.daily.date||'—');
+
+    // Transactions
+    const txc = $('d-txs'); txc.innerHTML = '';
+    [...state.sales].reverse().forEach(s => {
+      const d = document.createElement('div'); d.className='card';
+      d.innerHTML = `
+        <div class="card-h">
+          <span>Mesa ${s.mesa}</span>
+          <span style="color:var(--gold)">${fc(s.total)}</span>
+        </div>
+        <div class="card-b" style="font-size:0.78rem">
+          <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
+          ${(s.items||[]).map(i=>`${i.name} ×${i.qty}`).join(', ')}
+        </div>`;
+      txc.appendChild(d);
+    });
+
+    // Inventario
+    const ic = $('caj-inv'); ic.innerHTML = '';
+    Object.keys(MENU).forEach(cat => {
+      ic.innerHTML += `<div class="scat">${cat}</div>`;
+      MENU[cat].forEach(it => {
+        const cur = state.inv[it.n] || 0;
+        ic.innerHTML += `
+          <div class="item" style="margin-bottom:8px">
+            <div class="i-name">${it.n}</div>
+            <div class="qc">
+              <button class="qb" onclick="updInv('${it.n}',-1)">−</button>
+              <span class="qv" style="min-width:30px">${cur}</span>
+              <button class="qb" onclick="updInv('${it.n}',1)">+</button>
+            </div>
+          </div>`;
+      });
+    });
+
+    // Menu edit
+    const me = $('caj-menu-edit'); me.innerHTML = '';
+    Object.entries(MENU).forEach(([cat,items]) => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<div class="scat">${cat}</div>`;
+      items.forEach((it, idx) => {
+        const row = document.createElement('div');
+        row.className = 'item'; row.style.flexDirection='column'; row.style.alignItems='stretch';
+        row.innerHTML = `
+          <div style="display:flex;gap:8px">
+            <input type="text" class="inp" style="margin:0;flex:1;padding:8px 10px;height:36px" value="${it.n}"
+              onchange="MENU['${cat}'][${idx}].n=this.value">
+            <input type="number" class="inp" style="margin:0;width:100px;padding:8px 10px;height:36px" value="${it.p}"
+              onchange="MENU['${cat}'][${idx}].p=parseInt(this.value)||0">
+          </div>`;
+        wrap.appendChild(row);
+      });
+      me.appendChild(wrap);
+    });
+  }
+}
+
+/* ── Actions ── */
+window.cQ = (n, d) => {
+  if (!myOrder[n]) myOrder[n] = {qty:0, note:''};
+  const q = myOrder[n].qty + d;
+  if (q<=0) delete myOrder[n]; else myOrder[n].qty = q;
+  render();
+};
+
+window.addNote = n => {
+  if (!myOrder[n]) return;
+  const txt = prompt(`Nota para "${n}" (ej: sin cebolla):`, myOrder[n].note);
+  if (txt !== null) { myOrder[n].note = txt.trim(); render(); }
+};
+
+window.openOrderModal = () => {
+  if (!selTab) { showToast('Selecciona una mesa primero'); return; }
+  const oi = $('mod-order-items'); oi.innerHTML = '';
+  let tot = 0;
+  Object.entries(myOrder).forEach(([n,md]) => {
+    const s = (PR[n]||0)*md.qty; tot += s;
+    oi.innerHTML += `
+      <div class="mi">
+        <div>
+          <div>${n} ×${md.qty}</div>
+          ${md.note?`<div style="font-size:0.72rem;color:var(--txt2)">📝 ${md.note}</div>`:''}
+        </div>
+        <span style="color:var(--gold)">${fc(s)}</span>
+      </div>`;
+  });
+  $('mod-order-tot').textContent = fc(tot);
+  openM('mod-order');
+};
+
+window.sendOrder = () => {
+  if (!selTab || Object.keys(myOrder).length===0) { showToast('Pedido vacío'); return; }
+  socket.emit('new-order', {
+    mesa: selTab, mesero: myName,
+    items: Object.entries(myOrder).map(([n,md])=>({name:n,qty:md.qty,price:PR[n]||0,note:md.note}))
+  });
+  myOrder = {}; selTab = null;
+  $('mes-order-area').style.display = 'none';
+  closeM('mod-order');
+  showToast('✅ Pedido enviado a cocina');
+  render();
+};
+
+window.dispatch = id => socket.emit('dispatch-order', id);
+
+window.setCajaTab = t => {
+  ['cuentas','venta','inventario','config'].forEach(x => {
+    $('cv-'+x)?.classList.remove('on');
+    $('ctab-'+x)?.classList.remove('act');
+  });
+  $('cv-'+t)?.classList.add('on');
+  $('ctab-'+t)?.classList.add('act');
+};
+
+window.openPay = m => {
+  payMesa = m;
+  const b = state.bills[m]; if(!b) return;
+  $('mod-pay-title').innerHTML = `Cobrar Mesa ${m} <button class="mx" onclick="closeM('mod-pay')">✕</button>`;
+  $('mod-pay-body').innerHTML  = (b.items||[]).map(it=>`
+    <div class="mi">
+      <div>${it.name} ×${it.qty}${it.note?` <em style="color:var(--txt2);font-size:0.72rem">[${it.note}]</em>`:''}</div>
+      <span>${fc((it.price||0)*it.qty)}</span>
+    </div>`).join('');
+  $('mod-pay-tot').textContent = fc(b.total||0);
+  openM('mod-pay');
+};
+
+window.shareWhatsApp = () => {
+  const b = state.bills[payMesa]; if(!b) return;
+  const txt = `*La Reserva — Su Cuenta*\n\n📍 Mesa ${payMesa}\n—\n${(b.items||[]).map(i=>`• ${i.name} ×${i.qty}: ${fc((i.price||0)*i.qty)}`).join('\n')}\n—\n💰 *TOTAL: ${fc(b.total||0)}*\n\n¡Gracias por visitarnos! 🙏`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+};
+
+window.confirmPay = () => {
+  socket.emit('close-account', { mesa: payMesa, paymentMethod: $('pay-method').value });
+  closeM('mod-pay');
+  showToast('💰 Cuenta cerrada · Mesa '+payMesa);
+};
+
+window.updInv = (n, d) => {
+  const val = (state.inv[n]||0) + d;
+  if (val>=0) socket.emit('update-inventory', {[n]: val});
+};
+
+window.saveMenu = async () => {
+  const r = await fetch('/api/menu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(MENU)});
+  if(r.ok) showToast('✅ Menú guardado');
+};
+
+window.exportExcel = () => { window.location.href='/api/export-daily'; };
+window.resetDaily  = () => {
+  if(confirm('¿Reiniciar la venta del día? Descarga el Excel primero.')) {
+    socket.emit('reset-daily'); showToast('🔄 Venta reiniciada');
+  }
+};
+
+} // end if MODE !== 'landing'
+</script>
 </body>
 </html>
