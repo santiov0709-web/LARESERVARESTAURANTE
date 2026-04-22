@@ -476,7 +476,7 @@ function render() {
       const md  = myOrder[it.n] || null;
       const q   = md ? md.qty : 0;
       const note= md ? (md.note||'') : '';
-      const left= state.inv[it.n] === undefined ? 999 : state.inv[it.n];
+      const left= state.inv[it.n] === undefined ? 0 : state.inv[it.n];
       const ex  = left <= 0;
       const maxed = q >= left;
       const d = document.createElement('div');
@@ -485,7 +485,7 @@ function render() {
         <div style="flex:1;min-width:0">
           <div class="i-name">${it.n}
             ${ex ? '<span style="color:var(--red);font-size:0.7rem;margin-left:6px;font-weight:700">AGOTADO</span>'
-                 : left<999 ? `<span style="color:var(--txt2);font-size:0.7rem;margin-left:6px">Quedan ${left}</span>` : ''}
+                 : `<span style="color:var(--txt2);font-size:0.7rem;margin-left:6px">Quedan ${left}</span>`}
           </div>
           <div class="i-price">${fc(it.p)}</div>
           ${q>0 ? `<div class="i-note" onclick="addNote('${it.n}')">📝 ${note||'Añadir nota...'}</div>` : ''}
