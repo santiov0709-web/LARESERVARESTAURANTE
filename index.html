@@ -55,11 +55,16 @@
 
     /* ── Mesa grid ── */
     .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:20px; }
-    .mesa-btn { aspect-ratio:1; border:1px solid var(--border); border-radius:10px; background:var(--bg-card); color:var(--txt2); font-weight:700; font-size:1rem; cursor:pointer; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:var(--tr); }
-    .mesa-btn span { font-size:0.5rem; font-weight:400; text-transform:uppercase; opacity:.7; }
-    .mesa-btn.sel { background:var(--emerald-d); color:#fff; border-color:var(--emerald); }
-    .mesa-btn.tiene { border-color:var(--gold); }
-    .dot-gold { position:absolute; top:4px; right:4px; width:8px; height:8px; border-radius:50%; background:var(--gold); }
+    .mesa-btn { aspect-ratio:1; border:2px solid var(--border); border-radius:10px; background:var(--bg-card); color:var(--txt3); font-weight:700; font-size:1.1rem; cursor:pointer; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:var(--tr); }
+    .mesa-btn span { font-size:0.5rem; font-weight:400; text-transform:uppercase; opacity:.7; margin-top:2px; }
+    /* Libre = gris (default) */
+    /* Cuenta abierta = verde brillante */
+    .mesa-btn.ocupada { background:rgba(46,204,113,.18); color:var(--emerald); border-color:var(--emerald); box-shadow:0 0 12px rgba(46,204,113,.3); }
+    /* Pedido en cocina = dorado pulsante */
+    .mesa-btn.pedido  { background:rgba(240,192,64,.18); color:var(--gold); border-color:var(--gold); animation:pulse-mesa 1.8s infinite; }
+    /* Seleccionada = resaltado fuerte */
+    .mesa-btn.sel { outline:3px solid var(--emerald-d); outline-offset:2px; }
+    @keyframes pulse-mesa { 0%,100%{box-shadow:0 0 0 0 rgba(240,192,64,.4)} 50%{box-shadow:0 0 0 8px rgba(240,192,64,0)} }
 
     /* ── Tabs ── */
     .tabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; -webkit-overflow-scrolling:touch; }
@@ -439,13 +444,19 @@ function render() {
     $('app-mesero').style.display = 'block';
     if (!myName) return;
 
-    // Mesa grid
+    // Mesa grid — 3 estados: libre / ocupada (cuenta) / pedido (en cocina)
     const tg = $('m-grid'); tg.innerHTML = '';
     for (let i = 1; i <= 10; i++) {
-      const tiene = !!state.bills[i];
+      const tieneCuenta = !!state.bills[i];
+      const tienePedido = state.orders.some(o => o.mesa == i);
       const b = document.createElement('button');
-      b.className = 'mesa-btn' + (selTb===i?' sel':'') + (tiene?' tiene':'');
-      b.innerHTML = `${tiene?'<div class="dot-gold"></div>':''}${i}<span>Mesa</span>`;
+      let cls = 'mesa-btn';
+      if (selTb === i) cls += ' sel';
+      if (tienePedido)  cls += ' pedido';
+      else if (tieneCuenta) cls += ' ocupada';
+      const lbl = tienePedido ? 'En cocina' : tieneCuenta ? 'Ocupada' : 'Libre';
+      b.className = cls;
+      b.innerHTML = `${i}<span>${lbl}</span>`;
       b.onclick = () => { selTb=i; render(); };
       tg.appendChild(b);
     }
