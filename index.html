@@ -290,6 +290,7 @@
 
 <div id="payModal" class="modal"><div class="m-content">
   <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
+  <div style="font-size:0.75rem;color:var(--gold);margin-bottom:8px;text-align:center">💡 <i>Baja las cantidades con el botón (-) para <b>Dividir la Cuenta</b> o hacer pagos de solo una parte.</i></div>
   <div id="pm-body" style="max-height:160px;overflow-y:auto;margin-bottom:10px"></div>
   <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
   
@@ -304,7 +305,7 @@
     <option value="Datafono">💳 Datáfono</option>
   </select>
 
-  <button class="btn-full btn-red" onclick="confirmPayment()">CERRAR Y LIBERAR MESA</button>
+  <button id="pm-btn-confirm" class="btn-full btn-red" onclick="confirmPayment()">COBRAR Y LIBERAR MESA</button>
 </div></div>
 
 <div id="dispatchAlertModal" class="modal" style="z-index:9999"><div class="m-content" style="text-align:center;border:2px solid var(--emerald);background:#080f0b">
@@ -835,10 +836,12 @@ window.openP = m => {
 function renderPayModal() {
   const b = state.bills[payTb]; if(!b) return;
   let partialTotal = 0;
+  let isPartial = false;
   
   $('pm-body').innerHTML = (b.items||[]).map((it, idx) => {
     const pps = partialPaymentState[idx];
     partialTotal += pps.qtyToPay * pps.price;
+    if (pps.qtyToPay < pps.maxQty) isPartial = true;
     return `
     <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px">
       <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -857,6 +860,14 @@ function renderPayModal() {
   }).join('');
   
   $('pm-tot').textContent = fc(partialTotal);
+
+  if (isPartial) {
+    $('pm-btn-confirm').innerHTML = `COBRAR PARCIAL (${fc(partialTotal)})`;
+    $('pm-btn-confirm').style.background = '#e67e22'; // Anaranjado para parcial
+  } else {
+    $('pm-btn-confirm').innerHTML = `COBRAR TODO (${fc(partialTotal)})`;
+    $('pm-btn-confirm').style.background = 'var(--red)';
+  }
 }
 
 window.updatePartialQty = (idx, d) => {
