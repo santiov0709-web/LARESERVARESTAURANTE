@@ -142,6 +142,18 @@
     /* ── Pulse (dispatch alert) ── */
     .pulse-icon { animation:pulse-icon .8s infinite; }
     @keyframes pulse-icon { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+    /* ── Impresión Térmica ── */
+    #ticket { display:none; }
+    @media print {
+      body, html { background:#fff; color:#000; margin:0; padding:0; }
+      body > *:not(#ticket) { display:none !important; }
+      #ticket { display:block !important; position:absolute; top:0; left:0; width:300px; color:#000; font-family:'Courier New', monospace; font-size:12px; padding:10px; }
+      .tk-c { text-align:center; }
+      .tk-b { font-weight:bold; }
+      .tk-j { display:flex; justify-content:space-between; }
+      .tk-line { border-top:1px dashed #000; margin:6px 0; }
+    }
   </style>
 </head>
 <body>
@@ -213,6 +225,7 @@
     </div>
     <div class="caja-tabs">
       <div class="caja-tab act" id="tab-cuentas"    onclick="switchCaja('cuentas')">Cuentas</div>
+      <div class="caja-tab"     id="tab-dashboard"  onclick="switchCaja('dashboard')">Dashboard</div>
       <div class="caja-tab"     id="tab-venta"      onclick="switchCaja('venta')">Venta</div>
       <div class="caja-tab"     id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
       <div class="caja-tab"     id="tab-config"     onclick="switchCaja('config')">Menú</div>
@@ -223,6 +236,18 @@
     <div class="sec-title">Cuentas Abiertas</div>
     <div id="cj-bills"></div>
     <div id="cj-empty" style="text-align:center;padding:40px;color:var(--txt3)">No hay cuentas abiertas</div>
+  </section>
+
+  <section class="app-view sub-view" id="v-dashboard">
+    <div class="sec-title">Dashboard de Estadísticas</div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="text-align:center;font-size:0.8rem;color:var(--txt2);margin-bottom:8px">Ventas por Categoría</div>
+      <div style="position:relative;height:240px;width:100%"><canvas id="chart-cat"></canvas></div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="text-align:center;font-size:0.8rem;color:var(--txt2);margin-bottom:8px">Top Productos</div>
+      <div style="position:relative;height:240px;width:100%"><canvas id="chart-top"></canvas></div>
+    </div>
   </section>
 
   <section class="app-view sub-view" id="v-venta">
@@ -248,7 +273,8 @@
   <section class="app-view sub-view" id="v-config">
     <div class="sec-title">Configuración del Menú</div>
     <div id="cj-menu-edit"></div>
-    <button class="btn-full" style="background:#34495e;margin-top:16px" onclick="saveMenuToServer()">💾 GUARDAR MENÚ</button>
+    <button class="btn-full" style="background:#8fa89a;margin-top:24px;color:var(--bg-deep)" onclick="menuAddCat()">➕ AÑADIR CATEGORÍA</button>
+    <button class="btn-full" style="background:#34495e;margin-top:12px" onclick="saveMenuToServer()">💾 GUARDAR MENÚ GLOBAL</button>
   </section>
 </div>
 
@@ -266,15 +292,18 @@
   <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
   <div id="pm-body" style="max-height:160px;overflow-y:auto;margin-bottom:10px"></div>
   <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
+  
+  <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="btn-full" style="background:#25D366;margin:0;flex:1" onclick="shareBill()">📲 WhatsApp</button>
-    <select id="pm-method" class="select-box" style="flex:1.5;margin:0">
-      <option value="Efectivo">💵 Efectivo</option>
-      <option value="Nequi">📱 Nequi</option>
-      <option value="Daviplata">📱 Daviplata</option>
-      <option value="Datafono">💳 Datáfono</option>
-    </select>
+    <button class="btn-full" style="background:#7f8c8d;margin:0;flex:1" onclick="printBill()">🖨️ Imprimir</button>
   </div>
+  <select id="pm-method" class="select-box" style="margin-bottom:10px">
+    <option value="Efectivo">💵 Efectivo</option>
+    <option value="Nequi">📱 Nequi</option>
+    <option value="Daviplata">📱 Daviplata</option>
+    <option value="Datafono">💳 Datáfono</option>
+  </select>
+
   <button class="btn-full btn-red" onclick="confirmPayment()">CERRAR Y LIBERAR MESA</button>
 </div></div>
 
@@ -285,7 +314,22 @@
   <button class="btn-full" style="font-size:1.05rem;padding:16px" onclick="closeM('dispatchAlertModal')">ACEPTAR</button>
 </div></div>
 
+<!-- TICKET IMPRESIÓN -->
+<div id="ticket">
+  <div class="tk-c tk-b" style="font-size:18px;margin-bottom:2px">LA RESERVA</div>
+  <div class="tk-c" style="margin-bottom:10px">Comprobante de Venta</div>
+  <div class="tk-c" id="tk-head" style="margin-bottom:6px"></div>
+  <div class="tk-line"></div>
+  <div class="tk-j tk-b"><span>CANT DETALLE</span><span>TOTAL</span></div>
+  <div class="tk-line"></div>
+  <div id="tk-items"></div>
+  <div class="tk-line"></div>
+  <div class="tk-j tk-b" style="font-size:14px;margin-top:6px"><span>TOTAL:</span><span id="tk-tot"></span></div>
+  <div class="tk-c" style="margin-top:16px">¡Gracias por su visita!</div>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /* ── Helpers ── */
 const fc  = n => '$' + Math.round(n).toLocaleString('es-CO');
@@ -357,10 +401,20 @@ socket.on('daily-sales-update', s => {
   state.daily = s; state.sales = s.transactions || [];
   $('d-count') && ($('d-count').textContent = state.sales.length);
   render();
+  if (mode === 'caja' && $('v-dashboard')?.classList.contains('active')) updateDashboard();
 });
 socket.on('order-received', o => {
   state.orders.push(o);
-  if (mode === 'cocina') { beep(700, 900); showToast('🔔 Nuevo pedido — Mesa ' + o.mesa); }
+  if (mode === 'cocina') { 
+    beep(700, 900); 
+    showToast('🔔 Nuevo pedido — Mesa ' + o.mesa); 
+    if ('speechSynthesis' in window) {
+      const text = `Nuevo pedido, mesa ${o.mesa}. ` + o.items.map(i => `${i.qty} ${i.name}`).join(', ');
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'es-ES'; utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
   render();
 });
 socket.on('order-dispatched', d => {
@@ -607,25 +661,55 @@ function render() {
     });
 
     // Menú edit
-    const me = $('cj-menu-edit'); me.innerHTML = '';
-    Object.entries(MENU).forEach(([cat, items]) => {
-      const wrap = document.createElement('div');
-      wrap.innerHTML = `<div class="subcat">${cat}</div>`;
-      items.forEach((it, idx) => {
-        const row = document.createElement('div');
-        row.className = 'item'; row.style.flexDirection='column'; row.style.alignItems='stretch'; row.style.marginBottom='6px';
-        row.innerHTML = `
-          <div style="display:flex;gap:8px">
-            <input type="text" class="input-text" style="margin:0;flex:1;padding:8px 10px;height:36px" value="${it.n}"
-              onchange="MENU['${cat}'][${idx}].n=this.value;PR[this.value]=MENU['${cat}'][${idx}].p">
-            <input type="number" class="input-text" style="margin:0;width:90px;padding:8px 10px;height:36px" value="${it.p}"
-              onchange="MENU['${cat}'][${idx}].p=parseInt(this.value)||0;PR[MENU['${cat}'][${idx}].n]=MENU['${cat}'][${idx}].p">
-          </div>`;
-        wrap.appendChild(row);
-      });
-      me.appendChild(wrap);
-    });
+    renderMenuConfig();
   }
+}
+
+/* ── Render Local de Configuración de Menú ── */
+function renderMenuConfig() {
+  const me = $('cj-menu-edit'); if(!me) return;
+  me.innerHTML = '';
+  Object.entries(MENU).forEach(([cat, items]) => {
+    const wrap = document.createElement('div');
+    wrap.style.marginBottom = '20px';
+    wrap.innerHTML = `
+      <div class="subcat" style="display:flex;justify-content:space-between;align-items:center">
+        <span>${cat}</span>
+        <div>
+          <button class="q-btn wide" style="color:var(--blue);border-color:var(--blue)" onclick="menuAddItem('${cat}')">+ ITEM</button>
+          <button class="q-btn wide" style="color:var(--red);border-color:var(--red);margin-left:4px" onclick="menuDelCat('${cat}')">🗑️</button>
+        </div>
+      </div>`;
+    items.forEach((it, idx) => {
+      const row = document.createElement('div');
+      row.className = 'item'; row.style.flexDirection='column'; row.style.alignItems='stretch'; row.style.marginBottom='6px';
+      row.innerHTML = `
+        <div style="display:flex;gap:8px">
+          <input type="text" class="input-text" style="margin:0;flex:1;padding:8px 10px;height:36px" value="${it.n}"
+            onchange="MENU['${cat}'][${idx}].n=this.value; PR[this.value]=MENU['${cat}'][${idx}].p">
+          <input type="number" class="input-text" style="margin:0;width:80px;padding:8px 10px;height:36px" value="${it.p}"
+            onchange="MENU['${cat}'][${idx}].p=parseInt(this.value)||0; PR[MENU['${cat}'][${idx}].n]=MENU['${cat}'][${idx}].p">
+          <button class="btn-full btn-red" style="margin:0;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center" onclick="menuDelItem('${cat}', ${idx})">✕</button>
+        </div>`;
+      wrap.appendChild(row);
+    });
+    me.appendChild(wrap);
+  });
+}
+
+function menuAddCat() {
+  const name = prompt('Nombre de la nueva categoría:');
+  if (name && !MENU[name]) { MENU[name] = []; renderMenuConfig(); }
+}
+function menuDelCat(cat) {
+  if (confirm(`¿Eliminar categoría "${cat}" completa?`)) { delete MENU[cat]; renderMenuConfig(); }
+}
+function menuAddItem(cat) {
+  const name = prompt('Nombre del nuevo producto:');
+  if (name) { MENU[cat].push({n: name, p: 0}); renderMenuConfig(); }
+}
+function menuDelItem(cat, idx) {
+  if (confirm('¿Eliminar producto?')) { MENU[cat].splice(idx, 1); renderMenuConfig(); }
 }
 
 /* ── Actions ── */
@@ -670,13 +754,64 @@ window.sendOrder = () => {
 
 window.disp = id => socket.emit('dispatch-order', id);
 
+let chartCat = null;
+let chartTop = null;
+function updateDashboard() {
+  if (mode !== 'caja') return;
+  const catTotals = {}; const topItems = {};
+  const itemToCat = {};
+  Object.entries(MENU).forEach(([cat, items]) => items.forEach(it => { itemToCat[it.n] = cat; }));
+
+  state.sales.forEach(s => {
+    (s.items||[]).forEach(it => {
+      const cat = itemToCat[it.name] || 'Otros';
+      const tot = (it.price||0) * it.qty;
+      catTotals[cat] = (catTotals[cat] || 0) + tot;
+      topItems[it.name] = (topItems[it.name] || 0) + it.qty;
+    });
+  });
+
+  const catColors = ['#2ecc71', '#3498db', '#f0c040', '#e74c3c', '#9b59b6', '#e67e22'];
+  Chart.defaults.color = '#8fa89a';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+  if (chartCat) chartCat.destroy();
+  if (chartTop) chartTop.destroy();
+  
+  const ctxCat = $('chart-cat');
+  if (ctxCat) {
+    chartCat = new Chart(ctxCat.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catTotals),
+        datasets: [{ data: Object.values(catTotals), backgroundColor: catColors, borderWidth: 2, borderColor: '#0f1e15' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, cutout: '70%' }
+    });
+  }
+
+  const topArray = Object.entries(topItems).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const ctxTop = $('chart-top');
+  if (ctxTop) {
+    chartTop = new Chart(ctxTop.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: topArray.map(x=>x[0]),
+        datasets: [{ label: 'Unidades Vendidas', data: topArray.map(x=>x[1]), backgroundColor: '#27ae60', borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  }
+}
+
 window.switchCaja = t => {
-  ['cuentas','venta','inventario','config'].forEach(x => {
+  ['cuentas','dashboard','venta','inventario','config'].forEach(x => {
     $('v-'+x)?.classList.remove('active');
     $('tab-'+x)?.classList.remove('act');
   });
   $('v-'+t)?.classList.add('active');
   $('tab-'+t)?.classList.add('act');
+  if (t === 'dashboard') requestAnimationFrame(updateDashboard);
   render();
 };
 
@@ -685,17 +820,51 @@ window.updateInv = (n, d) => {
   if (val >= 0) socket.emit('update-inventory', {[n]: val});
 };
 
+let partialPaymentState = [];
+
 window.openP = m => {
   payTb = m;
   const b = state.bills[m]; if(!b) return;
+  
+  partialPaymentState = (b.items||[]).map(it => ({ qtyToPay: it.qty, maxQty: it.qty, price: it.price || 0, name: it.name }));
   $('pm-title').innerHTML = `Cobrar Mesa ${m} <button class="m-close" onclick="closeM('payModal')">✕</button>`;
-  $('pm-body').innerHTML = (b.items||[]).map(it=>`
-    <div class="m-item" style="flex-direction:column;align-items:flex-start">
-      <div style="width:100%;display:flex;justify-content:space-between"><span>${it.name} ×${it.qty}</span><span>${fc((it.price||0)*it.qty)}</span></div>
-      ${it.note?`<div style="font-size:0.7rem;color:var(--emerald);margin-top:2px">📝 ${it.note}</div>`:''}
-    </div>`).join('');
-  $('pm-tot').textContent = fc(b.total||0);
+  renderPayModal();
   openM('payModal');
+};
+
+function renderPayModal() {
+  const b = state.bills[payTb]; if(!b) return;
+  let partialTotal = 0;
+  
+  $('pm-body').innerHTML = (b.items||[]).map((it, idx) => {
+    const pps = partialPaymentState[idx];
+    partialTotal += pps.qtyToPay * pps.price;
+    return `
+    <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px">
+      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:0.8rem;font-weight:${pps.qtyToPay>0?'600':'400'}">${it.name} (Tot: ${it.qty})</span>
+        <div class="q-ctrl" style="gap:4px">
+          <button class="q-btn" style="width:26px;height:26px;font-size:1rem" onclick="updatePartialQty(${idx}, -1)" ${pps.qtyToPay<=0?'disabled':''}>-</button>
+          <span class="q-val" style="min-width:20px;font-size:0.9rem">${pps.qtyToPay}</span>
+          <button class="q-btn" style="width:26px;height:26px;font-size:1rem" onclick="updatePartialQty(${idx}, 1)" ${pps.qtyToPay>=pps.maxQty?'disabled':''}>+</button>
+        </div>
+      </div>
+      <div style="width:100%;display:flex;justify-content:space-between;font-size:0.75rem">
+        <span style="color:var(--txt3)">Precio ud: ${fc(pps.price)}</span>
+        <span style="color:var(--gold);font-weight:700">${fc(pps.qtyToPay * pps.price)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  
+  $('pm-tot').textContent = fc(partialTotal);
+}
+
+window.updatePartialQty = (idx, d) => {
+  const pps = partialPaymentState[idx];
+  pps.qtyToPay += d;
+  if(pps.qtyToPay < 0) pps.qtyToPay = 0;
+  if(pps.qtyToPay > pps.maxQty) pps.qtyToPay = pps.maxQty;
+  renderPayModal();
 };
 
 window.shareBill = () => {
@@ -704,9 +873,43 @@ window.shareBill = () => {
   window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
 };
 
+window.printBill = () => {
+  const b = state.bills[payTb]; if(!b) return;
+  const d = new Date().toLocaleString('es-CO');
+  $('tk-head').innerHTML = `Mesa ${payTb} <br> Atiende: ${b.mesero||'—'} <br> ${d}`;
+  $('tk-items').innerHTML = (b.items||[]).map(i=>`
+    <div class="tk-j" style="margin-bottom:4px">
+      <span style="width:70%">${i.qty}x ${i.name}</span>
+      <span>${fc((i.price||0)*i.qty)}</span>
+    </div>`).join('');
+  $('tk-tot').textContent = fc(b.total||0);
+  window.print();
+};
+
 window.confirmPayment = () => {
-  socket.emit('close-account', {mesa: payTb, paymentMethod: $('pm-method').value});
-  closeM('payModal'); showToast('💰 Cuenta cerrada — Mesa ' + payTb);
+  const b = state.bills[payTb]; if(!b) return;
+  
+  let isFull = true;
+  let hasAny = false;
+  const paidItems = [];
+  
+  partialPaymentState.forEach((pps, idx) => {
+    if (pps.qtyToPay < pps.maxQty) isFull = false;
+    if (pps.qtyToPay > 0) hasAny = true;
+    paidItems.push({ index: idx, qtyToPay: pps.qtyToPay });
+  });
+  
+  if (!hasAny) { showToast('⚠️ Debes cobrar al menos un ítem'); return; }
+  
+  if (isFull) {
+    socket.emit('close-account', {mesa: payTb, paymentMethod: $('pm-method').value});
+    showToast('💰 Cuenta cerrada — Mesa ' + payTb);
+  } else {
+    socket.emit('partial-payment', {mesa: payTb, paymentMethod: $('pm-method').value, paidItems});
+    showToast('💰 Cobro parcial realizado — Mesa ' + payTb);
+  }
+  
+  closeM('payModal');
 };
 
 window.exportExcel = () => { window.location.href = '/api/export-daily'; };

@@ -294,6 +294,58 @@ io.on('connection', (socket) => {
     });
   });
 
+  /* ── Partial payment (Dividir cuenta) ── */
+  socket.on('partial-payment', ({mesa, paymentMethod, paidItems}) => {
+    const bill = tableBills.get(mesa);
+    if (!bill) return;
+    
+    // paidItems es array de { index: número, qtyToPay: número }
+    // Asumimos que validan contra el bill real.
+    const transactionItems = [];
+    let partialTotal = 0;
+
+    paidItems.forEach(pi => {
+      const bItem = bill.items[pi.index];
+      if (bItem && pi.qtyToPay > 0 && pi.qtyToPay <= bItem.qty) {
+        // Añadir a la transacción
+        transactionItems.push({ name: bItem.name, qty: pi.qtyToPay, price: bItem.price, note: bItem.note });
+        partialTotal += (bItem.price * pi.qtyToPay);
+        // Descontar del bill
+        bItem.qty -= pi.qtyToPay;
+      }
+    });
+
+    if (transactionItems.length === 0) return;
+
+    // Limpiar items en 0 del bill
+    bill.items = bill.items.filter(i => i.qty > 0);
+    bill.total -= partialTotal;
+
+    const transaction = {
+      mesa: bill.mesa, mesero: bill.mesero,
+      items: transactionItems, total: partialTotal,
+      paymentMethod, openedAt: bill.openedAt,
+      closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+      timestamp: Date.now()
+    };
+    dailySales.push(transaction);
+
+    console.log(`💰 Mesa ${mesa} PAGO PARCIAL — ${paymentMethod} — ${formatCOP(partialTotal)}`);
+
+    // Si la mesa quedó vacía, se cierra del todo
+    if (bill.items.length === 0) {
+      tableBills.delete(mesa);
+      io.emit('account-closed', {mesa, bill:transaction});
+      persist(async () => { await new Sale(transaction).save(); await Bill.deleteOne({mesa}); });
+    } else {
+      tableBills.set(mesa, bill);
+      persist(async () => { await new Sale(transaction).save(); await Bill.findOneAndUpdate({mesa},{items:bill.items,total:bill.total}); });
+    }
+
+    io.emit('all-bills', Object.fromEntries(tableBills));
+    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+  });
+
   /* ── Update inventory ── */
   socket.on('update-inventory', (data) => {
     Object.assign(inventory, data);
