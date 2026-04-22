@@ -10,237 +10,223 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+let MENU = {
+  'Bebidas': [ {n:'Coca-Cola', p:5000}, {n:'Coronita', p:8000}, {n:'Jugo Natural', p:7000}, {n:'Sprite', p:5000}, {n:'Agua Cristal', p:3000}, {n:'Club Colombia', p:7000}, {n:'Limonada', p:6000} ],
+  'Licores': [ {n:'Aguardiente (Copa)', p:5000}, {n:'Aguardiente (Media)', p:45000}, {n:'Tequila (Trago)', p:15000}, {n:'Ron Viejo (Trago)', p:10000}, {n:'Whisky Old Parr', p:220000} ],
+  'Comidas': [ {n:'Patacones', p:12000}, {n:'Filete Miñón', p:45000}, {n:'Hamburguesa', p:18000}, {n:'Alitas BBQ (x6)', p:16000}, {n:'Picada Mixta', p:35000}, {n:'Ceviche', p:28000} ]
+};
+
+// ── Persistent Menu Schema ──
+const ConfigSchema = new mongoose.Schema({ key: String, value: Object });
+const Config = mongoose.model('Config', ConfigSchema);
+
+async function initMenu() {
+  const cfg = await Config.findOne({ key: 'menu' });
+  if(cfg) MENU = cfg.value;
+}
+initMenu();
+
 // ── Routes ──
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/mesero', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/cocina', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/caja', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/api/menu', (req, res) => res.json(MENU));
+app.post('/api/menu', express.json(), async (req, res) => {
+  MENU = req.body;
+  await Config.findOneAndUpdate({ key: 'menu' }, { value: MENU }, { upsert: true });
+  io.emit('menu-updated', MENU);
+  res.json({ ok: true });
+});
 
-// ── State ──
-const activeOrders = new Map();
-const tableBills = new Map();
-let orderCounter = 0;
-let inventory = {};
-
-// Daily sales: array of closed transactions
-let dailySales = [];
-let dailyDate = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+// ── State (Removed legacy in-memory Maps/Arrays) ──
+// Data is now handled by MongoDB via Mongoose models
 
 // Caja password
 const CAJA_PASSWORD = '0707';
 
-function formatCOP(n) {
-  return '$' + n.toLocaleString('es-CO');
-}
-
-function getDailyTotal() {
-  return dailySales.reduce((sum, tx) => sum + tx.total, 0);
-}
-
-function resetDailyIfNewDay() {
-  const today = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
-  if (today !== dailyDate) {
-    dailySales = [];
-    dailyDate = today;
-  }
-}
+// ── Initialization (Global) ──
+let dailyDate = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
 
 // ── Excel Export ──
 app.get('/api/export-daily', async (req, res) => {
   try {
-    resetDailyIfNewDay();
+    const today = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const sales = await Sale.find({ timestamp: { $gte: new Date().setHours(0,0,0,0) } });
+    
     const wb = new ExcelJS.Workbook();
     wb.creator = 'La Reserva';
     wb.created = new Date();
 
     const ws = wb.addWorksheet('Venta Diaria');
-
-    // Header styling
-    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1a3324' } };
-    const headerFont = { bold: true, color: { argb: 'FFe8f0ec' }, size: 12 };
-    const titleFont = { bold: true, color: { argb: 'FF2ecc71' }, size: 16 };
-    const goldFont = { bold: true, color: { argb: 'FFf0c040' }, size: 13 };
+    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10b981' } };
+    const headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
     const borderStyle = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
 
-    // Title
     ws.mergeCells('A1:G1');
     const titleCell = ws.getCell('A1');
     titleCell.value = 'LA RESERVA — Reporte de Venta Diaria';
-    titleCell.font = titleFont;
+    titleCell.font = { bold: true, size: 16, color: { argb: 'FF10b981' } };
     titleCell.alignment = { horizontal: 'center' };
-    titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0b140f' } };
 
-    // Date
     ws.mergeCells('A2:G2');
     const dateCell = ws.getCell('A2');
-    dateCell.value = `Fecha: ${dailyDate}`;
-    dateCell.font = { bold: true, size: 11, color: { argb: 'FF8fa89a' } };
+    dateCell.value = `Fecha: ${today}`;
     dateCell.alignment = { horizontal: 'center' };
-    dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0b140f' } };
 
-    ws.addRow([]); // spacing
-
-    // Column headers
+    ws.addRow([]);
     ws.columns = [
-      { key: 'num', width: 6 },
-      { key: 'mesa', width: 10 },
-      { key: 'mesero', width: 18 },
-      { key: 'hora', width: 14 },
-      { key: 'productos', width: 42 },
-      { key: 'metodo', width: 16 },
-      { key: 'total', width: 16 }
+      { key: 'num', width: 6 }, { key: 'mesa', width: 10 }, { key: 'mesero', width: 18 },
+      { key: 'hora', width: 14 }, { key: 'productos', width: 42 }, { key: 'metodo', width: 16 }, { key: 'total', width: 16 }
     ];
 
     const headerRow = ws.addRow(['#', 'Mesa', 'Mesero', 'Hora Cierre', 'Productos', 'Método Pago', 'Total']);
-    headerRow.eachCell((cell) => {
-      cell.fill = headerFill;
-      cell.font = headerFont;
-      cell.border = borderStyle;
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    });
-    headerRow.height = 28;
+    headerRow.eachCell(c => { c.fill = headerFill; c.font = headerFont; c.border = borderStyle; c.alignment = { horizontal: 'center' }; });
 
-    // Data rows
-    dailySales.forEach((tx, idx) => {
-      const productList = tx.items.map(it => `${it.name} x${it.qty}${it.note ? ' [' + it.note + ']' : ''} (${formatCOP(it.price * it.qty)})`).join(', ');
-      const row = ws.addRow([
-        idx + 1,
-        `Mesa ${tx.mesa}`,
-        tx.mesero || '—',
-        tx.closedAt,
-        productList,
-        tx.paymentMethod || '—',
-        tx.total
-      ]);
-
+    sales.forEach((tx, idx) => {
+      const productList = tx.items.map(it => `${it.name} x${it.qty}${it.note ? ' [' + it.note + ']' : ''} ($${(it.price * it.qty).toLocaleString()})`).join(', ');
+      const row = ws.addRow([idx + 1, `Mesa ${tx.mesa}`, tx.mesero, tx.closedAt, productList, tx.paymentMethod, tx.total]);
       row.getCell('total').numFmt = '"$"#,##0';
-      row.eachCell((cell) => {
-        cell.border = borderStyle;
-        cell.alignment = { vertical: 'middle', wrapText: true };
-      });
-      row.height = Math.max(22, Math.ceil(productList.length / 40) * 18);
-
-      // Alternate row color
-      if (idx % 2 === 0) {
-        row.eachCell((cell) => {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0f1e15' } };
-        });
-      }
+      row.eachCell(c => { c.border = borderStyle; c.alignment = { vertical: 'middle', wrapText: true }; });
     });
 
-    // Total row
+    const totalDay = sales.reduce((s,t) => s + t.total, 0);
     ws.addRow([]);
-    const totalRow = ws.addRow(['', '', '', '', '', 'TOTAL DÍA:', getDailyTotal()]);
-    totalRow.getCell(6).font = goldFont;
-    totalRow.getCell(7).font = goldFont;
+    const totalRow = ws.addRow(['', '', '', '', '', 'TOTAL DÍA:', totalDay]);
     totalRow.getCell(7).numFmt = '"$"#,##0';
-    totalRow.getCell(6).alignment = { horizontal: 'right' };
+    totalRow.getCell(6).font = { bold: true };
+    totalRow.getCell(7).font = { bold: true, color: { argb: 'FFfbbf24' } };
 
-    // Payment method breakdown
-    const methods = {};
-    dailySales.forEach(tx => {
-      const m = tx.paymentMethod || 'Sin método';
-      methods[m] = (methods[m] || 0) + tx.total;
-    });
-
-    ws.addRow([]);
-    const breakdownHeader = ws.addRow(['', '', '', '', '', 'Método', 'Total']);
-    breakdownHeader.getCell(6).font = headerFont;
-    breakdownHeader.getCell(6).fill = headerFill;
-    breakdownHeader.getCell(7).font = headerFont;
-    breakdownHeader.getCell(7).fill = headerFill;
-
-    Object.entries(methods).forEach(([method, total]) => {
-      const row = ws.addRow(['', '', '', '', '', method, total]);
-      row.getCell(7).numFmt = '"$"#,##0';
-    });
-
-    // Generate file
-    const fileName = `Ventas_LaReserva_${dailyDate.replace(/\//g, '-')}.xlsx`;
+    const fileName = `Ventas_LaReserva_${today.replace(/\//g, '-')}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
     await wb.xlsx.write(res);
     res.end();
-    console.log(`📊 Excel exportado: ${fileName}`);
   } catch (err) {
-    console.error('Error generando Excel:', err);
-    res.status(500).json({ error: 'Error generando archivo' });
+    console.error('Error Excel:', err);
+    res.status(500).json({ error: 'Error' });
   }
 });
 
 // ── Socket.io ──
-io.on('connection', (socket) => {
+const mongoose = require('mongoose');
+
+// ── Database Connection ──
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/la-reserva';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('📁 Conectado a MongoDB'))
+  .catch(err => console.error('❌ Error de conexión MongoDB:', err));
+
+// ── Schemas ──
+const OrderSchema = new mongoose.Schema({
+  id: Number, mesa: Number, items: Array, mesero: String, hora: String, timestamp: Number
+});
+const BillSchema = new mongoose.Schema({
+  mesa: Number, items: Array, total: Number, mesero: String, openedAt: String
+});
+const SaleSchema = new mongoose.Schema({
+  mesa: Number, mesero: String, items: Array, total: Number, paymentMethod: String, openedAt: String, closedAt: String, timestamp: { type: Number, default: Date.now }
+});
+const InventorySchema = new mongoose.Schema({
+  itemName: String, stock: Number
+});
+
+const Order = mongoose.model('Order', OrderSchema);
+const Bill = mongoose.model('Bill', BillSchema);
+const Sale = mongoose.model('Sale', SaleSchema);
+const Inventory = mongoose.model('Inventory', InventorySchema);
+
+// ── Socket Logic ──
+
+// ── Socket.io ──
+io.on('connection', async (socket) => {
   console.log(`✅ Cliente conectado: ${socket.id}`);
 
-  resetDailyIfNewDay();
+  // Load state from DB
+  const orders = await Order.find().sort({ timestamp: 1 });
+  const bills = await Bill.find();
+  const sales = await Sale.find({ 
+    closedAt: { $exists: true },
+    timestamp: { $gte: new Date().setHours(0,0,0,0) } 
+  });
+  const invDocs = await Inventory.find();
+  const inventory = {}; invDocs.forEach(d => inventory[d.itemName] = d.stock);
 
-  socket.emit('active-orders', Array.from(activeOrders.values()));
-  socket.emit('all-bills', Object.fromEntries(tableBills));
-  socket.emit('daily-sales-update', { total: getDailyTotal(), count: dailySales.length, date: dailyDate, transactions: dailySales });
+  socket.emit('active-orders', orders);
+  socket.emit('all-bills', Object.fromEntries(bills.map(b => [b.mesa, b])));
+  socket.emit('daily-sales-update', { 
+    total: sales.reduce((s,t) => s + t.total, 0), 
+    count: sales.length, 
+    date: dailyDate, 
+    transactions: sales 
+  });
   socket.emit('all-inventory', inventory);
 
   // Inventario manual update
-  socket.on('update-inventory', (data) => {
-    inventory = { ...inventory, ...data };
-    io.emit('all-inventory', inventory);
+  socket.on('update-inventory', async (data) => {
+    for (const [name, stock] of Object.entries(data)) {
+      await Inventory.findOneAndUpdate({ itemName: name }, { stock }, { upsert: true });
+    }
+    const allInv = await Inventory.find();
+    const invMap = {}; allInv.forEach(d => invMap[d.itemName] = d.stock);
+    io.emit('all-inventory', invMap);
   });
 
-  // Verify caja password
-  socket.on('verify-caja-password', (pwd, callback) => {
-    callback(pwd === CAJA_PASSWORD);
-  });
+  socket.on('verify-caja-password', (pwd, callback) => callback(pwd === CAJA_PASSWORD));
 
   // Reset daily sales manually
-  socket.on('reset-daily', () => {
-    dailySales = [];
-    dailyDate = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' });
+  socket.on('reset-daily', async () => {
+    await Sale.deleteMany({ timestamp: { $gte: new Date().setHours(0,0,0,0) } });
     io.emit('daily-sales-update', { total: 0, count: 0, date: dailyDate, transactions: [] });
-    console.log('🔄 Venta diaria reiniciada manualmente');
+    console.log('🔄 Venta diaria reiniciada en DB');
   });
 
-  // Waiter sends a new order
-  socket.on('new-order', (data) => {
-    orderCounter++;
-    const order = {
-      id: orderCounter,
+  socket.on('new-order', async (data) => {
+    const lastOrder = await Order.findOne().sort({ id: -1 });
+    const nextId = (lastOrder ? lastOrder.id : 0) + 1;
+    
+    const order = new Order({
+      id: nextId,
       mesa: data.mesa,
       items: data.items,
       mesero: data.mesero || 'Mesero',
       hora: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
       timestamp: Date.now()
-    };
-
-    activeOrders.set(order.id, order);
-
-    data.items.forEach(it => {
-      if (inventory[it.name] !== undefined) {
-        inventory[it.name] -= it.qty;
-        if (inventory[it.name] < 0) inventory[it.name] = 0;
-      }
     });
 
-    if (!tableBills.has(order.mesa)) {
-      tableBills.set(order.mesa, {
-        mesa: order.mesa,
+    await order.save();
+
+    // Update inventory
+    for (const it of data.items) {
+      await Inventory.findOneAndUpdate(
+        { itemName: it.name }, 
+        { $inc: { stock: -it.qty } }, 
+        { upsert: true }
+      );
+    }
+
+    // Update Bill
+    let bill = await Bill.findOne({ mesa: data.mesa });
+    if (!bill) {
+      bill = new Bill({
+        mesa: data.mesa,
         items: [],
         total: 0,
         mesero: data.mesero || 'Mesero',
         openedAt: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: true })
       });
     }
+    await bill.save();
 
-    io.emit('all-inventory', inventory);
+    const allInvDocs = await Inventory.find();
+    const invMap = {}; allInvDocs.forEach(d => invMap[d.itemName] = d.stock);
+
+    io.emit('all-inventory', invMap);
     io.emit('order-received', order);
-    io.emit('all-bills', Object.fromEntries(tableBills));
-    console.log(`📋 Pedido #${order.id} — Mesa ${order.mesa} (${data.mesero}): ${order.items.length} items`);
+    const allBills = await Bill.find();
+    io.emit('all-bills', Object.fromEntries(allBills.map(b => [b.mesa, b])));
   });
 
-  // Kitchen dispatches an order → items go to the bill
-  socket.on('dispatch-order', (orderId) => {
-    const order = activeOrders.get(orderId);
+  socket.on('dispatch-order', async (orderId) => {
+    const order = await Order.findOne({ id: orderId });
     if (order) {
-      const bill = tableBills.get(order.mesa);
+      const bill = await Bill.findOne({ mesa: order.mesa });
       if (bill) {
         order.items.forEach(item => {
           const key = item.note ? `${item.name}_${item.note}` : item.name;
@@ -249,41 +235,46 @@ io.on('connection', (socket) => {
           else bill.items.push({ name: item.name, qty: item.qty, price: item.price, note: item.note || '' });
           bill.total += item.price * item.qty;
         });
-        tableBills.set(order.mesa, bill);
+        bill.markModified('items');
+        await bill.save();
       }
+      await Order.deleteOne({ id: orderId });
+      io.emit('order-dispatched', { id: orderId, mesa: order.mesa, mesero: order.mesero });
+      const allBills = await Bill.find();
+      io.emit('all-bills', Object.fromEntries(allBills.map(b => [b.mesa, b])));
     }
-    activeOrders.delete(orderId);
-    io.emit('order-dispatched', { id: orderId, mesa: order ? order.mesa : '?', mesero: order ? order.mesero : '' });
-    io.emit('all-bills', Object.fromEntries(tableBills));
-    console.log(`✔️  Pedido #${orderId} despachado`);
   });
 
-  // Close account with payment method
-  socket.on('close-account', (data) => {
+  socket.on('close-account', async (data) => {
     const { mesa, paymentMethod } = data;
-    const bill = tableBills.get(mesa);
+    const bill = await Bill.findOne({ mesa });
     if (bill) {
-      const transaction = {
+      const transaction = new Sale({
         mesa: bill.mesa,
         mesero: bill.mesero,
-        items: [...bill.items],
+        items: bill.items,
         total: bill.total,
         paymentMethod: paymentMethod,
         openedAt: bill.openedAt,
         closedAt: new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
-      };
-      dailySales.push(transaction);
-      console.log(`💰 Mesa ${mesa} cerrada — ${paymentMethod} — Total: ${formatCOP(bill.total)}`);
-      tableBills.delete(mesa);
+      });
+      await transaction.save();
+      await Bill.deleteOne({ mesa });
+      
+      const sales = await Sale.find({ timestamp: { $gte: new Date().setHours(0,0,0,0) } });
       io.emit('account-closed', { mesa, bill: transaction });
-      io.emit('all-bills', Object.fromEntries(tableBills));
-      io.emit('daily-sales-update', { total: getDailyTotal(), count: dailySales.length, date: dailyDate, transactions: dailySales });
+      const allBills = await Bill.find();
+      io.emit('all-bills', Object.fromEntries(allBills.map(b => [b.mesa, b])));
+      io.emit('daily-sales-update', { 
+        total: sales.reduce((s,t) => s + t.total, 0), 
+        count: sales.length, 
+        date: dailyDate, 
+        transactions: sales 
+      });
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log(`❌ Cliente desconectado: ${socket.id}`);
-  });
+  socket.on('disconnect', () => console.log(`❌ Cliente desconectado: ${socket.id}`));
 });
 
 const PORT = process.env.PORT || 3000;

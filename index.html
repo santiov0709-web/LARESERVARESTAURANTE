@@ -9,84 +9,252 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-deep: #0b140f; --bg-card: #0f1e15; --bg-card-hover: #142a1c; --bg-surface: #1a3324;
-      --emerald: #2ecc71; --emerald-dark: #27ae60; --gold: #f0c040; --red: #e74c3c; --red-dark: #c0392b;
-      --text-pri: #e8f0ec; --text-sec: #8fa89a; --text-mut: #5a7566;
-      --border: rgba(46, 204, 113, 0.12); --transition: 0.2s;
+      /* Palette: Emerald, Gold, Obsidian */
+      --bg-deep: #050a08;
+      --bg-surface: #0b1411;
+      --bg-glass: rgba(15, 30, 24, 0.7);
+      --bg-glass-hover: rgba(25, 50, 40, 0.85);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.3);
+      --gold: #fbbf24;
+      --red: #f43f5e;
+      --text-pri: #f8fafc;
+      --text-sec: #94a3b8;
+      --text-mut: #475569;
+      --border: rgba(16, 185, 129, 0.1);
+      --border-bright: rgba(16, 185, 129, 0.3);
+      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; font-family: 'Poppins', sans-serif; background: var(--bg-deep); color: var(--text-pri); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg-deep); } ::-webkit-scrollbar-thumb { background: var(--emerald-dark); border-radius: 3px; }
-    .header { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg, var(--bg-deep), rgba(11,20,15,0.97)); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 12px 16px; }
-    .header-top { display: flex; align-items: center; justify-content: space-between; }
-    .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--emerald), #a8edca); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .logo-sub { font-size: 0.6rem; color: var(--text-mut); text-transform: uppercase; letter-spacing: 2px; }
-    .badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; border: 1px solid var(--border); }
-    .bg-mes { background: rgba(46,204,113,0.1); color: var(--emerald); }
-    .bg-coc { background: rgba(240,192,64,0.1); color: var(--gold); }
-    .bg-caj { background: rgba(52,152,219,0.1); color: #3498db; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
-    .landing { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; }
-    .landing-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; text-decoration: none; color: var(--text-pri); width: 100%; max-width: 320px; margin-bottom: 16px; }
-    .landing-card:active { transform: scale(0.97); }
-    .landing-icon { font-size: 2rem; }
-    .landing-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
-    .app-view { padding: 16px 16px 100px; }
-    .sub-view { display: none; } .sub-view.active { display: block; }
-    .sec-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
-    .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-    .btn { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-sec); font-weight: 700; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .btn.sel { background: var(--emerald); color: var(--bg-deep); border-color: var(--emerald); }
-    .btn span { font-size: 0.5rem; font-weight: 400; text-transform: uppercase; }
-    .dot-gold { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
-    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
-    .tab { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-sec); font-size: 0.8rem; white-space: nowrap; cursor: pointer; }
-    .tab.act { background: var(--emerald-dark); color: #fff; }
-    .subcat { font-size: 0.7rem; color: var(--emerald); text-transform: uppercase; margin: 12px 0 8px; }
-    .item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-    .item.has { border-color: var(--emerald-dark); background: rgba(46,204,113,0.06); }
-    .i-name { font-size: 0.85rem; } .i-price { font-size: 0.7rem; color: var(--gold); }
-    .q-ctrl { display: flex; align-items: center; gap: 8px; }
-    .q-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-surface); color: var(--emerald); font-weight: 700; cursor: pointer; }
-    .q-val { min-width: 20px; text-align: center; color: var(--emerald); font-weight: 700; }
-    .summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-deep); padding: 16px; display: none; border-top: 1px solid var(--border); }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    
+    html, body { 
+      height: 100%; 
+      font-family: 'Poppins', sans-serif; 
+      background: var(--bg-deep); 
+      color: var(--text-pri); 
+      overflow-x: hidden; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+
+    /* Glass Panels */
+    .glass {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 16px;
+    }
+
+    .header { 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+      background: rgba(5, 10, 8, 0.8);
+      backdrop-filter: blur(20px); 
+      border-bottom: 1px solid var(--border); 
+      padding: 16px 20px; 
+    }
+
+    .logo { 
+      font-family: 'Playfair Display', serif; 
+      font-size: 1.6rem; 
+      font-weight: 800; 
+      background: linear-gradient(135deg, var(--emerald), #6ee7b7); 
+      -webkit-background-clip: text; 
+      background-clip: text;
+      -webkit-text-fill-color: transparent; 
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub { font-size: 0.65rem; color: var(--text-mut); text-transform: uppercase; letter-spacing: 3px; font-weight: 600; }
+
+    .badge { 
+      display: flex; align-items: center; gap: 8px; 
+      padding: 6px 12px; border-radius: 99px; 
+      font-size: 0.75rem; font-weight: 600; 
+      border: 1px solid var(--border); 
+      background: rgba(255,255,255,0.03);
+    }
+    .bg-mes { color: var(--emerald); border-color: var(--emerald-glow); }
+    .bg-coc { color: var(--gold); border-color: rgba(251, 191, 36, 0.2); }
+    .bg-caj { color: #38bdf8; border-color: rgba(56, 189, 248, 0.2); }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+
+    /* Landing Refactor */
+    .landing { 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      min-height: 100vh; padding: 24px; text-align: center; 
+      background: radial-gradient(circle at top, #142a22 0%, var(--bg-deep) 70%);
+    }
+    .landing-logo { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 800; margin-bottom: 4px; }
+    .landing-sub { font-size: 0.9rem; color: var(--emerald); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 48px; opacity: 0.8; }
+    
+    .landing-card { 
+      display: flex; align-items: center; gap: 20px; 
+      padding: 24px; width: 100%; max-width: 380px; 
+      margin-bottom: 16px; border: 1px solid var(--border);
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    .landing-card:hover { 
+      border-color: var(--emerald-glow); 
+      background: var(--bg-glass-hover);
+      transform: translateY(-4px); 
+    }
+    .landing-card:active { transform: scale(0.98); }
+    .landing-icon { font-size: 2.5rem; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5)); }
+    .landing-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #fff; }
+
+    /* Table Map */
+    .table-map {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 12px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .table-node {
+      aspect-ratio: 1;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+      transition: var(--transition);
+      position: relative;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      cursor: pointer;
+    }
+    .table-node[data-status="free"] { color: var(--text-mut); }
+    .table-node[data-status="busy"] { 
+      background: var(--emerald-glow); 
+      color: var(--emerald); 
+      border-color: var(--emerald);
+      box-shadow: 0 0 15px var(--emerald-glow);
+    }
+    .table-node[data-status="ready"] { 
+      background: rgba(251, 191, 36, 0.15); 
+      color: var(--gold); 
+      border-color: var(--gold);
+      animation: pulse-gold 2s infinite;
+    }
+    .table-node .label { font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; margin-top: 2px; }
+    
+    @keyframes pulse-gold {
+      0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(251, 191, 36, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+    }
+
+    .app-view { padding: 24px 20px 120px; max-width: 800px; margin: 0 auto; }
+    .sec-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text-sec); display: flex; align-items: center; gap: 10px; }
+    .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* Header Improvements */
+    .header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    
+    /* Menu Items */
+    .item { 
+      display: flex; align-items: center; justify-content: space-between; 
+      padding: 16px; background: var(--bg-surface); 
+      border: 1px solid var(--border); border-radius: 12px; 
+      margin-bottom: 12px; transition: var(--transition);
+    }
+    .item:hover { border-color: var(--emerald-glow); transform: translateX(4px); }
+    .item.has { border-color: var(--emerald); background: rgba(16, 185, 129, 0.05); }
+    
+    .i-name { font-size: 0.95rem; font-weight: 500; } 
+    .i-price { font-size: 0.8rem; color: var(--gold); font-weight: 600; margin-top: 2px; }
+    
+    /* Order Summary Bar */
+    .summary { 
+      position: fixed; bottom: 24px; left: 16px; right: 16px; 
+      z-index: 150; display: none; 
+      animation: slide-up 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
     .summary.vis { display: block; }
-    .sum-bar { background: var(--emerald); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: var(--bg-deep); }
-    .s-btn { background: var(--bg-deep); color: var(--emerald); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; border: none; }
-    .modal.open { display: flex; }
-    .m-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; padding: 20px; border: 1px solid var(--border); max-height: 80vh; overflow-y: auto; }
-    .m-head { display: flex; justify-content: space-between; margin-bottom: 16px; font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; }
-    .m-close { background: none; border: none; color: var(--text-sec); font-size: 1.2rem; cursor: pointer; }
-    .m-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; }
-    .m-tot { display: flex; justify-content: space-between; padding: 12px 0; font-weight: 700; color: var(--gold); border-top: 1px solid var(--border); margin-top: 8px; }
-    .btn-full { width: 100%; padding: 14px; background: var(--emerald); color: var(--bg-deep); border: none; border-radius: 8px; font-weight: 700; margin-top: 12px; cursor: pointer; }
-    .btn-red { background: var(--red-dark); color: #fff; }
-    .input-text { width: 100%; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); color: #fff; border-radius: 8px; margin-bottom: 16px; outline: none; }
-    .select-box { width: 100%; padding: 12px; background: var(--bg-surface); border: 1px solid var(--border); color: #fff; border-radius: 8px; margin-bottom: 16px; }
-    .bill-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-    .b-head { background: var(--bg-surface); padding: 12px; display: flex; justify-content: space-between; font-weight: 700; color: var(--emerald); border-bottom: 1px solid var(--border); }
-    .b-body { padding: 12px; }
-    .b-foot { padding: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-weight: 700; }
-    .caja-tabs { display: flex; gap: 8px; margin-top: 12px; }
-    .caja-tab { flex: 1; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
-    .caja-tab.act { background: #3498db; color: #fff; border-color: #3498db; }
-    .daily-header { background: var(--bg-card); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px; text-align: center; }
-    .daily-title { font-size: 0.8rem; color: var(--text-sec); }
-    .daily-total { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--gold); font-weight: 700; margin: 8px 0; }
-    .daily-date { font-size: 0.75rem; color: var(--text-mut); }
-    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--emerald-dark); padding: 12px 20px; border-radius: 8px; z-index: 999; font-size: 0.8rem; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    #landing, #app-mesero, #app-cocina, #app-caja { display: none; }
+    .sum-bar { 
+      background: var(--emerald); border-radius: 16px; 
+      padding: 14px 20px; display: flex; justify-content: space-between; 
+      align-items: center; color: var(--bg-deep); 
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+    }
+    .s-btn { 
+      background: var(--bg-deep); color: #fff; border: none; 
+      padding: 10px 20px; border-radius: 10px; 
+      font-weight: 700; cursor: pointer; letter-spacing: 1px;
+    }
+
+    @keyframes slide-up { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Modals & Inputs */
+    .m-content { 
+      background: var(--bg-surface); border: 1px solid var(--border-bright); 
+      box-shadow: 0 0 40px rgba(0,0,0,0.6); 
+      border-radius: 24px; width: 100%; max-width: 420px; padding: 24px; 
+    }
+    .input-text, .select-box { 
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); 
+      color: #fff; border-radius: 12px; padding: 14px; 
+      width: 100%; margin-bottom: 16px; transition: var(--transition);
+    }
+    .input-text:focus { border-color: var(--emerald); background: rgba(255,255,255,0.08); outline: none; }
+
+    .btn-full { 
+      background: var(--emerald); color: var(--bg-deep); 
+      border: none; border-radius: 12px; 
+      padding: 16px; font-weight: 700; font-size: 1rem; 
+      cursor: pointer; transition: var(--transition); 
+    }
+    .btn-full:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .btn-full:active { transform: translateY(0); }
+    .btn-red { background: var(--red); color: #fff; }
+
+    /* Utilities */
+    [style*="display: none"] { display: none !important; }
+    .hide { display: none !important; }
   </style>
 </head>
 <body>
   <!-- LANDING -->
   <div id="landing" class="landing">
-    <div class="landing-logo">La Reserva</div>
+    <div class="landing-logo logo">La Reserva</div>
     <div class="landing-sub">Sistema de Comandas</div>
-    <a href="/mesero" class="landing-card"><div class="landing-icon">📋</div><div class="landing-title">Mesero</div></a>
-    <a href="/cocina" class="landing-card"><div class="landing-icon">👨‍🍳</div><div class="landing-title">Cocina</div></a>
-    <a href="/caja" class="landing-card"><div class="landing-icon">💰</div><div class="landing-title">Caja (Admin)</div></a>
+    
+    <div style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px">
+      <a href="/mesero" class="landing-card glass">
+        <div class="landing-icon">📋</div>
+        <div>
+          <div class="landing-title">Meseros</div>
+          <div style="font-size:0.7rem; color:var(--text-mut)">Toma de pedidos y mapa de mesas</div>
+        </div>
+      </a>
+      
+      <a href="/cocina" class="landing-card glass">
+        <div class="landing-icon">👨‍🍳</div>
+        <div>
+          <div class="landing-title">Cocina</div>
+          <div style="font-size:0.7rem; color:var(--text-mut)">Producción y despacho real-time</div>
+        </div>
+      </a>
+      
+      <a href="/caja" class="landing-card glass">
+        <div class="landing-icon">💰</div>
+        <div>
+          <div class="landing-title">Caja (Admin)</div>
+          <div style="font-size:0.7rem; color:var(--text-mut)">Cuentas, inventario y reportes</div>
+        </div>
+      </a>
+    </div>
   </div>
 
   <!-- MESERO APP -->
@@ -98,11 +266,14 @@
       </div>
     </header>
     <section class="app-view">
-      <div class="sec-title">Mesa</div>
-      <div class="grid" id="m-grid"></div>
-      <div class="sec-title">Menú</div>
-      <div class="tabs" id="m-cats"></div>
-      <div id="m-menu"></div>
+      <div class="sec-title">📍 Mapa de Mesas</div>
+      <div class="table-map" id="m-map"></div>
+      
+      <div id="m-order-area" style="display:none">
+        <div class="sec-title">🍽️ Selección de Menú — Mesa <span id="m-title-mesa"></span></div>
+        <div class="tabs" id="m-cats"></div>
+        <div id="m-menu"></div>
+      </div>
     </section>
     <div class="summary" id="m-sum">
       <div class="sum-bar" onclick="openOrderModal()">
@@ -137,6 +308,7 @@
         <div class="caja-tab act" id="tab-cuentas" onclick="switchCaja('cuentas')">Cuentas</div>
         <div class="caja-tab" id="tab-venta" onclick="switchCaja('venta')">Venta Diaria</div>
         <div class="caja-tab" id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
+        <div class="caja-tab" id="tab-config" onclick="switchCaja('config')">Menú</div>
       </div>
     </header>
     <section class="app-view sub-view active" id="v-cuentas">
@@ -145,19 +317,27 @@
       <div id="cj-empty" style="text-align:center; padding:40px; color:var(--text-mut);">No hay cuentas abiertas</div>
     </section>
     <section class="app-view sub-view" id="v-venta">
-      <div class="daily-header">
+      <div class="daily-header glass">
         <div class="daily-title">Total Venta Diaria</div>
         <div class="daily-total" id="d-tot">$0</div>
         <div class="daily-date" id="d-date">Fecha: -</div>
+        <div style="font-size:0.7rem; color:var(--emerald); margin-top:4px">📈 <span id="d-count">0</span> transacciones hoy</div>
       </div>
-      <button class="btn-full" style="background:#2980b9; margin-top:0" onclick="exportExcel()">⬇️ DESCARGAR EXCEL</button>
-      <button class="btn-full btn-red" style="margin-bottom:12px" onclick="resetDaily()">🔄 REINICIAR VENTA DIARIA</button>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px">
+        <button class="btn-full" style="background:#2980b9; margin-top:0; font-size:0.8rem" onclick="exportExcel()">⬇️ EXCEL</button>
+        <button class="btn-full btn-red" style="margin:0; font-size:0.8rem" onclick="resetDaily()">🔄 REINICIAR</button>
+      </div>
       <div class="sec-title" style="margin-top:24px">Transacciones</div>
       <div id="d-txs"></div>
     </section>
     <section class="app-view sub-view" id="v-inventario">
       <div class="sec-title">Gestión de Inventario</div>
       <div id="cj-inv"></div>
+    </section>
+    <section class="app-view sub-view" id="v-config">
+      <div class="sec-title">Configuración del Menú</div>
+      <div id="cj-menu-list"></div>
+      <button class="btn-full" style="background:#34495e" onclick="saveMenuToServer()">💾 GUARDAR CAMBIOS DEL MENÚ</button>
     </section>
   </div>
 
@@ -172,13 +352,15 @@
     <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
     <div id="pm-body" style="font-size:0.8rem; margin-bottom:12px; max-height:150px; overflow-y:auto;"></div>
     <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
-    <label style="font-size:0.8rem; color:var(--text-sec); display:block; margin-bottom:4px;">Método de Pago:</label>
-    <select id="pm-method" class="select-box">
-      <option value="Efectivo">💵 Efectivo</option>
-      <option value="Nequi">📱 Nequi</option>
-      <option value="Daviplata">📱 Daviplata</option>
-      <option value="Datafono">💳 Datáfono</option>
-    </select>
+    <div style="display:flex; gap:8px; margin-bottom:12px">
+      <button class="btn-full" style="background:#25D366; color:white; flex:1" onclick="shareBill()">📲 WHATSAPP</button>
+      <select id="pm-method" class="select-box" style="flex:1.5; margin:0">
+        <option value="Efectivo">💵 Efectivo</option>
+        <option value="Nequi">📱 Nequi</option>
+        <option value="Daviplata">📱 Daviplata</option>
+        <option value="Datafono">💳 Datáfono</option>
+      </select>
+    </div>
     <button class="btn-full btn-red" onclick="confirmPayment()">CERRAR Y LIBERAR MESA</button>
   </div></div>
 
@@ -196,28 +378,43 @@
     if(path==='/mesero') mode='mesero'; else if(path==='/cocina') mode='cocina'; else if(path==='/caja') mode='caja';
     if(mode==='landing'){ document.getElementById('landing').style.display='flex'; }
 
-    const fc = n => '$' + n.toLocaleString('es-CO');
-    const MENU = {
-      'Bebidas': [ {n:'Coca-Cola', p:5000}, {n:'Coronita', p:8000}, {n:'Jugo Natural', p:7000}, {n:'Sprite', p:5000}, {n:'Agua Cristal', p:3000}, {n:'Club Colombia', p:7000}, {n:'Limonada', p:6000} ],
-      'Licores': [ {n:'Aguardiente (Copa)', p:5000}, {n:'Aguardiente (Media)', p:45000}, {n:'Tequila (Trago)', p:15000}, {n:'Ron Viejo (Trago)', p:10000}, {n:'Whisky Old Parr', p:220000} ],
-      'Comidas': [ {n:'Patacones', p:12000}, {n:'Filete Miñón', p:45000}, {n:'Hamburguesa', p:18000}, {n:'Alitas BBQ (x6)', p:16000}, {n:'Picada Mixta', p:35000}, {n:'Ceviche', p:28000} ]
-    };
-    const PR = {}; Object.values(MENU).flat().forEach(i => PR[i.n] = i.p);
+    let MENU = {};
+    let PR = {};
+    
+    async function loadMenu() {
+      const resp = await fetch('/api/menu');
+      MENU = await resp.json();
+      Object.values(MENU).flat().forEach(i => PR[i.n] = i.p);
+      if(typeof render === 'function') render();
+    }
+    loadMenu();
 
     function showToast(m){ 
-      const t = document.createElement('div'); t.className='toast'; t.textContent=m; 
+      const t = document.createElement('div'); t.className='toast glass'; t.textContent=m; 
       document.body.appendChild(t); setTimeout(()=>t.remove(), 3000); 
     }
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function beep(f1, f2, vol=0.3, type='sine'){ 
+    function beep(type, vol=0.3){ 
       if(audioCtx.state==='suspended') audioCtx.resume();
       const n = audioCtx.currentTime;
-      [f1,f2].forEach((f,i)=>{
-        if(!f) return; const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-        o.connect(g); g.connect(audioCtx.destination); o.frequency.value=f; o.type=type;
-        g.gain.setValueAtTime(vol, n+(i*0.2)); g.gain.exponentialRampToValueAtTime(0.001, n+(i*0.2)+0.4);
-        o.start(n+(i*0.2)); o.stop(n+(i*0.2)+0.4);
+      let tones = [];
+      if(type==='new') tones = [440, 880];      // Notification
+      if(type==='ready') tones = [554, 659, 880]; // Success/Ready
+      if(type==='error') tones = [220, 110];      // Error
+      
+      tones.forEach((f,i)=>{
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination); o.frequency.value=f; 
+        o.type = type === 'ready' ? 'triangle' : 'sine';
+        g.gain.setValueAtTime(vol, n+(i*0.15)); g.gain.exponentialRampToValueAtTime(0.001, n+(i*0.15)+0.3);
+        o.start(n+(i*0.15)); o.stop(n+(i*0.15)+0.3);
       });
+    }
+
+    function shareWhatsApp(mesa, items, total) {
+      const text = `*La Reserva — Su Cuenta*\n\n📍 Mesa: ${mesa}\n---\n${items.map(i => `• ${i.name} x${i.qty}: ${fc(i.price*i.qty)}`).join('\n')}\n---\n💰 *TOTAL: ${fc(total)}*\n\n¡Gracias por visitarnos!`;
+      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
     }
 
     if(mode !== 'landing') {
@@ -229,12 +426,18 @@
       socket.on('all-bills', b => { state.bills=b; render(); });
       socket.on('active-orders', o => { state.orders=o; render(); });
       socket.on('all-inventory', i => { state.inv=i; render(); });
-      socket.on('daily-sales-update', s => { state.sales=s.transactions; state.daily=s; render(); });
-      socket.on('order-received', o => { state.orders.push(o); if(mode==='cocina') { beep(700, 900); showToast('🔔 Nuevo pedido mesa '+o.mesa); } render(); });
+      socket.on('daily-sales-update', s => { 
+        state.daily = s; 
+        state.sales = s.transactions; 
+        document.getElementById('d-count').textContent = s.transactions.length;
+        render(); 
+      });
+      socket.on('menu-updated', m => { MENU = m; showToast('🔄 Menú actualizado'); render(); });
+      socket.on('order-received', o => { state.orders.push(o); if(mode==='cocina') { beep('new'); showToast('🔔 Nuevo pedido mesa '+o.mesa); } render(); });
       socket.on('order-dispatched', d => {
         state.orders = state.orders.filter(x=>x.id!==d.id);
         if(mode==='mesero' && d.mesero === myName) {
-          beep(800, 1000, 1.0, 'square'); // Volumen al 100% y onda cuadrada (mucho más fuerte)
+          beep('ready', 1.0); // Volumen fuerte para aviso de despacho
           if(navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]); // Vibrate pattern
           document.getElementById('da-mesa').textContent = 'MESA ' + d.mesa;
           openM('dispatchAlertModal');
@@ -279,19 +482,41 @@
         if(mode==='mesero'){
           document.getElementById('app-mesero').style.display='block';
           if(!myName) return;
-          // Tables
-          const tg = document.getElementById('m-grid'); tg.innerHTML='';
+
+          // Table Map Rendering
+          const map = document.getElementById('m-map');
+          map.innerHTML = '';
           for(let i=1; i<=10; i++){
-            const b=document.createElement('button'); b.className='btn'+(selTb===i?' sel':'');
-            b.innerHTML=`${state.bills[i]?'<div class="dot-gold"></div>':''}${i}<span>Mesa</span>`;
-            b.onclick = () => { selTb=i; render(); }; tg.appendChild(b);
+            const hasBill = !!state.bills[i];
+            const hasOrder = state.orders.some(o => o.mesa == i);
+            let status = 'free';
+            if(hasBill) status = 'busy';
+            if(hasOrder) status = 'ready'; // Ready to be dispatched or already ordered
+
+            const node = document.createElement('div');
+            node.className = 'table-node';
+            node.setAttribute('data-status', status);
+            node.innerHTML = `${i}<div class="label">${status === 'free' ? 'Libre' : (status === 'busy' ? 'En Cuenta' : 'Pedido')}</div>`;
+            
+            node.onclick = () => {
+              selTb = i;
+              document.getElementById('m-order-area').style.display = 'block';
+              document.getElementById('m-title-mesa').textContent = i;
+              window.scrollTo({ top: document.getElementById('m-order-area').offsetTop - 100, behavior: 'smooth' });
+              render();
+            };
+            map.appendChild(node);
           }
-          // Cats
+
+          if(!selTb) return;
+
+          // Tabs
           const tc = document.getElementById('m-cats'); tc.innerHTML='';
           Object.keys(MENU).forEach(c => {
             const b=document.createElement('button'); b.className='tab'+(curCat===c?' act':'');
             b.textContent=c; b.onclick=()=>{ curCat=c; render(); }; tc.appendChild(b);
           });
+
           // Menu
           const tm = document.getElementById('m-menu'); tm.innerHTML='';
           MENU[curCat].forEach(i => {
@@ -302,16 +527,17 @@
             const maxed = q >= left;
             const ex = left === 0;
             const d = document.createElement('div'); d.className='item'+(q>0?' has':'');
-            d.innerHTML=`<div style="flex:1"><div class="i-name">${i.n} ${ex?'<span style="color:var(--red);font-size:0.7rem;margin-left:6px;font-weight:700">AGOTADO</span>':'<span style="color:var(--text-sec);font-size:0.7rem;margin-left:6px">Quedan '+left+'</span>'}</div><div class="i-price">${fc(i.p)}</div>
-            ${q>0 ? `<div style="font-size:0.65rem; color:var(--gold); margin-top:4px; font-weight:600; cursor:pointer" onclick="addNote('${i.n}')">📝 ${note||'Añadir nota especial'}</div>` : ''}</div>
+            d.innerHTML=`<div style="flex:1"><div class="i-name">${i.n} ${ex?'<span style="color:var(--red);font-size:0.75rem;margin-left:6px;font-weight:700">AGOTADO</span>':'<span style="color:var(--text-sec);font-size:0.75rem;margin-left:6px">Quedan '+left+'</span>'}</div><div class="i-price">${fc(i.p)}</div>
+            ${q>0 ? `<div style="font-size:0.7rem; color:var(--emerald); margin-top:6px; font-weight:600; cursor:pointer" onclick="addNote('${i.n}')">📝 ${note||'Añadir nota especial'}</div>` : ''}</div>
             <div class="q-ctrl"><button class="q-btn" onclick="cQ('${i.n}',-1)">-</button><span class="q-val">${q}</span><button class="q-btn" ${maxed?'disabled style="opacity:0.3"':''} onclick="cQ('${i.n}',1)">+</button></div>`;
             tm.appendChild(d);
           });
+
           // Sum
           const tot = Object.entries(myOrder).reduce((s,[n,md])=>s+(PR[n]*md.qty),0);
           const cnt = Object.values(myOrder).reduce((s,md)=>s+md.qty,0);
           const bs = document.getElementById('m-sum');
-          if(cnt>0){ bs.classList.add('vis'); document.getElementById('s-cnt').textContent=`${cnt} ítems | Mesa ${selTb||'?'}`; document.getElementById('s-tot').textContent=fc(tot); }
+          if(cnt>0){ bs.classList.add('vis'); document.getElementById('s-cnt').textContent=`${cnt} ítems | Mesa ${selTb}`; document.getElementById('s-tot').textContent=fc(tot); }
           else bs.classList.remove('vis');
         }
 
@@ -338,25 +564,26 @@
           const bills = Object.entries(state.bills);
           be.style.display = bills.length ? 'none' : 'block';
           bills.forEach(([m,b]) => {
-            const d=document.createElement('div'); d.className='bill-card';
-            d.innerHTML=`<div class="b-head"><span>Mesa ${m}</span><span style="color:#8fa89a; font-size:0.8rem">${b.mesero} | ${b.openedAt}</span></div>
+            const d=document.createElement('div'); d.className='bill-card glass';
+            d.innerHTML=`<div class="b-head"><span>Mesa ${m}</span><span style="color:var(--text-sec); font-size:0.75rem">${b.mesero} | ${b.openedAt}</span></div>
             <div class="b-body">${b.items.map(i=>`<div class="m-item" style="flex-direction:column; align-items:flex-start">
               <div style="width:100%; display:flex; justify-content:space-between"><span>${i.name} x${i.qty}</span><span>${fc(i.price*i.qty)}</span></div>
               ${i.note ? `<div style="font-size:0.7rem; color:var(--text-sec)">📝 ${i.note}</div>` : ''}
               </div>`).join('')}</div>
             <div class="b-foot"><span>TOTAL:</span><span style="color:var(--gold)">${fc(b.total)}</span></div>
-            <div style="padding:0 12px 12px"><button class="btn-full btn-red" style="margin:0" onclick="openP(${m})">COBRAR Y CERRAR CUENTA</button></div>`;
+            <div style="padding:0 12px 12px"><button class="btn-full btn-red" style="margin:0" onclick="openP(${m})">💰 COBRAR Y CERRAR</button></div>`;
             bc.appendChild(d);
           });
-          // Venta diaria
+
+          // Stats
           document.getElementById('d-tot').textContent = fc(state.daily.total);
-          document.getElementById('d-date').textContent = 'Fecha: ' + state.daily.date;
+          document.getElementById('d-date').textContent = 'F: ' + state.daily.date;
           const dt = document.getElementById('d-txs'); dt.innerHTML='';
           [...state.sales].reverse().forEach(s => {
-            const d=document.createElement('div'); d.className='bill-card';
+            const d=document.createElement('div'); d.className='bill-card glass';
             d.innerHTML=`<div class="b-head"><span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span></div>
             <div class="b-body" style="font-size:0.75rem"><div style="color:var(--text-sec); margin-bottom:4px">${s.mesero} | ${s.closedAt} | ${s.paymentMethod}</div>
-            ${s.items.map(i=>`${i.name} x${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}</div>`;
+            ${s.items.map(i=>`${i.name} x${i.qty}`).join(', ')}</div>`;
             dt.appendChild(d);
           });
 
@@ -366,20 +593,51 @@
             ic.innerHTML += `<div class="subcat" style="margin-top:16px;">${cat}</div>`;
             MENU[cat].forEach(i => {
               const cur = state.inv[i.n] || 0;
-              ic.innerHTML += `<div class="item">
+              ic.innerHTML += `<div class="item glass">
                 <div class="i-name">${i.n}</div>
                 <div class="q-ctrl" style="gap:4px">
-                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', -5)">-5</button>
-                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', -1)">-1</button>
+                  <button class="q-btn" onclick="updateInv('${i.n}', -1)">-</button>
                   <span class="q-val" style="min-width:30px">${cur}</span>
-                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', 1)">+1</button>
-                  <button class="q-btn" style="width:auto; padding:0 8px; border-radius:8px" onclick="updateInv('${i.n}', 5)">+5</button>
+                  <button class="q-btn" onclick="updateInv('${i.n}', 1)">+</button>
                 </div>
               </div>`;
             });
           });
+
+          // Menu Management View
+          const mc = document.getElementById('cj-menu-list'); mc.innerHTML = '';
+          Object.entries(MENU).forEach(([cat, items]) => {
+            const catDiv = document.createElement('div');
+            catDiv.innerHTML = `<div class="subcat">${cat}</div>`;
+            items.forEach((it, idx) => {
+              const itemDiv = document.createElement('div');
+              itemDiv.className = 'item glass'; 
+              itemDiv.style.flexDirection = 'column'; itemDiv.style.alignItems = 'stretch';
+              itemDiv.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+                  <input type="text" class="input-text" style="margin:0; flex:1; height:35px; padding:0 8px" value="${it.n}" onchange="editMenuItem('${cat}', ${idx}, 'n', this.value)">
+                  <input type="number" class="input-text" style="margin:0 0 0 8px; width:100px; height:35px; padding:0 8px" value="${it.p}" onchange="editMenuItem('${cat}', ${idx}, 'p', parseInt(this.value))">
+                </div>
+              `;
+              catDiv.appendChild(itemDiv);
+            });
+            mc.appendChild(catDiv);
+          });
         }
       }
+
+      window.editMenuItem = (cat, idx, key, val) => {
+        MENU[cat][idx][key] = val;
+      };
+
+      window.saveMenuToServer = async () => {
+        const resp = await fetch('/api/menu', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(MENU)
+        });
+        if(resp.ok) showToast('✅ Menú guardado y actualizado');
+      };
 
       // Actions
       window.cQ = (n,d) => { 
@@ -431,6 +689,10 @@
           ${i.note ? `<div style="font-size:0.7rem; color:var(--emerald); background:rgba(46,204,113,0.1); padding:2px 6px; border-radius:4px; margin-top:4px">📝 ${i.note}</div>` : ''}
           </div>`).join('');
         document.getElementById('pm-tot').textContent = fc(b.total); openM('payModal');
+      };
+      window.shareBill = () => {
+        const b = state.bills[payTb];
+        if(b) shareWhatsApp(payTb, b.items, b.total);
       };
       window.confirmPayment = () => {
         const pm = document.getElementById('pm-method').value;
