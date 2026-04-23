@@ -52,6 +52,7 @@ function resetDailyIfNewDay(){
    MONGODB  (optional persistence — never blocks events)
    ══════════════════════════════════════════════ */
 let dbReady = false;
+let isServerEmpty = true; // Si es true, la primera Caja que entre enviará su copia
 let Order, Bill, Sale, Inventory, Config;
 
 try {
@@ -84,7 +85,8 @@ try {
       if(cfgMenu && cfgMenu.value) MENU = cfgMenu.value;
       dailySales = sales.map(s => s.toObject());
 
-      console.log(`📦 Estado restaurado: ${activeOrders.size} pedidos, ${tableBills.size} cuentas, ${Object.keys(inventory).length} items de inventario`);
+      console.log(`📦 Estado restaurado de Mongo: ${activeOrders.size} pedidos, ${tableBills.size} cuentas, ${Object.keys(inventory).length} items`);
+      isServerEmpty = false;
 
       // Notify all connected clients of restored state
       io.emit('menu-updated', MENU);
@@ -93,9 +95,10 @@ try {
       io.emit('all-inventory', inventory);
       io.emit('daily-sales-update', {total:getDailyTotal(), count:dailySales.length, date:dailyDate, transactions:dailySales});
     })
-    .catch(err => console.warn('⚠️  MongoDB no disponible — modo en memoria:', err.message));
+    .catch(err => { console.warn('⚠️  MongoDB no disponible — modo en memoria:', err.message); isServerEmpty = true; });
 } catch(e) {
   console.warn('⚠️  mongoose no instalado — modo en memoria puro');
+  isServerEmpty = true;
 }
 
 /* ── Persist helpers (non-blocking, never throw) ── */
@@ -193,7 +196,43 @@ io.on('connection', (socket) => {
   socket.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
 
   /* ── Verify caja ── */
-  socket.on('verify-caja-password', (pwd, cb) => cb(pwd === CAJA_PASSWORD));
+  socket.on('verify-caja-password', (pwd, cb) => {
+    const ok = (pwd === CAJA_PASSWORD);
+    cb(ok);
+    if (ok && isServerEmpty) { socket.emit('request-backup'); }
+  });
+
+  /* ── INYECCIÓN DEL RESPALDO DESDE LA CAJA (Client-Side DB) ── */
+  socket.on('restore-backup', (bk) => {
+    if (!isServerEmpty) return; // si ya se inyectó, ignora
+    if (!bk) return;
+
+    try {
+      if (bk.menu) MENU = bk.menu;
+      if (bk.inv) inventory = bk.inv;
+      if (bk.sales) dailySales = bk.sales;
+      if (bk.date) dailyDate = bk.date;
+      if (bk.orders) { activeOrders.clear(); bk.orders.forEach(o => activeOrders.set(o.id, o)); }
+      if (bk.bills)  { tableBills.clear(); Object.entries(bk.bills).forEach(([m, b]) => tableBills.set(Number(m), b)); }
+      
+      let maxO = 0;
+      activeOrders.forEach(o => { if(o.id>maxO) maxO=o.id; });
+      orderCounter = maxO;
+      isServerEmpty = false;
+
+      console.log('✅ RESPALDO RECIBIDO DESDE CAJA. Datos restaurados.');
+      io.emit('menu-updated', MENU);
+      io.emit('active-orders', Array.from(activeOrders.values()));
+      io.emit('all-bills', Object.fromEntries(tableBills));
+      io.emit('all-inventory', inventory);
+      io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      
+      // Persistir a DB por si la DB de pura casualidad volvió luego (opcional)
+      persist(async () => {
+         await Config.findOneAndUpdate({key:'menu'},{value:MENU},{upsert:true});
+      });
+    } catch(e) { console.error('Error inyectando el backup', e); }
+  });
 
   /* ── New order ── */
   socket.on('new-order', (data) => {

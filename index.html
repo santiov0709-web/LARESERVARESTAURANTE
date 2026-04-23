@@ -148,11 +148,23 @@
     @media print {
       body, html { background:#fff; color:#000; margin:0; padding:0; }
       body > *:not(#ticket) { display:none !important; }
-      #ticket { display:block !important; position:absolute; top:0; left:0; width:300px; color:#000; font-family:'Courier New', monospace; font-size:12px; padding:10px; }
+      #ticket { 
+        display:block !important; 
+        position:absolute; 
+        top:0; 
+        left:0; 
+        width:290px; 
+        color:#000; 
+        font-family: 'Arial', sans-serif; 
+        font-size: 13px; 
+        font-weight: 600; 
+        padding: 5px; 
+        line-height: 1.25;
+      }
       .tk-c { text-align:center; }
-      .tk-b { font-weight:bold; }
+      .tk-b { font-weight: 900; }
       .tk-j { display:flex; justify-content:space-between; }
-      .tk-line { border-top:1px dashed #000; margin:6px 0; }
+      .tk-line { border-top: 2px solid #000; margin: 8px 0; }
     }
   </style>
 </head>
@@ -233,7 +245,10 @@
   </header>
 
   <section class="app-view sub-view active" id="v-cuentas">
-    <div class="sec-title">Cuentas Abiertas</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="sec-title" style="margin:0">Cuentas Abiertas</div>
+      <div id="backup-badge" style="display:none;background:var(--emerald);color:#000;font-size:0.7rem;font-weight:700;padding:4px 8px;border-radius:4px">✅ Respaldo Local Activo</div>
+    </div>
     <div id="cj-bills"></div>
     <div id="cj-empty" style="text-align:center;padding:40px;color:var(--txt3)">No hay cuentas abiertas</div>
   </section>
@@ -663,6 +678,17 @@ function render() {
 
     // Menú edit
     renderMenuConfig();
+
+    // Guardado de Respaldo Local (Solo Caja)
+    $('backup-badge').style.display = 'block';
+    localStorage.setItem('la_reserva_backup', JSON.stringify({
+      menu: MENU,
+      inv: state.inv,
+      sales: state.sales,
+      date: dailyDate,
+      orders: state.orders,
+      bills: state.bills
+    }));
   }
 }
 
