@@ -24,18 +24,86 @@ const tableBills   = new Map();   // mesa → bill
 let   orderCounter = 0;
 let   inventory    = {};
 let   dailySales   = [];
-let   MENU = {
-  'Bebidas': [
-    {n:'Coca-Cola',p:5000},{n:'Coronita',p:8000},{n:'Jugo Natural',p:7000},
-    {n:'Sprite',p:5000},{n:'Agua Cristal',p:3000},{n:'Club Colombia',p:7000},{n:'Limonada',p:6000}
+let MENU = {
+  'ENTRADAS': [
+    { n: 'Choricitos La Reserva', p: 25000 },
+    { n: 'Tostadas de Ajo', p: 25000 },
+    { n: 'Canastas de Plátano', p: 25000 }
   ],
-  'Licores': [
-    {n:'Aguardiente (Copa)',p:5000},{n:'Aguardiente (Media)',p:45000},
-    {n:'Tequila (Trago)',p:15000},{n:'Ron Viejo (Trago)',p:10000},{n:'Whisky Old Parr',p:220000}
+  'CERVEZAS': [
+    { n: 'Corona', p: 12000 },
+    { n: 'Stella Artois', p: 12000 },
+    { n: 'Club Colombia', p: 10000 },
+    { n: 'Águila Light', p: 7000 },
+    { n: 'Poker', p: 7000 },
+    { n: 'Pilsen', p: 7000 },
+    { n: 'Águila', p: 7000 }
   ],
-  'Comidas': [
-    {n:'Patacones',p:12000},{n:'Filete Miñón',p:45000},{n:'Hamburguesa',p:18000},
-    {n:'Alitas BBQ (x6)',p:16000},{n:'Picada Mixta',p:35000},{n:'Ceviche',p:28000}
+  'GASEOSAS': [
+    { n: 'Coca-Cola', p: 5000 },
+    { n: 'Tamarindo', p: 5000 },
+    { n: 'Manzana', p: 5000 },
+    { n: 'Colombiana', p: 5000 }
+  ],
+  'PLATOS FUERTES (Principales)': [
+    { n: 'FILET MIGNONT', p: 62000 },
+    { n: 'STROGANOF', p: 62000 },
+    { n: 'SOLOMITO', p: 62000 },
+    { n: 'PARRILLADA', p: 60000 },
+    { n: 'PICADA', p: 60000 },
+    { n: 'SALMON', p: 55000 },
+    { n: 'ROBALO', p: 55000 },
+    { n: 'CAZUELA', p: 55000 },
+    { n: 'CHURRASCO', p: 53000 },
+    { n: 'PUNTA DE ANCA', p: 53000 },
+    { n: 'BABY BEFF', p: 53000 },
+    { n: 'PECHUGA', p: 48000 },
+    { n: 'CORDON BLU', p: 48000 },
+    { n: 'CHULETA', p: 48000 },
+    { n: 'SOBREBARRIGA', p: 48000 },
+    { n: 'COSTILLAS BBQ', p: 45000 },
+    { n: 'CEVICHE', p: 43000 }
+  ],
+  'PASTAS': [
+    { n: 'Carbonada', p: 50000 },
+    { n: 'Bologñesa', p: 50000 },
+    { n: 'En Camarón', p: 50000 },
+    { n: 'Marinera', p: 50000 }
+  ],
+  'COMIDA RÁPIDA / INFANTIL': [
+    { n: 'Papas Maxi', p: 45000 },
+    { n: 'Árabe', p: 38000 },
+    { n: 'Cajita Feliz', p: 37000 },
+    { n: 'Hamburguesa', p: 35000 },
+    { n: 'Salchipapa', p: 35000 },
+    { n: 'Desgranado', p: 35000 },
+    { n: 'Creps', p: 35000 },
+    { n: 'Patacón', p: 35000 },
+    { n: 'Menú Muslitos', p: 35000 },
+    { n: 'Menú Pechuga', p: 35000 }
+  ],
+  'LICORES (Botellas)': [
+    { n: 'Buchanans', p: 190000 },
+    { n: 'Casillero', p: 150000 },
+    { n: 'Dubonnet', p: 120000 },
+    { n: 'Manischewitz', p: 120000 },
+    { n: 'Baileys', p: 120000 },
+    { n: 'Chivas Regal', p: 110000 },
+    { n: 'Old Parr', p: 110000 },
+    { n: 'JP Chenet', p: 100000 },
+    { n: 'Sello Rojo', p: 95000 },
+    { n: 'Lazo', p: 90000 },
+    { n: 'Gato Negro', p: 90000 }
+  ],
+  'EXTRAS Y EMPAQUES': [
+    { n: 'Crema de Pollo', p: 12000 },
+    { n: 'Porción Tropi', p: 12000 },
+    { n: 'Adicional de Papas Fritas', p: 10000 },
+    { n: 'Pico de Gallo', p: 10000 },
+    { n: 'Adicional (General)', p: 8000 },
+    { n: 'Galleta', p: 2000 },
+    { n: 'Desechable de Caja', p: 2000 },
+    { n: 'Desechable Plástico', p: 1000 }
   ]
 };
 let dailyDate = new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'});
