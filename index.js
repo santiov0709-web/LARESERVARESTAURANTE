@@ -440,6 +440,7 @@ io.on('connection', (socket) => {
 
   /* ── Remove item from bill (Admin) ── */
   socket.on('remove-item-bill', ({mesa, idx}) => {
+    mesa = Number(mesa);
     const bill = tableBills.get(mesa);
     if (!bill || !bill.items[idx]) return;
 

@@ -855,7 +855,13 @@ window.cancelOrder = id => {
 window.removeItemFromBill = (mesa, idx) => {
   if (confirm('¿Eliminar este ítem de la cuenta?')) {
     socket.emit('remove-item-bill', { mesa, idx });
-    setTimeout(renderPayModal, 100);
+    setTimeout(() => {
+      if (state.bills[mesa] && state.bills[mesa].items.length > 0) {
+        openP(mesa);
+      } else {
+        closeM('payModal');
+      }
+    }, 200);
   }
 };
 
@@ -948,7 +954,7 @@ function renderPayModal() {
     if (pps.qtyToPay < pps.maxQty) isPartial = true;
     return `
     <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px;position:relative">
-      <button class="m-close" style="top:5px;right:5px;font-size:0.8rem;color:var(--red)" onclick="removeItemFromBill('${payTb}', ${idx})">🗑️</button>
+      <button class="m-close" style="top:5px;right:5px;font-size:0.8rem;color:var(--red)" onclick="removeItemFromBill(${payTb}, ${idx})">🗑️</button>
       <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:25px">
         <span style="font-size:0.8rem;font-weight:${pps.qtyToPay>0?'600':'400'}">${it.name} (Tot: ${it.qty})</span>
         <div class="q-ctrl" style="gap:4px">
