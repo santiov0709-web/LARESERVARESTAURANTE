@@ -1115,6 +1115,41 @@ window.saveMenuToServer = async () => {
   } catch(e) { showToast('❌ Error al guardar'); }
 };
 
+let editSaleTs = null;
+window.openEditModal = ts => {
+  const s = state.sales.find(x => x.timestamp === ts);
+  if (!s) return;
+  editSaleTs = ts;
+  $('em-orig-total').textContent = fc(s.total);
+  $('em-orig-method').textContent = s.paymentMethod || '—';
+  $('em-full-method').value = s.paymentMethod || 'Efectivo';
+  $('em-amount').value = '';
+  $('em-split-method').value = 'Efectivo';
+  openM('editSaleModal');
+};
+
+window.confirmChangeFullMethod = () => {
+  if (!editSaleTs) return;
+  const newMethod = $('em-full-method').value;
+  socket.emit('edit-sale-method', { timestamp: editSaleTs, newMethod });
+  closeM('editSaleModal');
+  showToast('🔄 Cambiando método de pago...');
+};
+
+window.confirmDivideSale = () => {
+  if (!editSaleTs) return;
+  const s = state.sales.find(x => x.timestamp === editSaleTs);
+  if (!s) return;
+  const amt = parseInt($('em-amount').value) || 0;
+  if (amt <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  if (amt >= s.total) { showToast('⚠️ El monto extraído no puede ser igual o mayor al total original'); return; }
+
+  const newMethod = $('em-split-method').value;
+  socket.emit('split-sale-retroactive', { timestamp: editSaleTs, amount: amt, newMethod });
+  closeM('editSaleModal');
+  showToast('🔄 Dividiendo cobro de la base de datos...');
+};
+
 } // end mode check
 </script>
 
@@ -1151,41 +1186,5 @@ window.saveMenuToServer = async () => {
   </div>
 </div></div>
 
-<script>
-let editSaleTs = null;
-window.openEditModal = ts => {
-  const s = state.sales.find(x => x.timestamp === ts);
-  if (!s) return;
-  editSaleTs = ts;
-  $('em-orig-total').textContent = fc(s.total);
-  $('em-orig-method').textContent = s.paymentMethod || '—';
-  $('em-full-method').value = s.paymentMethod || 'Efectivo';
-  $('em-amount').value = '';
-  $('em-split-method').value = 'Efectivo';
-  openM('editSaleModal');
-};
-
-window.confirmChangeFullMethod = () => {
-  if (!editSaleTs) return;
-  const newMethod = $('em-full-method').value;
-  socket.emit('edit-sale-method', { timestamp: editSaleTs, newMethod });
-  closeM('editSaleModal');
-  showToast('🔄 Cambiando método de pago...');
-};
-
-window.confirmDivideSale = () => {
-  if (!editSaleTs) return;
-  const s = state.sales.find(x => x.timestamp === editSaleTs);
-  if (!s) return;
-  const amt = parseInt($('em-amount').value) || 0;
-  if (amt <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
-  if (amt >= s.total) { showToast('⚠️ El monto extraído no puede ser igual o mayor al total original'); return; }
-
-  const newMethod = $('em-split-method').value;
-  socket.emit('split-sale-retroactive', { timestamp: editSaleTs, amount: amt, newMethod });
-  closeM('editSaleModal');
-  showToast('🔄 Dividiendo cobro de la base de datos...');
-};
-</script>
 </body>
 </html>
