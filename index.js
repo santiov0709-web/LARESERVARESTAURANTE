@@ -194,15 +194,15 @@ app.get('/api/export-daily', async (req, res) => {
     wb.creator = 'La Reserva';
     const ws = wb.addWorksheet('Venta Diaria');
 
-    const hFill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}};
-    const hFont = {bold:true,color:{argb:'FFe8f0ec'},size:12};
-    const gold  = {bold:true,color:{argb:'FFf0c040'},size:13};
+    const hFill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}}; // Dark Green
+    const hFont = {bold:true,color:{argb:'FFFFFFFF'},size:12}; // White
+    const gold  = {bold:true,color:{argb:'FF27ae60'},size:13}; // Darker Green for Totals
     const bdr   = {top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
 
     ws.mergeCells('A1:G1');
     const t = ws.getCell('A1');
-    t.value='LA RESERVA — Reporte de Venta Diaria'; t.font={bold:true,color:{argb:'FF2ecc71'},size:16}; t.alignment={horizontal:'center'};
-    t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0b140f'}};
+    t.value='LA RESERVA — Reporte de Venta Diaria'; t.font={bold:true,color:{argb:'FFFFFFFF'},size:16}; t.alignment={horizontal:'center'};
+    t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}};
 
     ws.mergeCells('A2:G2');
     const d = ws.getCell('A2');
@@ -222,7 +222,7 @@ app.get('/api/export-daily', async (req, res) => {
       row.getCell('total').numFmt='"$"#,##0';
       row.height = Math.max(22,Math.ceil(list.length/40)*18);
       row.eachCell(c=>{c.border=bdr;c.alignment={vertical:'middle',wrapText:true};});
-      if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0f1e15'}};});
+      if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};}); // Light Grey for alternate rows
     });
 
     ws.addRow([]);
