@@ -413,6 +413,55 @@ io.on('connection', (socket) => {
     });
   });
 
+  /* ── Cancel order (Admin) ── */
+  socket.on('cancel-order', (orderId) => {
+    const order = activeOrders.get(orderId);
+    if (!order) return;
+
+    // Restaurar inventario
+    order.items.forEach(it => {
+      if (inventory[it.name] !== undefined) {
+        inventory[it.name] += it.qty;
+      }
+    });
+
+    activeOrders.delete(orderId);
+    io.emit('active-orders', Array.from(activeOrders.values()));
+    io.emit('all-inventory', inventory);
+    console.log(`❌ Pedido #${orderId} cancelado por admin`);
+
+    persist(async () => {
+      await Order.deleteOne({id:orderId});
+      for(const it of order.items){
+        await Inventory.findOneAndUpdate({itemName:it.name},{stock:inventory[it.name]},{upsert:true});
+      }
+    });
+  });
+
+  /* ── Remove item from bill (Admin) ── */
+  socket.on('remove-item-bill', ({mesa, idx}) => {
+    const bill = tableBills.get(mesa);
+    if (!bill || !bill.items[idx]) return;
+
+    const item = bill.items[idx];
+    bill.total -= (item.price * item.qty);
+    bill.items.splice(idx, 1);
+
+    if (bill.items.length === 0 && (bill.abono || 0) <= 0) {
+      tableBills.delete(mesa);
+    } else {
+      tableBills.set(mesa, bill);
+    }
+
+    io.emit('all-bills', Object.fromEntries(tableBills));
+    console.log(`🗑️ Item eliminado de Mesa ${mesa}: ${item.name}`);
+
+    persist(async () => {
+      if (!tableBills.has(mesa)) await Bill.deleteOne({mesa});
+      else await Bill.findOneAndUpdate({mesa}, {items: bill.items, total: bill.total});
+    });
+  });
+
   /* ── Close account ── */
   socket.on('close-account', ({mesa, paymentMethod}) => {
     const bill = tableBills.get(mesa);

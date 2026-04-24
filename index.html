@@ -615,8 +615,9 @@ function render() {
               ${it.note?`<div style="font-size:0.74rem;color:var(--emerald);background:rgba(46,204,113,.1);padding:2px 7px;border-radius:4px;margin-top:3px">📝 ${it.note}</div>`:''}
             </div>`).join('')}
         </div>
-        <div style="padding:10px 14px;border-top:1px solid var(--border)">
-          <button class="btn-full" style="margin:0" onclick="disp(${o.id})">✅ DESPACHAR</button>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px">
+          <button class="btn-full" style="margin:0;flex:2" onclick="disp(${o.id})">✅ DESPACHAR</button>
+          ${mode==='caja'?`<button class="btn-full btn-red" style="margin:0;flex:1;padding:0" onclick="cancelOrder(${o.id})">🗑️</button>`:''}
         </div>`;
       oc.appendChild(d);
     });
@@ -846,6 +847,17 @@ window.sendOrder = () => {
 };
 
 window.disp = id => socket.emit('dispatch-order', id);
+window.cancelOrder = id => {
+  if (confirm('¿Cancelar pedido permanentemente? Los productos volverán al inventario.')) {
+    socket.emit('cancel-order', id);
+  }
+};
+window.removeItemFromBill = (mesa, idx) => {
+  if (confirm('¿Eliminar este ítem de la cuenta?')) {
+    socket.emit('remove-item-bill', { mesa, idx });
+    setTimeout(renderPayModal, 100);
+  }
+};
 
 let chartCat = null;
 let chartTop = null;
@@ -935,8 +947,9 @@ function renderPayModal() {
     partialTotal += pps.qtyToPay * pps.price;
     if (pps.qtyToPay < pps.maxQty) isPartial = true;
     return `
-    <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px">
-      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px;position:relative">
+      <button class="m-close" style="top:5px;right:5px;font-size:0.8rem;color:var(--red)" onclick="removeItemFromBill('${payTb}', ${idx})">🗑️</button>
+      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:25px">
         <span style="font-size:0.8rem;font-weight:${pps.qtyToPay>0?'600':'400'}">${it.name} (Tot: ${it.qty})</span>
         <div class="q-ctrl" style="gap:4px">
           <button class="q-btn" style="width:26px;height:26px;font-size:1rem" onclick="updatePartialQty(${idx}, -1)" ${pps.qtyToPay<=0?'disabled':''}>-</button>
