@@ -678,10 +678,10 @@ function render() {
           <span style="color:var(--txt2);font-size:0.78rem">${b.mesero||''} | ${b.openedAt||''}</span>
         </div>
         <div class="b-body">
-          ${(b.items||[]).map(it=>`
+          ${(b.items||[]).map((it, idx)=>`
             <div class="m-item" style="flex-direction:column;align-items:flex-start">
-              <div style="width:100%;display:flex;justify-content:space-between">
-                <span>${it.name} ×${it.qty}</span><span>${fc((it.price||0)*it.qty)}</span>
+              <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
+                <span>${it.name} ×${it.qty} <button class="q-btn" style="width:24px;height:24px;font-size:0.7rem;color:var(--red);border-color:var(--red);margin-left:6px;display:inline-flex" onclick="deleteItemFromCuentas(${m}, ${idx})">🗑️</button></span><span>${fc((it.price||0)*it.qty)}</span>
               </div>
               ${it.note?`<div style="font-size:0.7rem;color:var(--txt2)">📝 ${it.note}</div>`:''}
             </div>`).join('')}
@@ -904,6 +904,12 @@ window.removeItemFromBill = (mesa, idx) => {
         closeM('payModal');
       }
     }, 200);
+  }
+};
+
+window.deleteItemFromCuentas = (mesa, idx) => {
+  if (confirm('¿Seguro que deseas eliminar permanentemente esta comanda de la cuenta?')) {
+    socket.emit('remove-item-bill', { mesa, idx });
   }
 };
 
