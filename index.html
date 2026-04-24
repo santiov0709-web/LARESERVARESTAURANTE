@@ -421,6 +421,28 @@ function beep(f1, f2, vol = 0.3, type = 'sine') {
   });
 }
 
+function playChime() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const n = audioCtx.currentTime;
+  // Secuencia de campanas (Ding-Dong) con múltiples osciladores para más volumen y riqueza en cualquier dispositivo
+  const bells = [
+    { f: 987.77, start: 0,   end: 1.5, type: 'triangle' }, // B5
+    { f: 1318.51, start: 0,  end: 1.5, type: 'sine' },     // E6
+    { f: 783.99,  start: 0.3,end: 1.8, type: 'triangle' }, // G5
+    { f: 1046.50, start: 0.3,end: 1.8, type: 'sine' }      // C6
+  ];
+  bells.forEach(b => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = b.f; o.type = b.type;
+    g.gain.setValueAtTime(0, n + b.start);
+    g.gain.linearRampToValueAtTime(1.0, n + b.start + 0.05); // Attack fuerte
+    g.gain.exponentialRampToValueAtTime(0.001, n + b.end); // Decay largo
+    o.start(n + b.start); 
+    o.stop(n + b.end + 0.1);
+  });
+}
+
 /* ── Mejora de Voz (Cocina) ── */
 window.speechUtterances = []; // Previene que Chrome/Safari borren el audio antes de que termine
 
@@ -530,8 +552,8 @@ socket.on('order-received', o => {
 socket.on('order-dispatched', d => {
   state.orders = state.orders.filter(x => x.id !== d.id);
   if (mode === 'mesero' && d.mesero === myName) {
-    beep(800, 1000, 1.0, 'square');
-    if (navigator.vibrate) navigator.vibrate([300,100,300,100,500]);
+    playChime();
+    if (navigator.vibrate) navigator.vibrate([400, 100, 400, 100, 600]);
     $('da-mesa').textContent = 'MESA ' + d.mesa;
     openM('dispatchAlertModal');
   }
