@@ -189,57 +189,93 @@ app.post('/api/menu', (req, res) => {
 
 app.get('/api/export-daily', async (req, res) => {
   try {
-    resetDailyIfNewDay();
     const wb = new ExcelJS.Workbook();
     wb.creator = 'La Reserva';
-    const ws = wb.addWorksheet('Venta Diaria');
 
-    const hFill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}}; // Dark Green
-    const hFont = {bold:true,color:{argb:'FFFFFFFF'},size:12}; // White
-    const gold  = {bold:true,color:{argb:'FF27ae60'},size:13}; // Darker Green for Totals
-    const bdr   = {top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
+    let allSales = [];
+    if (dbReady) {
+      allSales = await Sale.find().sort({timestamp: 1});
+    } else {
+      resetDailyIfNewDay();
+      allSales = dailySales;
+    }
 
-    ws.mergeCells('A1:G1');
-    const t = ws.getCell('A1');
-    t.value='LA RESERVA — Reporte de Venta Diaria'; t.font={bold:true,color:{argb:'FFFFFFFF'},size:16}; t.alignment={horizontal:'center'};
-    t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}};
-
-    ws.mergeCells('A2:G2');
-    const d = ws.getCell('A2');
-    d.value=`Fecha: ${dailyDate}`; d.font={bold:true,size:11,color:{argb:'FF8fa89a'}}; d.alignment={horizontal:'center'};
-    d.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0b140f'}};
-
-    ws.addRow([]);
-    ws.columns=[{key:'num',width:6},{key:'mesa',width:10},{key:'mesero',width:18},{key:'hora',width:14},{key:'productos',width:42},{key:'metodo',width:16},{key:'total',width:16}];
-
-    const hRow = ws.addRow(['#','Mesa','Mesero','Hora Cierre','Productos','Método Pago','Total']);
-    hRow.height = 28;
-    hRow.eachCell(c=>{c.fill=hFill;c.font=hFont;c.border=bdr;c.alignment={horizontal:'center',vertical:'middle'};});
-
-    dailySales.forEach((tx,i) => {
-      const list = tx.items.map(it=>`${it.name} x${it.qty}${it.note?' ['+it.note+']':''} (${formatCOP(it.price*it.qty)})`).join(', ');
-      const row = ws.addRow([i+1,`Mesa ${tx.mesa}`,tx.mesero||'—',tx.closedAt,list,tx.paymentMethod||'—',tx.total]);
-      row.getCell('total').numFmt='"$"#,##0';
-      row.height = Math.max(22,Math.ceil(list.length/40)*18);
-      row.eachCell(c=>{c.border=bdr;c.alignment={vertical:'middle',wrapText:true};});
-      if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};}); // Light Grey for alternate rows
+    const grouped = {};
+    allSales.forEach(s => {
+      // Formato DD-MM-YYYY para el nombre de la pestaña
+      const d = new Date(s.timestamp).toLocaleDateString('es-CO', {timeZone:'America/Bogota', year:'numeric', month:'2-digit', day:'2-digit'}).replace(/\//g,'-');
+      if (!grouped[d]) grouped[d] = [];
+      grouped[d].push(s);
     });
 
-    ws.addRow([]);
-    const totRow = ws.addRow(['','','','','','TOTAL DÍA:',getDailyTotal()]);
-    totRow.getCell(6).font=gold; totRow.getCell(7).font=gold;
-    totRow.getCell(7).numFmt='"$"#,##0'; totRow.getCell(6).alignment={horizontal:'right'};
+    if (Object.keys(grouped).length === 0) {
+      const ws = wb.addWorksheet('Sin Ventas');
+      ws.addRow(['No hay ventas registradas aún.']);
+    } else {
+      const hFill = {type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}}; // Dark Green
+      const hFont = {bold:true,color:{argb:'FFFFFFFF'},size:12}; // White
+      const gold  = {bold:true,color:{argb:'FF27ae60'},size:13}; // Darker Green for Totals
+      const bdr   = {top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
 
-    // Breakdown por método
-    const methods={};
-    dailySales.forEach(tx=>{ const m=tx.paymentMethod||'Sin método'; methods[m]=(methods[m]||0)+tx.total; });
-    ws.addRow([]);
-    const bh=ws.addRow(['','','','','','Método','Total']);
-    bh.getCell(6).font=hFont; bh.getCell(6).fill=hFill;
-    bh.getCell(7).font=hFont; bh.getCell(7).fill=hFill;
-    Object.entries(methods).forEach(([m,t])=>{ const r=ws.addRow(['','','','','',m,t]); r.getCell(7).numFmt='"$"#,##0'; });
+      // Ordenar fechas descendentes (la más reciente primero)
+      const sortedDates = Object.keys(grouped).sort((a,b) => {
+        const [d1,m1,y1] = a.split('-');
+        const [d2,m2,y2] = b.split('-');
+        return new Date(y2,m2-1,d2) - new Date(y1,m1-1,d1);
+      });
 
-    const fileName=`Ventas_LaReserva_${dailyDate.replace(/\//g,'-')}.xlsx`;
+      sortedDates.forEach(dateStr => {
+        const sales = grouped[dateStr];
+        const ws = wb.addWorksheet(dateStr);
+        
+        ws.mergeCells('A1:G1');
+        const t = ws.getCell('A1');
+        t.value='LA RESERVA — REPORTE DE VENTAS'; t.font={bold:true,color:{argb:'FFFFFFFF'},size:16}; t.alignment={horizontal:'center'};
+        t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}};
+
+        ws.mergeCells('A2:G2');
+        const d = ws.getCell('A2');
+        d.value=`Fecha: ${dateStr.replace(/-/g,'/')}`; d.font={bold:true,size:11,color:{argb:'FF8fa89a'}}; d.alignment={horizontal:'center'};
+        d.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0b140f'}};
+
+        ws.addRow([]);
+        ws.columns=[{key:'num',width:6},{key:'mesa',width:10},{key:'mesero',width:18},{key:'hora',width:14},{key:'productos',width:42},{key:'metodo',width:16},{key:'total',width:16}];
+
+        const hRow = ws.addRow(['#','Mesa','Mesero','Hora Cierre','Productos','Método Pago','Total']);
+        hRow.height = 28;
+        hRow.eachCell(c=>{c.fill=hFill;c.font=hFont;c.border=bdr;c.alignment={horizontal:'center',vertical:'middle'};});
+
+        let dayTotal = 0;
+        const methods = {};
+
+        sales.forEach((tx,i) => {
+          const list = tx.items.map(it=>`${it.name} x${it.qty}${it.note?' ['+it.note+']':''} (${formatCOP(it.price*it.qty)})`).join(', ');
+          const row = ws.addRow([i+1,`Mesa ${tx.mesa}`,tx.mesero||'—',tx.closedAt,list,tx.paymentMethod||'—',tx.total]);
+          row.getCell('total').numFmt='"$"#,##0';
+          row.height = Math.max(22,Math.ceil(list.length/40)*18);
+          row.eachCell(c=>{c.border=bdr;c.alignment={vertical:'middle',wrapText:true};});
+          if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};}); // Light Grey
+          
+          dayTotal += tx.total;
+          const m = tx.paymentMethod || 'Sin método';
+          methods[m] = (methods[m]||0) + tx.total;
+        });
+
+        ws.addRow([]);
+        const totRow = ws.addRow(['','','','','','TOTAL DÍA:',dayTotal]);
+        totRow.getCell(6).font=gold; totRow.getCell(7).font=gold;
+        totRow.getCell(7).numFmt='"$"#,##0'; totRow.getCell(6).alignment={horizontal:'right'};
+
+        // Breakdown por método en esa hoja
+        ws.addRow([]);
+        const bh=ws.addRow(['','','','','','Método','Total']);
+        bh.getCell(6).font=hFont; bh.getCell(6).fill=hFill;
+        bh.getCell(7).font=hFont; bh.getCell(7).fill=hFill;
+        Object.entries(methods).forEach(([m,t])=>{ const r=ws.addRow(['','','','','',m,t]); r.getCell(7).numFmt='"$"#,##0'; });
+      });
+    }
+
+    const fileName='Reporte_Ventas_LaReserva.xlsx';
     res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition',`attachment; filename="${fileName}"`);
     await wb.xlsx.write(res); res.end();
