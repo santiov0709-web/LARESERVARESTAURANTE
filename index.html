@@ -407,6 +407,18 @@ function showToast(msg) {
 
 /* ── Audio ── */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Desbloquear audio en iOS Safari al primer toque
+const unlockAudio = () => {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  osc.connect(audioCtx.destination);
+  osc.frequency.value = 400;
+  osc.start(0); osc.stop(0.001);
+  ['touchstart', 'click'].forEach(e => document.removeEventListener(e, unlockAudio));
+};
+['touchstart', 'click'].forEach(e => document.addEventListener(e, unlockAudio, { once: true }));
+
 function beep(f1, f2, vol = 0.3, type = 'sine') {
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const n = audioCtx.currentTime;
@@ -580,7 +592,9 @@ if (mode === 'mesero') {
     if ((n==='Andres'&&p==='2828') || (n==='Ximena'&&p==='9090')) {
       myName = n;
       $('meseroNameHeader').textContent = 'Mesero: ' + n;
-      closeM('authModal'); render();
+      closeM('authModal'); 
+      beep(1500, 0, 0.02, 'sine'); // Pequeño pitido para anclar el desbloqueo de audio en iOS
+      render();
     } else {
       showToast('❌ Clave incorrecta'); beep(300, 200, 0.5);
     }
