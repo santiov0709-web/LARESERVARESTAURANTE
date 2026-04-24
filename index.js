@@ -140,6 +140,18 @@ try {
       Inventory = mongoose.model('Inventory', new mongoose.Schema({itemName:{type:String,unique:true},stock:{type:Number,default:0}}));
       Config    = mongoose.model('Config',    new mongoose.Schema({key:{type:String,unique:true},value:Object}));
 
+      const splitsForFix = await Sale.find({ "items.name": "Abono dividido (Retroactivo)" });
+      for (const sp of splitsForFix) {
+        const orig = await Sale.findOne({
+          mesa: sp.mesa, openedAt: sp.openedAt, closedAt: sp.closedAt, _id: { $ne: sp._id }
+        });
+        if (orig && Math.abs(sp.timestamp - orig.timestamp) > 3600000) {
+          sp.timestamp = orig.timestamp + 1500;
+          await sp.save();
+          console.log(`✅ AUTO-FIX: Venta dividida retroactiva de $${sp.total} regresada a su fecha original.`);
+        }
+      }
+
       // Restore in-memory state from DB
       const [orders, bills, invDocs, cfgMenu, sales] = await Promise.all([
         Order.find().sort({timestamp:1}),
