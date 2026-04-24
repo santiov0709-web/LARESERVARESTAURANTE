@@ -415,19 +415,14 @@ function beep(f1, f2, vol = 0.3, type = 'sine') {
 }
 
 /* ── Mejora de Voz (Cocina) ── */
-const speechQueue = [];
-let isSpeaking = false;
+window.speechUtterances = []; // Previene que Chrome/Safari borren el audio antes de que termine
 
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-  window.speechSynthesis.getVoices();
-}
-
-function playNextSpeech() {
-  if (speechQueue.length === 0) { isSpeaking = false; return; }
-  isSpeaking = true;
-  const text = speechQueue.shift();
-  const utterance = new SpeechSynthesisUtterance(text);
+function queueSpeech(text) {
+  if (!('speechSynthesis' in window)) return;
+  
+  // Agregar una coma invisible ayuda a crear una micropausa natural al inicio si están pegados
+  const utterance = new SpeechSynthesisUtterance(text + " , ");
+  window.speechUtterances.push(utterance);
   
   const voices = window.speechSynthesis.getVoices();
   const bestVoice = voices.find(v => v.name.includes('Google español') || v.name.includes('Sabina') || v.name.includes('Paulina') || v.name.includes('Elena') || v.name.includes('Monica')) 
@@ -436,17 +431,20 @@ function playNextSpeech() {
                  
   if (bestVoice) utterance.voice = bestVoice;
   utterance.lang = 'es-ES';
-  utterance.rate = 0.95; // Más pausado para claridad
+  utterance.rate = 0.95; 
   
-  utterance.onend = () => { setTimeout(playNextSpeech, 700); };
-  utterance.onerror = () => { setTimeout(playNextSpeech, 700); };
+  utterance.onend = () => { 
+    const idx = window.speechUtterances.indexOf(utterance);
+    if (idx > -1) window.speechUtterances.splice(idx, 1);
+  };
+  utterance.onerror = (e) => { 
+    console.warn('TTS error:', e);
+    const idx = window.speechUtterances.indexOf(utterance);
+    if (idx > -1) window.speechUtterances.splice(idx, 1);
+  };
   
+  // Nativamente el navegador encola los mensajes uno tras otro
   window.speechSynthesis.speak(utterance);
-}
-
-function queueSpeech(text) {
-  speechQueue.push(text);
-  if (!isSpeaking) playNextSpeech();
 }
 
 /* ── Routing ── */
