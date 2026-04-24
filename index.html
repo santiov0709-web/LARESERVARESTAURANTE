@@ -699,26 +699,76 @@ function renderMenuConfig() {
   Object.entries(MENU).forEach(([cat, items]) => {
     const wrap = document.createElement('div');
     wrap.style.marginBottom = '20px';
-    wrap.innerHTML = `
-      <div class="subcat" style="display:flex;justify-content:space-between;align-items:center">
-        <span>${cat}</span>
-        <div>
-          <button class="q-btn wide" style="color:var(--blue);border-color:var(--blue)" onclick="menuAddItem('${cat}')">+ ITEM</button>
-          <button class="q-btn wide" style="color:var(--red);border-color:var(--red);margin-left:4px" onclick="menuDelCat('${cat}')">🗑️</button>
-        </div>
-      </div>`;
+    
+    const catHead = document.createElement('div');
+    catHead.className = 'subcat';
+    catHead.style.display = 'flex';
+    catHead.style.justifyContent = 'space-between';
+    catHead.style.alignItems = 'center';
+    catHead.innerHTML = `<span>${cat}</span>`;
+    
+    const catBtns = document.createElement('div');
+    const addItemBtn = document.createElement('button');
+    addItemBtn.className = 'q-btn wide';
+    addItemBtn.style.color = 'var(--blue)';
+    addItemBtn.style.borderColor = 'var(--blue)';
+    addItemBtn.textContent = '+ ITEM';
+    addItemBtn.onclick = () => menuAddItem(cat);
+    
+    const delCatBtn = document.createElement('button');
+    delCatBtn.className = 'q-btn wide';
+    delCatBtn.style.color = 'var(--red)';
+    delCatBtn.style.borderColor = 'var(--red)';
+    delCatBtn.style.marginLeft = '4px';
+    delCatBtn.textContent = '🗑️';
+    delCatBtn.onclick = () => menuDelCat(cat);
+    
+    catBtns.appendChild(addItemBtn);
+    catBtns.appendChild(delCatBtn);
+    catHead.appendChild(catBtns);
+    wrap.appendChild(catHead);
+
     items.forEach((it, idx) => {
       const row = document.createElement('div');
-      row.className = 'item'; row.style.flexDirection='column'; row.style.alignItems='stretch'; row.style.marginBottom='6px';
-      row.innerHTML = `
-        <div style="display:flex;gap:8px">
-          <input type="text" class="input-text" style="margin:0;flex:1;padding:8px 10px;height:36px" value="${it.n}"
-            data-cat="${cat}" data-idx="${idx}" oninput="MENU[this.dataset.cat][this.dataset.idx].n=this.value">
-          <input type="number" class="input-text" style="margin:0;width:80px;padding:8px 10px;height:36px" value="${it.p}"
-            data-cat="${cat}" data-idx="${idx}" oninput="MENU[this.dataset.cat][this.dataset.idx].p=parseInt(this.value)||0">
-          <button class="btn-full btn-red" style="margin:0;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center" 
-            data-cat="${cat}" data-idx="${idx}" onclick="menuDelItem(this.dataset.cat, this.dataset.idx)">✕</button>
-        </div>`;
+      row.className = 'item'; 
+      row.style.cssText = 'flex-direction:column; align-items:stretch; margin-bottom:6px; display:flex;';
+      
+      const flex = document.createElement('div');
+      flex.style.display = 'flex';
+      flex.style.gap = '8px';
+      
+      const nameInp = document.createElement('input');
+      nameInp.type = 'text';
+      nameInp.className = 'input-text';
+      nameInp.style.cssText = 'margin:0; flex:1; padding:8px 10px; height:36px;';
+      nameInp.value = it.n;
+      nameInp.oninput = (e) => { 
+        const newName = e.target.value;
+        MENU[cat][idx].n = newName;
+        PR[newName] = MENU[cat][idx].p;
+      };
+      
+      const priceInp = document.createElement('input');
+      priceInp.type = 'number';
+      priceInp.className = 'input-text';
+      priceInp.style.cssText = 'margin:0; width:90px; padding:8px 10px; height:36px;';
+      priceInp.value = it.p;
+      priceInp.oninput = (e) => {
+        const newPrice = parseInt(e.target.value) || 0;
+        MENU[cat][idx].p = newPrice;
+        PR[MENU[cat][idx].n] = newPrice;
+      };
+      
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-full btn-red';
+      delBtn.style.cssText = 'margin:0; width:36px; height:36px; padding:0; display:flex; align-items:center; justify-content:center;';
+      delBtn.innerHTML = '✕';
+      delBtn.onclick = () => menuDelItem(cat, idx);
+      
+      flex.appendChild(nameInp);
+      flex.appendChild(priceInp);
+      flex.appendChild(delBtn);
+      row.appendChild(flex);
       wrap.appendChild(row);
     });
     me.appendChild(wrap);
