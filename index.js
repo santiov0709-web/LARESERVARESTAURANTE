@@ -135,7 +135,7 @@ try {
       console.log('✅ MongoDB conectado — cargando estado persistido...');
 
       Order     = mongoose.model('Order',     new mongoose.Schema({id:Number,mesa:Number,items:Array,mesero:String,hora:String,timestamp:Number}));
-      Bill      = mongoose.model('Bill',      new mongoose.Schema({mesa:Number,items:{type:Array,default:[]},total:{type:Number,default:0},mesero:String,openedAt:String}));
+      Bill      = mongoose.model('Bill',      new mongoose.Schema({mesa:Number,items:{type:Array,default:[]},total:{type:Number,default:0},abono:{type:Number,default:0},mesero:String,openedAt:String}));
       Sale      = mongoose.model('Sale',      new mongoose.Schema({mesa:Number,mesero:String,items:Array,total:Number,paymentMethod:String,openedAt:String,closedAt:String,timestamp:{type:Number,default:Date.now}}));
       Inventory = mongoose.model('Inventory', new mongoose.Schema({itemName:{type:String,unique:true},stock:{type:Number,default:0}}));
       Config    = mongoose.model('Config',    new mongoose.Schema({key:{type:String,unique:true},value:Object}));
@@ -420,7 +420,7 @@ io.on('connection', (socket) => {
 
     const transaction = {
       mesa: bill.mesa, mesero: bill.mesero,
-      items: [...bill.items], total: bill.total,
+      items: [...bill.items], total: bill.total - (bill.abono || 0),
       paymentMethod, openedAt: bill.openedAt,
       closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
       timestamp: Date.now()
@@ -436,6 +436,42 @@ io.on('connection', (socket) => {
     persist(async () => {
       await new Sale(transaction).save();
       await Bill.deleteOne({mesa});
+    });
+  });
+
+  /* ── Manual amount payment ── */
+  socket.on('manual-payment', ({mesa, amount, paymentMethod}) => {
+    const bill = tableBills.get(mesa);
+    if (!bill || amount <= 0) return;
+
+    const transaction = {
+      mesa: bill.mesa, mesero: bill.mesero,
+      items: [{ name: 'Abono parcial', qty: 1, price: amount }],
+      total: amount, paymentMethod, openedAt: bill.openedAt,
+      closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+      timestamp: Date.now()
+    };
+    dailySales.push(transaction);
+    
+    // Update abono
+    bill.abono = (bill.abono || 0) + amount;
+    
+    // Check if fully paid
+    const isClosed = (bill.abono >= bill.total);
+    if (isClosed) {
+      tableBills.delete(mesa);
+      io.emit('account-closed', {mesa, bill:transaction});
+    } else {
+      tableBills.set(mesa, bill);
+    }
+
+    io.emit('all-bills', Object.fromEntries(tableBills));
+    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+
+    persist(async () => {
+      await new Sale(transaction).save();
+      if (isClosed) await Bill.deleteOne({mesa});
+      else await Bill.findOneAndUpdate({mesa}, {abono: bill.abono});
     });
   });
 

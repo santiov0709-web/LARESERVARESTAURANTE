@@ -307,7 +307,22 @@
   <div class="m-head" id="pm-title">Cerrar Cuenta <button class="m-close" onclick="closeM('payModal')">✕</button></div>
   <div style="font-size:0.75rem;color:var(--gold);margin-bottom:8px;text-align:center">💡 <i>Baja las cantidades con el botón (-) para <b>Dividir la Cuenta</b> o hacer pagos de solo una parte.</i></div>
   <div id="pm-body" style="max-height:160px;overflow-y:auto;margin-bottom:10px"></div>
-  <div class="m-tot"><span>Total a Pagar</span><span id="pm-tot">$0</span></div>
+  
+  <div id="pm-summary" style="background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;margin-bottom:12px;font-size:0.85rem;border:1px solid var(--border)">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Subtotal:</span><span id="pm-subtotal" style="color:var(--txt1);font-weight:600">$0</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--emerald)"><span>Pagos Recibidos:</span><span id="pm-abonos">-$0</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:800;border-top:1px solid var(--border);margin-top:6px;padding-top:6px;font-size:1.05rem;color:var(--gold)">
+      <span>PENDIENTE:</span><span id="pm-pendiente">$0</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:14px;padding:10px;border:1px dashed var(--border);border-radius:8px">
+    <label style="font-size:0.7rem;color:var(--txt3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Cobrar un Valor Específico:</label>
+    <div style="display:flex;gap:6px">
+      <input type="number" id="pm-manual-amount" class="input-text" style="margin:0;flex:1;height:38px;font-weight:700" placeholder="Ej: 50000">
+      <button class="q-btn" style="width:auto;padding:0 15px;height:38px;color:var(--gold);border-color:var(--gold);font-weight:700" onclick="confirmManualPayment()">COBRAR MONTO</button>
+    </div>
+  </div>
   
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="btn-full" style="background:#25D366;margin:0;flex:1" onclick="shareBill()">📲 WhatsApp</button>
@@ -936,16 +951,38 @@ function renderPayModal() {
     </div>`;
   }).join('');
   
-  $('pm-tot').textContent = fc(partialTotal);
+  const abonos = b.abono || 0;
+  const subtotal = b.total || 0;
+  const pendiente = subtotal - abonos;
+
+  $('pm-subtotal').textContent = fc(subtotal);
+  $('pm-abonos').textContent = `-${fc(abonos)}`;
+  $('pm-pendiente').textContent = fc(pendiente);
 
   if (isPartial) {
-    $('pm-btn-confirm').innerHTML = `COBRAR PARCIAL (${fc(partialTotal)})`;
-    $('pm-btn-confirm').style.background = '#e67e22'; // Anaranjado para parcial
+    if (partialTotal > pendiente) partialTotal = pendiente; // No cobrar mas de lo pendiente
+    $('pm-btn-confirm').innerHTML = `COBRAR SELECCIÓN (${fc(partialTotal)})`;
+    $('pm-btn-confirm').style.background = '#e67e22';
   } else {
-    $('pm-btn-confirm').innerHTML = `COBRAR TODO (${fc(partialTotal)})`;
+    $('pm-btn-confirm').innerHTML = `CERRAR TOTAL (${fc(pendiente)})`;
     $('pm-btn-confirm').style.background = 'var(--red)';
   }
 }
+
+window.confirmManualPayment = () => {
+  const b = state.bills[payTb]; if(!b) return;
+  const amount = parseInt($('pm-manual-amount').value) || 0;
+  const abonos = b.abono || 0;
+  const pendiente = (b.total || 0) - abonos;
+
+  if (amount <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  if (amount > pendiente) { showToast('⚠️ El monto supera el pendiente ('+fc(pendiente)+')'); return; }
+
+  socket.emit('manual-payment', { mesa: payTb, amount, paymentMethod: $('pm-method').value });
+  $('pm-manual-amount').value = '';
+  closeM('payModal');
+  showToast('💰 Pago manual de ' + fc(amount) + ' registrado');
+};
 
 window.updatePartialQty = (idx, d) => {
   const pps = partialPaymentState[idx];
