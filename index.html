@@ -1098,8 +1098,7 @@ window.confirmPayment = () => {
 };
 
 window.exportExcel = () => {
-  const d = $('d-date-picker')?.value;
-  window.location.href = `/api/export-daily${d ? '?date=' + d : ''}`; 
+  window.location.href = '/api/export-daily'; 
 };
 
 window.resetDaily = () => {
