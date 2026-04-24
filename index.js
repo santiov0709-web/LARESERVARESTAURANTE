@@ -191,15 +191,28 @@ app.post('/api/menu', (req, res) => {
 
 app.get('/api/export-daily', async (req, res) => {
   try {
+    const dateQuery = req.query.date;
     const wb = new ExcelJS.Workbook();
     wb.creator = 'La Reserva';
 
     let allSales = [];
     if (dbReady) {
-      allSales = await Sale.find().sort({timestamp: 1});
+      if (dateQuery) {
+        const start = new Date(`${dateQuery}T00:00:00-05:00`).getTime();
+        const end = start + 86400000;
+        allSales = await Sale.find({timestamp: {$gte: start, $lt: end}}).sort({timestamp: 1});
+      } else {
+        allSales = await Sale.find().sort({timestamp: 1});
+      }
     } else {
       resetDailyIfNewDay();
-      allSales = dailySales;
+      if (dateQuery) {
+        const parts = dateQuery.split('-');
+        const reqDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        if (reqDate === dailyDate) allSales = dailySales;
+      } else {
+        allSales = dailySales;
+      }
     }
 
     const grouped = {};
@@ -504,9 +517,10 @@ io.on('connection', (socket) => {
     const bill = tableBills.get(mesa);
     if (!bill) return;
 
+    const finalTotal = Math.max(0, bill.total - (bill.abono || 0));
     const transaction = {
       mesa: bill.mesa, mesero: bill.mesero,
-      items: [...bill.items], total: bill.total - (bill.abono || 0),
+      items: [...bill.items], total: finalTotal,
       paymentMethod, openedAt: bill.openedAt,
       closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
       timestamp: Date.now()
@@ -635,6 +649,30 @@ io.on('connection', (socket) => {
     persist(async () => {
       await Sale.deleteMany({});
     });
+  });
+
+  /* ── Fetch Historical Sales ── */
+  socket.on('fetch-historical-sales', async (dateStr) => {
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return;
+    const reqDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+    if (!dbReady) {
+      if (reqDate === dailyDate) {
+        socket.emit('historical-sales-result', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      } else {
+        socket.emit('historical-sales-result', {total:0,count:0,date:reqDate,transactions:[]});
+      }
+      return;
+    }
+    try {
+      const start = new Date(`${dateStr}T00:00:00-05:00`).getTime();
+      const end = start + 86400000;
+      const sales = await Sale.find({timestamp: {$gte: start, $lt: end}}).sort({timestamp: -1});
+      const arr = sales.map(s => s.toObject());
+      const total = arr.reduce((sum, s) => sum + s.total, 0);
+      socket.emit('historical-sales-result', {total, count: arr.length, date: reqDate, transactions: arr});
+    } catch(e) {}
   });
 
   socket.on('disconnect', () => console.log(`👋 Desconectado: ${socket.id}`));

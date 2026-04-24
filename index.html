@@ -266,7 +266,8 @@
   </section>
 
   <section class="app-view sub-view" id="v-venta">
-    <div class="daily-header">
+    <div class="daily-header" style="position:relative">
+      <input type="date" id="d-date-picker" style="position:absolute; top:16px; right:16px; background:var(--bg-surface); border:1px solid var(--border); color:var(--txt2); padding:6px; border-radius:8px; font-size:0.75rem; cursor:pointer;" onchange="fetchHistoricalSales(this.value)">
       <div class="daily-title">Total Venta Diaria</div>
       <div class="daily-total" id="d-tot">$0</div>
       <div class="daily-date"  id="d-date">Fecha: —</div>
@@ -453,9 +454,25 @@ socket.on('all-inventory',iv => { state.inv = iv; render(); });
 socket.on('daily-sales-update', s => {
   state.daily = s; state.sales = s.transactions || [];
   $('d-count') && ($('d-count').textContent = state.sales.length);
+  if ($('d-date-picker') && s.date) {
+    const p = s.date.split('/');
+    if (p.length === 3) $('d-date-picker').value = `${p[2]}-${p[1]}-${p[0]}`;
+  }
   render();
   if (mode === 'caja' && $('v-dashboard')?.classList.contains('active')) updateDashboard();
 });
+
+socket.on('historical-sales-result', s => {
+  state.daily = s; state.sales = s.transactions || [];
+  $('d-count') && ($('d-count').textContent = state.sales.length);
+  render();
+  if (mode === 'caja' && $('v-dashboard')?.classList.contains('active')) updateDashboard();
+});
+
+window.fetchHistoricalSales = (dateStr) => {
+  if (!dateStr) return;
+  socket.emit('fetch-historical-sales', dateStr);
+};
 socket.on('order-received', o => {
   state.orders.push(o);
   if (mode === 'cocina') { 
@@ -1004,7 +1021,6 @@ function renderPayModal() {
   $('pm-pendiente').textContent = fc(pendiente);
 
   if (isPartial) {
-    if (partialTotal > pendiente) partialTotal = pendiente; // No cobrar mas de lo pendiente
     $('pm-btn-confirm').innerHTML = `COBRAR SELECCIÓN (${fc(partialTotal)})`;
     $('pm-btn-confirm').style.background = '#e67e22';
   } else {
@@ -1081,7 +1097,10 @@ window.confirmPayment = () => {
   closeM('payModal');
 };
 
-window.exportExcel = () => { window.location.href = '/api/export-daily'; };
+window.exportExcel = () => {
+  const d = $('d-date-picker')?.value;
+  window.location.href = `/api/export-daily${d ? '?date=' + d : ''}`; 
+};
 
 window.resetDaily = () => {
   if (confirm('¿Reiniciar la venta del día? ¡Descarga el Excel primero!')) {
