@@ -139,9 +139,6 @@ try {
       Config    = mongoose.model('Config',    new mongoose.Schema({key:{type:String,unique:true},value:Object}));
 
       // Restore in-memory state from DB
-      await Sale.deleteMany({}); // <--- LIMPIEZA TOTAL POR SOLICITUD DEL USUARIO (INICIO 23-04)
-      console.log('⚠️ BASE DE DATOS DE VENTAS REINICIADA POR SOLICITUD');
-
       const [orders, bills, invDocs, cfgMenu, sales] = await Promise.all([
         Order.find().sort({timestamp:1}),
         Bill.find(),
