@@ -452,7 +452,7 @@ if (mode === 'mesero') {
   $('authContent').innerHTML = `
     <div class="sec-title" style="margin-bottom:14px">Identifícate</div>
     <select id="mName" class="select-box">
-      <option value="Patico">Patico</option>
+      <option value="Andres">Andres</option>
       <option value="Ximena">Ximena</option>
     </select>
     <input type="password" id="mPwd" class="input-text" placeholder="Clave...">
@@ -461,7 +461,7 @@ if (mode === 'mesero') {
   $('mPwd').addEventListener('keydown', e => { if(e.key==='Enter') saveName(); });
   window.saveName = () => {
     const n = $('mName').value, p = $('mPwd').value;
-    if ((n==='Patico'&&p==='2828') || (n==='Ximena'&&p==='9090')) {
+    if ((n==='Andres'&&p==='2828') || (n==='Ximena'&&p==='9090')) {
       myName = n;
       $('meseroNameHeader').textContent = 'Mesero: ' + n;
       closeM('authModal'); render();
