@@ -43,7 +43,8 @@ let MENU = {
     { n: 'Coca-Cola', p: 5000 },
     { n: 'Tamarindo', p: 5000 },
     { n: 'Manzana', p: 5000 },
-    { n: 'Colombiana', p: 5000 }
+    { n: 'Colombiana', p: 5000 },
+    { n: 'Granizado Mandarina', p: 9000 }
   ],
   'PLATOS FUERTES (Principales)': [
     { n: 'FILET MIGNONT', p: 62000 },
@@ -102,6 +103,7 @@ let MENU = {
     { n: 'Pico de Gallo', p: 10000 },
     { n: 'Adicional (General)', p: 8000 },
     { n: 'Galleta', p: 2000 },
+    { n: 'Sumo de Limón', p: 2000 },
     { n: 'Desechable de Caja', p: 2000 },
     { n: 'Desechable Plástico', p: 1000 }
   ]
