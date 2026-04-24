@@ -414,6 +414,41 @@ function beep(f1, f2, vol = 0.3, type = 'sine') {
   });
 }
 
+/* ── Mejora de Voz (Cocina) ── */
+const speechQueue = [];
+let isSpeaking = false;
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  window.speechSynthesis.getVoices();
+}
+
+function playNextSpeech() {
+  if (speechQueue.length === 0) { isSpeaking = false; return; }
+  isSpeaking = true;
+  const text = speechQueue.shift();
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  const voices = window.speechSynthesis.getVoices();
+  const bestVoice = voices.find(v => v.name.includes('Google español') || v.name.includes('Sabina') || v.name.includes('Paulina') || v.name.includes('Elena') || v.name.includes('Monica')) 
+                 || voices.find(v => v.lang.includes('es-CO') || v.lang.includes('es-MX'))
+                 || voices.find(v => v.lang.startsWith('es'));
+                 
+  if (bestVoice) utterance.voice = bestVoice;
+  utterance.lang = 'es-ES';
+  utterance.rate = 0.95; // Más pausado para claridad
+  
+  utterance.onend = () => { setTimeout(playNextSpeech, 700); };
+  utterance.onerror = () => { setTimeout(playNextSpeech, 700); };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+function queueSpeech(text) {
+  speechQueue.push(text);
+  if (!isSpeaking) playNextSpeech();
+}
+
 /* ── Routing ── */
 const PATH = window.location.pathname;
 let mode = 'landing';
@@ -479,10 +514,10 @@ socket.on('order-received', o => {
     beep(700, 900); 
     showToast('🔔 Nuevo pedido — Mesa ' + o.mesa); 
     if ('speechSynthesis' in window) {
-      const text = `Nuevo pedido, mesa ${o.mesa}. ` + o.items.map(i => `${i.qty} ${i.name}`).join(', ');
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES'; utterance.rate = 1.0;
-      window.speechSynthesis.speak(utterance);
+      const text = `Atención. Nuevo pedido, mesa ${o.mesa}. ` + o.items.map(i => {
+        return `${i.qty} ${i.name}` + (i.note ? `. Nota: ${i.note}` : '');
+      }).join('. ');
+      queueSpeech(text);
     }
   }
   render();
