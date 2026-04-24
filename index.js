@@ -710,11 +710,7 @@ io.on('connection', (socket) => {
     dailySales = [];
     dailyDate = new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'});
     io.emit('daily-sales-update', {total:0,count:0,date:dailyDate,transactions:[]});
-    console.log('🔄 Venta diaria reiniciada manualmente');
-
-    persist(async () => {
-      await Sale.deleteMany({});
-    });
+    console.log('🔄 Venta diaria reiniciada manualmente en memoria');
   });
 
   /* ── Fetch Historical Sales ── */
