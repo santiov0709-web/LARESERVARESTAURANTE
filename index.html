@@ -1134,6 +1134,10 @@ window.confirmChangeFullMethod = () => {
   socket.emit('edit-sale-method', { timestamp: editSaleTs, newMethod });
   closeM('editSaleModal');
   showToast('🔄 Cambiando método de pago...');
+  setTimeout(() => {
+    const d = $('d-date-picker')?.value;
+    if (d) fetchHistoricalSales(d);
+  }, 500);
 };
 
 window.confirmDivideSale = () => {
@@ -1148,6 +1152,10 @@ window.confirmDivideSale = () => {
   socket.emit('split-sale-retroactive', { timestamp: editSaleTs, amount: amt, newMethod });
   closeM('editSaleModal');
   showToast('🔄 Dividiendo cobro de la base de datos...');
+  setTimeout(() => {
+    const d = $('d-date-picker')?.value;
+    if (d) fetchHistoricalSales(d);
+  }, 500);
 };
 
 } // end mode check
