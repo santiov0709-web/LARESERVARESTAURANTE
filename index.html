@@ -338,6 +338,28 @@
   <button id="pm-btn-confirm" class="btn-full btn-red" onclick="confirmPayment()">COBRAR Y LIBERAR MESA</button>
 </div></div>
 
+<!-- Split Sale Modal -->
+<div id="splitSaleModal" class="modal"><div class="m-content">
+  <div class="m-head">Dividir Venta Retroactiva <button class="m-close" onclick="closeM('splitSaleModal')">✕</button></div>
+  <div style="font-size:0.8rem;color:var(--txt2);margin-bottom:12px;text-align:center">
+    Venta Original: <span id="sm-orig-total" style="color:var(--gold);font-weight:bold">$0</span> (<span id="sm-orig-method"></span>)
+  </div>
+  
+  <div style="margin-bottom:14px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px">
+    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Monto a Separar de la Venta Original:</label>
+    <input type="number" id="sm-amount" class="input-text" placeholder="Ej: 40000" style="margin-bottom:10px">
+    
+    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Nuevo Método de Pago (Abono):</label>
+    <select id="sm-method" class="select-box" style="margin-bottom:4px">
+      <option value="Efectivo">💵 Efectivo</option>
+      <option value="Nequi">📱 Nequi</option>
+      <option value="Daviplata">📱 Daviplata</option>
+      <option value="Datafono">💳 Datáfono</option>
+    </select>
+  </div>
+  <button class="btn-full" style="background:#e67e22" onclick="confirmDivideSale()">CONFIRMAR DIVISIÓN</button>
+</div></div>
+
 <div id="dispatchAlertModal" class="modal" style="z-index:9999"><div class="m-content" style="text-align:center;border:2px solid var(--emerald);background:#080f0b">
   <div class="pulse-icon" style="font-size:4rem;margin-bottom:8px">✅</div>
   <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--emerald);margin-bottom:4px">¡PEDIDO LISTO!</div>
@@ -668,6 +690,9 @@ function render() {
         <div class="b-body" style="font-size:0.78rem">
           <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
           ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border)">
+          <button class="q-btn wide" style="margin:0;width:100%;color:var(--gold);border-color:var(--gold)" onclick="openDivideModal(${s.timestamp})">✂️ DIVIDIR VENTA</button>
         </div>`;
       dt.appendChild(d);
     });
@@ -1072,6 +1097,54 @@ window.saveMenuToServer = async () => {
 };
 
 } // end mode check
+
+<!-- Split Sale Modal -->
+<div id="splitSaleModal" class="modal"><div class="m-content">
+  <div class="m-head" style="font-size:1.1rem">Dividir Venta Retroactiva <button class="m-close" onclick="closeM('splitSaleModal')">✕</button></div>
+  <div style="font-size:0.85rem;color:var(--txt2);margin-bottom:12px;text-align:center">
+    Venta Original: <span id="sm-orig-total" style="color:var(--gold);font-weight:bold">$0</span> (<span id="sm-orig-method"></span>)
+  </div>
+  
+  <div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed var(--border)">
+    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Monto a Separar (Extraer de la cuenta):</label>
+    <input type="number" id="sm-amount" class="input-text" placeholder="Girar/Transferir Ej: 40000" style="margin-bottom:10px;height:40px;font-weight:700;font-size:1.1rem">
+    
+    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Nuevo Método de Pago (Para el monto extraído):</label>
+    <select id="sm-method" class="select-box" style="margin-bottom:4px;height:40px">
+      <option value="Efectivo">💵 Efectivo</option>
+      <option value="Nequi">📱 Nequi</option>
+      <option value="Daviplata">📱 Daviplata</option>
+      <option value="Datafono">💳 Datáfono</option>
+    </select>
+  </div>
+  <button class="btn-full" style="background:#e67e22;font-size:0.95rem" onclick="confirmDivideSale()">✂️ CONFIRMAR DIVISIÓN</button>
+</div></div>
+
+<script>
+let splitSaleTs = null;
+window.openDivideModal = ts => {
+  const s = state.sales.find(x => x.timestamp === ts);
+  if (!s) return;
+  splitSaleTs = ts;
+  $('sm-orig-total').textContent = fc(s.total);
+  $('sm-orig-method').textContent = s.paymentMethod;
+  $('sm-amount').value = '';
+  openM('splitSaleModal');
+};
+
+window.confirmDivideSale = () => {
+  if (!splitSaleTs) return;
+  const s = state.sales.find(x => x.timestamp === splitSaleTs);
+  if (!s) return;
+  const amt = parseInt($('sm-amount').value) || 0;
+  if (amt <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  if (amt >= s.total) { showToast('⚠️ El monto extraído no puede ser igual o mayor al total original'); return; }
+
+  const newMethod = $('sm-method').value;
+  socket.emit('split-sale-retroactive', { timestamp: splitSaleTs, amount: amt, newMethod });
+  closeM('splitSaleModal');
+  showToast('🔄 Dividiendo cobro de la base de datos...');
+};
 </script>
 </body>
 </html>

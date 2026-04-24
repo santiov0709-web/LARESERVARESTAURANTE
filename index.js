@@ -438,6 +438,42 @@ io.on('connection', (socket) => {
     });
   });
 
+  /* ── Split sale (Retroactive Admin) ── */
+  socket.on('split-sale-retroactive', ({timestamp, amount, newMethod}) => {
+    const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+    if (idx === -1) return;
+    const orig = dailySales[idx];
+
+    // Ensure logic is sound
+    amount = Number(amount);
+    if (amount <= 0 || amount >= orig.total) return;
+
+    // Adjust original sale
+    orig.total -= amount;
+
+    // Create new retro sale portion
+    const newSale = {
+      mesa: orig.mesa,
+      mesero: orig.mesero,
+      items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
+      total: amount,
+      paymentMethod: newMethod,
+      openedAt: orig.openedAt,
+      closedAt: orig.closedAt,
+      timestamp: Date.now()
+    };
+    dailySales.push(newSale); // add to RAM
+
+    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+    console.log(`✂️ Venta dividida: Extraídos ${formatCOP(amount)} a ${newMethod}`);
+
+    // Update MongoDB
+    persist(async () => {
+      await Sale.findOneAndUpdate({timestamp}, {total: orig.total});
+      await new Sale(newSale).save();
+    });
+  });
+
   /* ── Remove item from bill (Admin) ── */
   socket.on('remove-item-bill', ({mesa, idx}) => {
     mesa = Number(mesa);
