@@ -300,6 +300,29 @@ app.get('/api/export-daily', async (req, res) => {
   }
 });
 
+app.get('/api/fix-retro', async (req, res) => {
+  if (!dbReady) return res.send('<h3>DB no lista, espera o revisa logs.</h3>');
+  try {
+    let count = 0;
+    let output = '<h2>Resultado de la Corrección:</h2>';
+    const splits = await Sale.find({ "items.name": "Abono dividido (Retroactivo)" });
+    
+    for (const sp of splits) {
+      const orig = await Sale.findOne({
+        mesa: sp.mesa, openedAt: sp.openedAt, closedAt: sp.closedAt, _id: { $ne: sp._id }
+      });
+      if (orig && Math.abs(sp.timestamp - orig.timestamp) > 3600000) { // Mayor a 1h de diferencia real indica que saltó de día.
+        sp.timestamp = orig.timestamp + 1500;
+        await sp.save();
+        output += `<p>✅ Venta dividida de $${sp.total} regresada con éxito al día: ${new Date(orig.timestamp).toLocaleDateString('es-CO')}.</p>`;
+        count++;
+      }
+    }
+    if (count === 0) output += '<p>No se encontraron cuentas fuera de su rango de tiempo (o ya fueron arregladas).</p>';
+    res.send(output + '<br><button onclick="window.location.href=\'/caja\'" style="padding:10px 20px; font-size:16px;">Volver a Caja</button>');
+  } catch (e) { res.send('<h3>Error:</h3> ' + e.message); }
+});
+
 /* ══════════════════════════════════════════════
    SOCKET.IO  — 100% in-memory, never blocked by DB
    ══════════════════════════════════════════════ */
