@@ -452,53 +452,70 @@ io.on('connection', (socket) => {
   });
 
   /* ── Split sale (Retroactive Admin) ── */
-  socket.on('split-sale-retroactive', ({timestamp, amount, newMethod}) => {
-    const idx = dailySales.findIndex(s => s.timestamp === timestamp);
-    if (idx === -1) return;
-    const orig = dailySales[idx];
-
-    // Ensure logic is sound
+  socket.on('split-sale-retroactive', async ({timestamp, amount, newMethod}) => {
     amount = Number(amount);
-    if (amount <= 0 || amount >= orig.total) return;
+    if (amount <= 0) return;
 
-    // Adjust original sale
-    orig.total -= amount;
+    if (dbReady) {
+      const orig = await Sale.findOne({timestamp});
+      if (!orig || amount >= orig.total) return;
 
-    // Create new retro sale portion
-    const newSale = {
-      mesa: orig.mesa,
-      mesero: orig.mesero,
-      items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
-      total: amount,
-      paymentMethod: newMethod,
-      openedAt: orig.openedAt,
-      closedAt: orig.closedAt,
-      timestamp: Date.now()
-    };
-    dailySales.push(newSale); // add to RAM
-
-    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
-    console.log(`✂️ Venta dividida: Extraídos ${formatCOP(amount)} a ${newMethod}`);
-
-    // Update MongoDB
-    persist(async () => {
-      await Sale.findOneAndUpdate({timestamp}, {total: orig.total});
+      orig.total -= amount;
+      const newSale = {
+        mesa: orig.mesa, mesero: orig.mesero,
+        items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
+        total: amount, paymentMethod: newMethod,
+        openedAt: orig.openedAt, closedAt: orig.closedAt,
+        timestamp: Date.now()
+      };
+      await orig.save();
       await new Sale(newSale).save();
-    });
+
+      const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+      if (idx !== -1) {
+        dailySales[idx].total -= amount;
+        dailySales.push(newSale);
+        io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      }
+      console.log(`✂️ Venta histórica dividida: Extraídos ${formatCOP(amount)} a ${newMethod}`);
+    } else {
+      const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+      if (idx === -1) return;
+      const orig = dailySales[idx];
+
+      if (amount >= orig.total) return;
+      orig.total -= amount;
+      const newSale = {
+        mesa: orig.mesa, mesero: orig.mesero,
+        items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
+        total: amount, paymentMethod: newMethod,
+        openedAt: orig.openedAt, closedAt: orig.closedAt,
+        timestamp: Date.now()
+      };
+      dailySales.push(newSale);
+      io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      console.log(`✂️ Venta dividida (RAM): Extraídos ${formatCOP(amount)} a ${newMethod}`);
+    }
   });
 
   /* ── Edit sale method (Retroactive Admin) ── */
-  socket.on('edit-sale-method', ({timestamp, newMethod}) => {
-    const idx = dailySales.findIndex(s => s.timestamp === timestamp);
-    if (idx === -1) return;
-    
-    dailySales[idx].paymentMethod = newMethod;
-    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
-    
-    persist(async () => {
+  socket.on('edit-sale-method', async ({timestamp, newMethod}) => {
+    if (dbReady) {
       await Sale.findOneAndUpdate({timestamp}, {paymentMethod: newMethod});
-    });
-    console.log(`✏️ Método de pago editado a ${newMethod} para venta de ${formatCOP(dailySales[idx].total)}`);
+      const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+      if (idx !== -1) {
+        dailySales[idx].paymentMethod = newMethod;
+        io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      }
+      console.log(`✏️ Método de pago histórico editado a ${newMethod}`);
+    } else {
+      const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+      if (idx !== -1) {
+        dailySales[idx].paymentMethod = newMethod;
+        io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+        console.log(`✏️ Método de pago editado a ${newMethod} en RAM`);
+      }
+    }
   });
 
   /* ── Remove item from bill (Admin) ── */
