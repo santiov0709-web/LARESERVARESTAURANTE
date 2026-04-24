@@ -466,7 +466,7 @@ io.on('connection', (socket) => {
         items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
         total: amount, paymentMethod: newMethod,
         openedAt: orig.openedAt, closedAt: orig.closedAt,
-        timestamp: Date.now()
+        timestamp: orig.timestamp + 1000 + Math.floor(Math.random() * 500)
       };
       await orig.save();
       await new Sale(newSale).save();
@@ -490,7 +490,7 @@ io.on('connection', (socket) => {
         items: [{ name: 'Abono dividido (Retroactivo)', qty: 1, price: amount }],
         total: amount, paymentMethod: newMethod,
         openedAt: orig.openedAt, closedAt: orig.closedAt,
-        timestamp: Date.now()
+        timestamp: orig.timestamp + 1000 + Math.floor(Math.random() * 500)
       };
       dailySales.push(newSale);
       io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
