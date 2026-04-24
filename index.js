@@ -487,6 +487,20 @@ io.on('connection', (socket) => {
     });
   });
 
+  /* ── Edit sale method (Retroactive Admin) ── */
+  socket.on('edit-sale-method', ({timestamp, newMethod}) => {
+    const idx = dailySales.findIndex(s => s.timestamp === timestamp);
+    if (idx === -1) return;
+    
+    dailySales[idx].paymentMethod = newMethod;
+    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+    
+    persist(async () => {
+      await Sale.findOneAndUpdate({timestamp}, {paymentMethod: newMethod});
+    });
+    console.log(`✏️ Método de pago editado a ${newMethod} para venta de ${formatCOP(dailySales[idx].total)}`);
+  });
+
   /* ── Remove item from bill (Admin) ── */
   socket.on('remove-item-bill', ({mesa, idx}) => {
     mesa = Number(mesa);

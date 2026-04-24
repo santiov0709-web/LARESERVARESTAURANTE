@@ -709,7 +709,7 @@ function render() {
           ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
         </div>
         <div style="padding:10px 14px;border-top:1px solid var(--border)">
-          <button class="q-btn wide" style="margin:0;width:100%;color:var(--gold);border-color:var(--gold)" onclick="openDivideModal(${s.timestamp})">✂️ DIVIDIR VENTA</button>
+          <button class="q-btn wide" style="margin:0;width:100%;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ EDITAR PAGO / DIVIDIR</button>
         </div>`;
       dt.appendChild(d);
     });
@@ -1118,51 +1118,72 @@ window.saveMenuToServer = async () => {
 } // end mode check
 </script>
 
-<!-- Split Sale Modal -->
-<div id="splitSaleModal" class="modal"><div class="m-content">
-  <div class="m-head" style="font-size:1.1rem">Dividir Venta Retroactiva <button class="m-close" onclick="closeM('splitSaleModal')">✕</button></div>
+<!-- Edit Sale Modal -->
+<div id="editSaleModal" class="modal"><div class="m-content">
+  <div class="m-head" style="font-size:1.1rem">Editar Venta / Pago <button class="m-close" onclick="closeM('editSaleModal')">✕</button></div>
   <div style="font-size:0.85rem;color:var(--txt2);margin-bottom:12px;text-align:center">
-    Venta Original: <span id="sm-orig-total" style="color:var(--gold);font-weight:bold">$0</span> (<span id="sm-orig-method"></span>)
+    Venta Seleccionada: <span id="em-orig-total" style="color:var(--gold);font-weight:bold">$0</span> 
+    <br><span style="color:var(--txt3);font-size:0.7rem">Método Actual: <span id="em-orig-method" style="color:#fff"></span></span>
   </div>
   
-  <div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed var(--border)">
-    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Monto a Separar (Extraer de la cuenta):</label>
-    <input type="number" id="sm-amount" class="input-text" placeholder="Girar/Transferir Ej: 40000" style="margin-bottom:10px;height:40px;font-weight:700;font-size:1.1rem">
-    
-    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Nuevo Método de Pago (Para el monto extraído):</label>
-    <select id="sm-method" class="select-box" style="margin-bottom:4px;height:40px">
+  <div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed var(--blue)">
+    <label style="font-size:0.75rem;color:var(--blue);display:block;margin-bottom:6px;font-weight:600">PASAR TODA LA VENTA A OTRO MÉTODO:</label>
+    <select id="em-full-method" class="select-box" style="margin-bottom:10px;height:40px">
       <option value="Efectivo">💵 Efectivo</option>
       <option value="Nequi">📱 Nequi</option>
       <option value="Daviplata">📱 Daviplata</option>
       <option value="Datafono">💳 Datáfono</option>
     </select>
+    <button class="btn-full btn-blue" style="font-size:0.85rem;padding:12px;margin:0" onclick="confirmChangeFullMethod()">🔄 GUARDAR NUEVO MÉTODO</button>
   </div>
-  <button class="btn-full" style="background:#e67e22;font-size:0.95rem" onclick="confirmDivideSale()">✂️ CONFIRMAR DIVISIÓN</button>
+
+  <div style="margin-bottom:14px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed #e67e22">
+    <label style="font-size:0.75rem;color:#e67e22;display:block;margin-bottom:6px;font-weight:600">O DIVIDIR: EXTRAER UN MONTO:</label>
+    <input type="number" id="em-amount" class="input-text" placeholder="Ej: 40000" style="margin-bottom:10px;height:40px;font-weight:700;font-size:1.1rem">
+    <label style="font-size:0.75rem;color:var(--txt3);display:block;margin-bottom:6px">Método para el monto extraído:</label>
+    <select id="em-split-method" class="select-box" style="margin-bottom:10px;height:40px">
+      <option value="Efectivo">💵 Efectivo</option>
+      <option value="Nequi">📱 Nequi</option>
+      <option value="Daviplata">📱 Daviplata</option>
+      <option value="Datafono">💳 Datáfono</option>
+    </select>
+    <button class="btn-full" style="background:#e67e22;font-size:0.85rem;padding:12px;margin:0" onclick="confirmDivideSale()">✂️ DIVIDIR VENTA</button>
+  </div>
 </div></div>
 
 <script>
-let splitSaleTs = null;
-window.openDivideModal = ts => {
+let editSaleTs = null;
+window.openEditModal = ts => {
   const s = state.sales.find(x => x.timestamp === ts);
   if (!s) return;
-  splitSaleTs = ts;
-  $('sm-orig-total').textContent = fc(s.total);
-  $('sm-orig-method').textContent = s.paymentMethod;
-  $('sm-amount').value = '';
-  openM('splitSaleModal');
+  editSaleTs = ts;
+  $('em-orig-total').textContent = fc(s.total);
+  $('em-orig-method').textContent = s.paymentMethod || '—';
+  $('em-full-method').value = s.paymentMethod || 'Efectivo';
+  $('em-amount').value = '';
+  $('em-split-method').value = 'Efectivo';
+  openM('editSaleModal');
+};
+
+window.confirmChangeFullMethod = () => {
+  if (!editSaleTs) return;
+  const newMethod = $('em-full-method').value;
+  socket.emit('edit-sale-method', { timestamp: editSaleTs, newMethod });
+  closeM('editSaleModal');
+  showToast('🔄 Cambiando método de pago...');
 };
 
 window.confirmDivideSale = () => {
-  if (!splitSaleTs) return;
-  const s = state.sales.find(x => x.timestamp === splitSaleTs);
+  if (!editSaleTs) return;
+  const s = state.sales.find(x => x.timestamp === editSaleTs);
   if (!s) return;
-  const amt = parseInt($('sm-amount').value) || 0;
+  const amt = parseInt($('em-amount').value) || 0;
   if (amt <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
   if (amt >= s.total) { showToast('⚠️ El monto extraído no puede ser igual o mayor al total original'); return; }
 
-  const newMethod = $('sm-method').value;
-  socket.emit('split-sale-retroactive', { timestamp: splitSaleTs, amount: amt, newMethod });
-  closeM('splitSaleModal');
+  const newMethod = $('em-split-method').value;
+  socket.emit('split-sale-retroactive', { timestamp: editSaleTs, amount: amt, newMethod });
+  closeM('editSaleModal');
   showToast('🔄 Dividiendo cobro de la base de datos...');
 };
 </script>
