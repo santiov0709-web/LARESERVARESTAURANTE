@@ -255,50 +255,73 @@ app.get('/api/export-daily', async (req, res) => {
         const sales = grouped[dateStr];
         const ws = wb.addWorksheet(dateStr);
         
-        ws.mergeCells('A1:G1');
+        ws.mergeCells('A1:C1');
         const t = ws.getCell('A1');
-        t.value='LA RESERVA — REPORTE DE VENTAS'; t.font={bold:true,color:{argb:'FFFFFFFF'},size:16}; t.alignment={horizontal:'center'};
+        t.value='LA RESERVA — REPORTE DE PRODUCTOS (POR DÍA)'; t.font={bold:true,color:{argb:'FFFFFFFF'},size:15}; t.alignment={horizontal:'center'};
         t.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1a3324'}};
 
-        ws.mergeCells('A2:G2');
+        ws.mergeCells('A2:C2');
         const d = ws.getCell('A2');
-        d.value=`Fecha: ${dateStr.replace(/-/g,'/')}`; d.font={bold:true,size:11,color:{argb:'FF8fa89a'}}; d.alignment={horizontal:'center'};
+        d.value=`Fecha de venta: ${dateStr.replace(/-/g,'/')}`; d.font={bold:true,size:11,color:{argb:'FF8fa89a'}}; d.alignment={horizontal:'center'};
         d.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0b140f'}};
 
         ws.addRow([]);
-        ws.columns=[{key:'num',width:6},{key:'mesa',width:10},{key:'mesero',width:18},{key:'hora',width:14},{key:'productos',width:42},{key:'metodo',width:16},{key:'total',width:16}];
+        ws.columns=[{key:'producto',width:42},{key:'cantidad',width:22},{key:'total',width:22}];
 
-        const hRow = ws.addRow(['#','Mesa','Mesero','Hora Cierre','Productos','Método Pago','Total']);
+        const hRow = ws.addRow(['Producto','Cantidad Vendida','Total Efectivo']);
         hRow.height = 28;
         hRow.eachCell(c=>{c.fill=hFill;c.font=hFont;c.border=bdr;c.alignment={horizontal:'center',vertical:'middle'};});
 
         let dayTotal = 0;
         const methods = {};
+        const productTotals = {};
 
-        sales.forEach((tx,i) => {
-          const list = tx.items.map(it=>`${it.name} x${it.qty}${it.note?' ['+it.note+']':''} (${formatCOP(it.price*it.qty)})`).join(', ');
-          const row = ws.addRow([i+1,`Mesa ${tx.mesa}`,tx.mesero||'—',tx.closedAt,list,tx.paymentMethod||'—',tx.total]);
-          row.getCell('total').numFmt='"$"#,##0';
-          row.height = Math.max(22,Math.ceil(list.length/40)*18);
-          row.eachCell(c=>{c.border=bdr;c.alignment={vertical:'middle',wrapText:true};});
-          if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};}); // Light Grey
-          
+        sales.forEach(tx => {
           dayTotal += tx.total;
           const m = tx.paymentMethod || 'Sin método';
           methods[m] = (methods[m]||0) + tx.total;
+
+          (tx.items || []).forEach(it => {
+            const name = it.name;
+            if (!productTotals[name]) {
+               productTotals[name] = { qty: 0, total: 0 };
+            }
+            productTotals[name].qty += it.qty;
+            productTotals[name].total += ((it.price || 0) * it.qty); // Calcula total del producto
+          });
+        });
+
+        // Convertir en array y ordenar por cantidad vendida
+        const productsArray = Object.entries(productTotals).sort((a,b) => b[1].qty - a[1].qty);
+
+        productsArray.forEach(([name, data], i) => {
+          const row = ws.addRow([name, data.qty, data.total]);
+          row.getCell('total').numFmt='"$"#,##0';
+          row.height = 22;
+          row.eachCell(c=>{c.border=bdr;c.alignment={vertical:'middle'};});
+          // Fondo gris para filas intercaladas
+          if(i%2===0) row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}};});
         });
 
         ws.addRow([]);
-        const totRow = ws.addRow(['','','','','','TOTAL DÍA:',dayTotal]);
-        totRow.getCell(6).font=gold; totRow.getCell(7).font=gold;
-        totRow.getCell(7).numFmt='"$"#,##0'; totRow.getCell(6).alignment={horizontal:'right'};
+        const totRow = ws.addRow(['','TOTAL VENTAS DESGLOSADAS:',dayTotal]);
+        totRow.getCell(2).font=gold; totRow.getCell(3).font=gold;
+        totRow.getCell(3).numFmt='"$"#,##0'; totRow.getCell(2).alignment={horizontal:'right'};
 
         // Breakdown por método en esa hoja
         ws.addRow([]);
-        const bh=ws.addRow(['','','','','','Método','Total']);
-        bh.getCell(6).font=hFont; bh.getCell(6).fill=hFill;
-        bh.getCell(7).font=hFont; bh.getCell(7).fill=hFill;
-        Object.entries(methods).forEach(([m,t])=>{ const r=ws.addRow(['','','','','',m,t]); r.getCell(7).numFmt='"$"#,##0'; });
+        const bh=ws.addRow(['','Método de Pago Ingresado','Total Recibido']);
+        bh.getCell(2).font=hFont; bh.getCell(2).fill=hFill;
+        bh.getCell(3).font=hFont; bh.getCell(3).fill=hFill;
+        
+        // Agregar cada método de pago ordenado
+        Object.entries(methods)
+          .sort((a,b) => b[1] - a[1]) // Mayor a menor
+          .forEach(([m,t])=>{ 
+             const r=ws.addRow(['',m,t]); 
+             r.getCell(3).numFmt='"$"#,##0'; 
+             r.getCell(2).border=bdr; r.getCell(3).border=bdr;
+          });
       });
     }
 
