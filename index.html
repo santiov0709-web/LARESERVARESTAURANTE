@@ -713,10 +713,10 @@ function renderMenuConfig() {
       row.innerHTML = `
         <div style="display:flex;gap:8px">
           <input type="text" class="input-text" style="margin:0;flex:1;padding:8px 10px;height:36px" value="${it.n}"
-            onchange="MENU['${cat}'][${idx}].n=this.value; PR[this.value]=MENU['${cat}'][${idx}].p">
+            oninput="MENU['${cat.replace(/'/g, "\\'")}'][${idx}].n=this.value; PR[this.value]=MENU['${cat.replace(/'/g, "\\'")}'][${idx}].p">
           <input type="number" class="input-text" style="margin:0;width:80px;padding:8px 10px;height:36px" value="${it.p}"
-            onchange="MENU['${cat}'][${idx}].p=parseInt(this.value)||0; PR[MENU['${cat}'][${idx}].n]=MENU['${cat}'][${idx}].p">
-          <button class="btn-full btn-red" style="margin:0;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center" onclick="menuDelItem('${cat}', ${idx})">✕</button>
+            oninput="MENU['${cat.replace(/'/g, "\\'")}'][${idx}].p=parseInt(this.value)||0; PR[MENU['${cat.replace(/'/g, "\\'")}'][${idx}].n]=MENU['${cat.replace(/'/g, "\\'")}'][${idx}].p">
+          <button class="btn-full btn-red" style="margin:0;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center" onclick="menuDelItem('${cat.replace(/'/g, "\\'")}', ${idx})">✕</button>
         </div>`;
       wrap.appendChild(row);
     });
