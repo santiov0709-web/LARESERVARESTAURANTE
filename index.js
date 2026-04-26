@@ -419,6 +419,7 @@ io.on('connection', (socket) => {
       mesa: data.mesa,
       items: data.items,
       mesero: data.mesero || 'Mesero',
+      isYaneth: data.isYaneth || false,
       hora: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
       timestamp: Date.now()
     };
@@ -460,6 +461,28 @@ io.on('connection', (socket) => {
   socket.on('dispatch-order', (orderId) => {
     const order = activeOrders.get(orderId);
     if (!order) return;
+
+    if (order.isYaneth) {
+      // Pedidos de Yaneth se cierran AUTOMÁTICAMENTE al despachar
+      const finalTotal = order.items.reduce((s,it)=>s+(it.price*it.qty),0);
+      const transaction = {
+        mesa: 0, mesero: 'ADMIN (Yaneth)',
+        items: [...order.items], total: finalTotal,
+        paymentMethod: 'Crédito Yaneth', openedAt: order.hora,
+        closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+        timestamp: Date.now()
+      };
+      dailySales.push(transaction);
+      activeOrders.delete(orderId);
+      io.emit('order-dispatched', {id:orderId, mesa:'Yaneth', mesero:'Yaneth'});
+      io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      console.log(`💎 Consumo Yaneth registrado — ${formatCOP(finalTotal)}`);
+      persist(async () => {
+        await Order.deleteOne({id:orderId});
+        await new Sale(transaction).save();
+      });
+      return;
+    }
 
     const bill = tableBills.get(order.mesa);
     if (bill) {

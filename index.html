@@ -173,6 +173,17 @@
       .tk-j { display:flex; justify-content:space-between; }
       .tk-line { border-top: 2px solid #000; margin: 8px 0; }
     }
+    .bill-card.yaneth { border: 2px solid #9b59b6; background: rgba(155, 89, 182, 0.05); }
+    .badge-yaneth { background: #9b59b6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; margin-bottom: 5px; display: inline-block; }
+    #yaneth-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      z-index: 5000; display: none; padding: 20px; color: white;
+    }
+    .y-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 20px; max-height: 70vh; overflow-y: auto; }
+    .y-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .y-item:hover { background: rgba(155, 89, 182, 0.2); border-color: #9b59b6; }
+    .y-q { background: #9b59b6; color: white; padding: 0 6px; border-radius: 10px; font-size: 0.8rem; margin-left: 5px; }
   </style>
 </head>
 <body>
@@ -247,12 +258,13 @@
       <div><div class="logo">La Reserva</div><div class="logo-sub">Caja / Admin</div></div>
       <div class="badge bg-caj"><div class="dot" style="background:var(--blue);box-shadow:0 0 8px var(--blue)"></div>Caja</div>
     </div>
-    <div class="caja-tabs">
+    <div class="caja-tabs" style="display:flex; align-items:center">
       <div class="caja-tab act" id="tab-cuentas"    onclick="switchCaja('cuentas')">Cuentas</div>
       <div class="caja-tab"     id="tab-dashboard"  onclick="switchCaja('dashboard')">Dashboard</div>
       <div class="caja-tab"     id="tab-venta"      onclick="switchCaja('venta')">Venta</div>
       <div class="caja-tab"     id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
       <div class="caja-tab"     id="tab-config"     onclick="switchCaja('config')">Menú</div>
+      <button class="btn-full" style="margin:0 0 0 auto; background: linear-gradient(135deg, #9b59b6, #8e44ad); border:none; padding:4px 12px; font-size:0.75rem; width:auto; height:32px" onclick="openYModal()">💎 CRÉDITO YANETH</button>
     </div>
   </header>
 
@@ -751,13 +763,15 @@ function render() {
     const oc = $('c-orders'); oc.innerHTML = '';
     $('c-empty').style.display = state.orders.length ? 'none' : 'block';
     [...state.orders].reverse().forEach(o => {
-      const d = document.createElement('div'); d.className = 'bill-card';
+      const d = document.createElement('div'); 
+      d.className = 'bill-card' + (o.isYaneth ? ' yaneth' : '');
       d.innerHTML = `
         <div class="b-head">
-          <span>Mesa ${o.mesa}</span>
+          <span>${o.isYaneth ? '<span class="badge-yaneth">PEDIDO PARA YANETH</span>' : 'Mesa ' + o.mesa}</span>
           <span style="color:var(--txt2);font-size:0.8rem">${o.mesero} · ${o.hora}</span>
         </div>
         <div class="b-body">
+...
           ${o.items.map(it=>`
             <div class="m-item" style="flex-direction:column;align-items:flex-start">
               <div style="width:100%;display:flex;justify-content:space-between">
@@ -1392,5 +1406,86 @@ window.confirmDivideSale = () => {
   </div>
 </div></div>
 
+  <!-- MODAL CRÉDITO YANETH -->
+  <div id="yaneth-modal">
+    <div style="max-width:800px; margin:0 auto">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+        <h2 style="margin:0; color:#9b59b6">💎 Crédito Yaneth</h2>
+        <button class="btn-full btn-red" style="margin:0; width:auto; padding:8px 20px" onclick="$('yaneth-modal').style.display='none'">CANCELAR</button>
+      </div>
+      <p style="color:var(--txt2); font-size:0.9rem">Selecciona los productos consumidos por Yaneth. Se enviarán a cocina y se registrarán como venta de crédito del dueño.</p>
+      
+      <div id="y-selection-summary" style="background:rgba(155, 89, 182, 0.15); padding:15px; border-radius:12px; margin:15px 0; border:1px dashed #9b59b6; display:none">
+        <div id="y-items-list" style="font-size:0.9rem; margin-bottom:10px"></div>
+        <button class="btn-full" style="background:#9b59b6; margin:0" onclick="sendYOrder()">ENVIAR PEDIDO PARA YANETH</button>
+      </div>
+
+      <div class="y-grid" id="y-menu-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    let yOrder = {};
+
+    function openYModal() {
+      yOrder = {};
+      renderYMenu();
+      $('y-selection-summary').style.display = 'none';
+      $('yaneth-modal').style.display = 'block';
+    }
+
+    function renderYMenu() {
+      const g = $('y-menu-grid'); g.innerHTML = '';
+      Object.keys(MENU).forEach(cat => {
+        const div = document.createElement('div');
+        div.style.gridColumn = '1 / -1';
+        div.style.color = 'var(--txt2)';
+        div.style.fontSize = '0.8rem';
+        div.style.textTransform = 'uppercase';
+        div.style.marginTop = '15px';
+        div.style.borderBottom = '1px solid rgba(155,89,182,0.3)';
+        div.style.paddingBottom = '5px';
+        div.textContent = cat;
+        g.appendChild(div);
+
+        MENU[cat].forEach(it => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'y-item';
+          const q = yOrder[it.n] ? yOrder[it.n].qty : 0;
+          itemDiv.innerHTML = `<div>${it.n}</div><div style="font-size:0.75rem; color:var(--txt3)">${fc(it.p)} ${q>0?`<span class="y-q">${q}</span>`:''}</div>`;
+          itemDiv.onclick = () => {
+            if(!yOrder[it.n]) yOrder[it.n] = { name: it.n, qty: 1, price: it.p };
+            else yOrder[it.n].qty++;
+            updateYSummary();
+            renderYMenu();
+          };
+          g.appendChild(itemDiv);
+        });
+      });
+    }
+
+    function updateYSummary() {
+      const s = $('y-selection-summary');
+      const list = $('y-items-list');
+      const items = Object.values(yOrder);
+      if(items.length === 0) { s.style.display = 'none'; return; }
+      
+      s.style.display = 'block';
+      list.innerHTML = items.map(it => `<div>• ${it.name} <strong>×${it.qty}</strong></div>`).join('');
+    }
+
+    function sendYOrder() {
+      const items = Object.values(yOrder);
+      if(items.length === 0) return;
+      socket.emit('new-order', {
+        mesa: 0,
+        items: items,
+        mesero: 'Yaneth',
+        isYaneth: true
+      });
+      $('yaneth-modal').style.display = 'none';
+      alert('✅ Pedido para Yaneth enviado a cocina.');
+    }
+  </script>
 </body>
 </html>
