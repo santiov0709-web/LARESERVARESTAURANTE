@@ -143,6 +143,13 @@
     .pulse-icon { animation:pulse-icon .8s infinite; }
     @keyframes pulse-icon { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
 
+    /* ── Search Bar ── */
+    .search-container { position:relative; margin-bottom:12px; }
+    .search-input { width:100%; padding:10px 14px 10px 40px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; color:var(--txt1); font-size:0.9rem; outline:none; transition:var(--tr); }
+    .search-input:focus { border-color:var(--emerald); box-shadow:0 0 8px rgba(46,204,113,0.2); }
+    .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:1.1rem; color:var(--txt3); pointer-events:none; }
+    .search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--txt3); font-size:1.2rem; cursor:pointer; padding:5px; }
+
     /* ── Impresión Térmica ── */
     #ticket { display:none; }
     @media print {
@@ -200,6 +207,11 @@
     <div class="sec-title">📍 Mesa</div>
     <div class="grid" id="m-grid"></div>
     <div class="sec-title">🍽️ Menú</div>
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="m-search" class="search-input" placeholder="Buscar producto..." oninput="handleSearch(this.value)">
+      <button id="search-clear" class="search-clear" style="display:none" onclick="clearSearch()">✕</button>
+    </div>
     <div class="tabs" id="m-cats"></div>
     <div id="m-menu"></div>
   </section>
@@ -504,7 +516,7 @@ if (mode === 'landing') {
 /* ── State ── */
 let MENU = {}, PR = {};
 let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'}, inv:{} };
-let selTb = null, curCat = '', myOrder = {}, myName = '';
+let selTb = null, curCat = '', myOrder = {}, myName = '', searchTerm = '';
 let payTb = null;
 
 /* ── Load menu from API (then update from socket) ── */
@@ -674,20 +686,38 @@ function render() {
 
     // Menu items
     const tm = $('m-menu'); tm.innerHTML = '';
-    (MENU[curCat] || []).forEach(it => {
+    let itemsToRender = [];
+    
+    if (searchTerm) {
+      // Search across all categories
+      Object.values(MENU).flat().forEach(it => {
+        if (it.n.toLowerCase().includes(searchTerm.toLowerCase())) {
+          itemsToRender.push(it);
+        }
+      });
+      $('m-cats').style.display = 'none'; // Hide categories while searching
+    } else {
+      itemsToRender = MENU[curCat] || [];
+      $('m-cats').style.display = 'flex';
+    }
+
+    itemsToRender.forEach(it => {
       const md  = myOrder[it.n] || null;
       const q   = md ? md.qty : 0;
       const note= md ? (md.note||'') : '';
-      const left= state.inv[it.n] === undefined ? 0 : state.inv[it.n];
-      const ex  = left <= 0;
-      const maxed = q >= left;
+      
+      const isTracked = state.inv[it.n] !== undefined;
+      const left= isTracked ? state.inv[it.n] : 999;
+      const ex  = isTracked && left <= 0;
+      const maxed = isTracked && q >= left;
+
       const d = document.createElement('div');
       d.className = 'item' + (q>0?' has':'');
       d.innerHTML = `
         <div style="flex:1;min-width:0">
           <div class="i-name">${it.n}
             ${ex ? '<span style="color:var(--red);font-size:0.7rem;margin-left:6px;font-weight:700">AGOTADO</span>'
-                 : `<span style="color:var(--txt2);font-size:0.7rem;margin-left:6px">Quedan ${left}</span>`}
+                 : (isTracked ? `<span style="color:var(--txt2);font-size:0.7rem;margin-left:6px">Quedan ${left}</span>` : '')}
           </div>
           <div class="i-price">${fc(it.p)}</div>
           ${q>0 ? `<div class="i-note" onclick="addNote('${it.n}')">📝 ${note||'Añadir nota...'}</div>` : ''}
@@ -699,6 +729,10 @@ function render() {
         </div>`;
       tm.appendChild(d);
     });
+
+    if (searchTerm && itemsToRender.length === 0) {
+      tm.innerHTML = '<div style="text-align:center;padding:40px;color:var(--txt3)">No se encontraron productos</div>';
+    }
 
     // Summary bar
     const tot = Object.entries(myOrder).reduce((s,[n,md])=>s+(PR[n]||0)*md.qty, 0);
@@ -925,6 +959,20 @@ function menuAddItem(cat) {
 function menuDelItem(cat, idx) {
   if (confirm('¿Eliminar producto?')) { MENU[cat].splice(idx, 1); renderMenuConfig(); }
 }
+
+/* ── Search Handlers ── */
+window.handleSearch = (val) => {
+  searchTerm = val.trim();
+  $('search-clear').style.display = searchTerm ? 'block' : 'none';
+  render();
+};
+
+window.clearSearch = () => {
+  $('m-search').value = '';
+  searchTerm = '';
+  $('search-clear').style.display = 'none';
+  render();
+};
 
 /* ── Actions ── */
 window.cQ = (n, d) => {
