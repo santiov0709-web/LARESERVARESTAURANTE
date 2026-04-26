@@ -1370,6 +1370,52 @@ window.confirmDivideSale = () => {
   }, 500);
 };
 
+  let yOrder = {};
+  window.openYModal = () => {
+    yOrder = {};
+    renderYMenu();
+    $('y-selection-summary').style.display = 'none';
+    openM('yaneth-modal');
+  };
+  function renderYMenu() {
+    const g = $('y-menu-grid'); g.innerHTML = '';
+    Object.keys(MENU).forEach(cat => {
+      const div = document.createElement('div');
+      div.style.gridColumn = '1 / -1'; div.style.color = 'var(--txt2)'; div.style.fontSize = '0.8rem';
+      div.style.textTransform = 'uppercase'; div.style.marginTop = '15px';
+      div.style.borderBottom = '1px solid rgba(155,89,182,0.3)'; div.style.paddingBottom = '5px';
+      div.textContent = cat;
+      g.appendChild(div);
+      MENU[cat].forEach(it => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'y-item';
+        const q = yOrder[it.n] ? yOrder[it.n].qty : 0;
+        itemDiv.innerHTML = `<div>${it.n}</div><div style="font-size:0.75rem; color:var(--txt3)">${fc(it.p)} ${q>0?`<span class="y-q">${q}</span>`:''}</div>`;
+        itemDiv.onclick = () => {
+          if(!yOrder[it.n]) yOrder[it.n] = { name: it.n, qty: 1, price: it.p };
+          else yOrder[it.n].qty++;
+          updateYSummary();
+          renderYMenu();
+        };
+        g.appendChild(itemDiv);
+      });
+    });
+  }
+  function updateYSummary() {
+    const s = $('y-selection-summary'); const list = $('y-items-list');
+    const items = Object.values(yOrder);
+    if(items.length === 0) { s.style.display = 'none'; return; }
+    s.style.display = 'block';
+    list.innerHTML = items.map(it => `<div>• ${it.name} <strong>×${it.qty}</strong></div>`).join('');
+  }
+  window.sendYOrder = () => {
+    const items = Object.values(yOrder);
+    if(items.length === 0) return;
+    socket.emit('new-order', { mesa: 0, items: items, mesero: 'Yaneth', isYaneth: true });
+    closeM('yaneth-modal');
+    showToast('✅ Pedido para Yaneth enviado a cocina.');
+  };
+
 } // end mode check
 </script>
 
@@ -1407,13 +1453,10 @@ window.confirmDivideSale = () => {
 </div></div>
 
   <!-- MODAL CRÉDITO YANETH -->
-  <div id="yaneth-modal">
-    <div style="max-width:800px; margin:0 auto">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <h2 style="margin:0; color:#9b59b6">💎 Crédito Yaneth</h2>
-        <button class="btn-full btn-red" style="margin:0; width:auto; padding:8px 20px" onclick="$('yaneth-modal').style.display='none'">CANCELAR</button>
-      </div>
-      <p style="color:var(--txt2); font-size:0.9rem">Selecciona los productos consumidos por Yaneth. Se enviarán a cocina y se registrarán como venta de crédito del dueño.</p>
+  <div id="yaneth-modal" class="modal">
+    <div class="m-content" style="max-width:800px">
+      <div class="m-head" style="color:#9b59b6">💎 Crédito Yaneth <button class="m-close" onclick="closeM('yaneth-modal')">✕</button></div>
+      <p style="color:var(--txt2); font-size:0.85rem; margin:10px 0">Selecciona los productos consumidos por Yaneth. Se enviarán a cocina y se registrarán como venta de crédito del dueño.</p>
       
       <div id="y-selection-summary" style="background:rgba(155, 89, 182, 0.15); padding:15px; border-radius:12px; margin:15px 0; border:1px dashed #9b59b6; display:none">
         <div id="y-items-list" style="font-size:0.9rem; margin-bottom:10px"></div>
@@ -1423,69 +1466,5 @@ window.confirmDivideSale = () => {
       <div class="y-grid" id="y-menu-grid"></div>
     </div>
   </div>
-
-  <script>
-    let yOrder = {};
-
-    function openYModal() {
-      yOrder = {};
-      renderYMenu();
-      $('y-selection-summary').style.display = 'none';
-      $('yaneth-modal').style.display = 'block';
-    }
-
-    function renderYMenu() {
-      const g = $('y-menu-grid'); g.innerHTML = '';
-      Object.keys(MENU).forEach(cat => {
-        const div = document.createElement('div');
-        div.style.gridColumn = '1 / -1';
-        div.style.color = 'var(--txt2)';
-        div.style.fontSize = '0.8rem';
-        div.style.textTransform = 'uppercase';
-        div.style.marginTop = '15px';
-        div.style.borderBottom = '1px solid rgba(155,89,182,0.3)';
-        div.style.paddingBottom = '5px';
-        div.textContent = cat;
-        g.appendChild(div);
-
-        MENU[cat].forEach(it => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'y-item';
-          const q = yOrder[it.n] ? yOrder[it.n].qty : 0;
-          itemDiv.innerHTML = `<div>${it.n}</div><div style="font-size:0.75rem; color:var(--txt3)">${fc(it.p)} ${q>0?`<span class="y-q">${q}</span>`:''}</div>`;
-          itemDiv.onclick = () => {
-            if(!yOrder[it.n]) yOrder[it.n] = { name: it.n, qty: 1, price: it.p };
-            else yOrder[it.n].qty++;
-            updateYSummary();
-            renderYMenu();
-          };
-          g.appendChild(itemDiv);
-        });
-      });
-    }
-
-    function updateYSummary() {
-      const s = $('y-selection-summary');
-      const list = $('y-items-list');
-      const items = Object.values(yOrder);
-      if(items.length === 0) { s.style.display = 'none'; return; }
-      
-      s.style.display = 'block';
-      list.innerHTML = items.map(it => `<div>• ${it.name} <strong>×${it.qty}</strong></div>`).join('');
-    }
-
-    function sendYOrder() {
-      const items = Object.values(yOrder);
-      if(items.length === 0) return;
-      socket.emit('new-order', {
-        mesa: 0,
-        items: items,
-        mesero: 'Yaneth',
-        isYaneth: true
-      });
-      $('yaneth-modal').style.display = 'none';
-      alert('✅ Pedido para Yaneth enviado a cocina.');
-    }
-  </script>
 </body>
 </html>
