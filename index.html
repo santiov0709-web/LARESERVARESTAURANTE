@@ -874,7 +874,10 @@ function render() {
         d.innerHTML = `
           <div class="b-head" style="font-size:0.75rem; padding:8px 12px; color:var(--emerald)">
             <span>${o.isYaneth ? '💎 YANETH' : 'Mesa ' + o.mesa}</span>
-            <span style="color:var(--txt3)">Out: ${o.closedAt||''}</span>
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="color:var(--txt3)">Out: ${o.closedAt||''}</span>
+              <button class="q-btn" style="width:22px; height:22px; font-size:0.6rem; color:var(--red); border-color:var(--red)" onclick="removeDispatchedOrder(${o.id})">✕</button>
+            </div>
           </div>
           <div class="b-body" style="padding:8px 12px; font-size:0.78rem">
             ${o.items.map(it => `<div>${it.qty}x ${it.name}</div>`).join('')}
@@ -1143,6 +1146,11 @@ window.openMeseroList = () => {
 };
 
 window.disp = id => socket.emit('dispatch-order', id);
+window.removeDispatchedOrder = id => {
+  if (confirm('¿Eliminar este pedido del monitor?')) {
+    socket.emit('remove-dispatched-order', id);
+  }
+};
 window.cancelOrder = id => {
   if (confirm('¿Cancelar pedido permanentemente? Los productos volverán al inventario.')) {
     socket.emit('cancel-order', id);

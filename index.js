@@ -116,7 +116,11 @@ function formatCOP(n){ return '$' + Math.round(n).toLocaleString('es-CO'); }
 function getDailyTotal(){ return dailySales.reduce((s,t)=>s+t.total,0); }
 function resetDailyIfNewDay(){
   const today = new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'});
-  if(today !== dailyDate){ dailySales=[]; dailyDate=today; }
+  if(today !== dailyDate){ 
+    dailySales=[]; 
+    dispatchedOrders=[]; // Reset monitor de despachados cada día
+    dailyDate=today; 
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -520,6 +524,13 @@ io.on('connection', (socket) => {
     });
   });
 
+  /* ── Remove dispatched order (Admin) ── */
+  socket.on('remove-dispatched-order', (id) => {
+    dispatchedOrders = dispatchedOrders.filter(o => o.id !== id);
+    io.emit('all-dispatched-orders', dispatchedOrders);
+    console.log(`🗑️ Pedido despachado #${id} eliminado del monitor`);
+  });
+
   /* ── Cancel order (Admin) ── */
   socket.on('cancel-order', (orderId) => {
     const order = activeOrders.get(orderId);
@@ -767,9 +778,11 @@ io.on('connection', (socket) => {
   /* ── Reset daily ── */
   socket.on('reset-daily', () => {
     dailySales = [];
+    dispatchedOrders = []; // También reiniciar monitor al reiniciar manual
     dailyDate = new Date().toLocaleDateString('es-CO',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'});
     io.emit('daily-sales-update', {total:0,count:0,date:dailyDate,transactions:[]});
-    console.log('🔄 Venta diaria reiniciada manualmente en memoria');
+    io.emit('all-dispatched-orders', dispatchedOrders);
+    console.log('🔄 Venta diaria y monitor reiniciados manualmente en memoria');
   });
 
   /* ── Fetch Historical Sales ── */
