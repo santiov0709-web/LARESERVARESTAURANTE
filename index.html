@@ -833,21 +833,26 @@ function render() {
     $('d-tot').textContent  = fc(state.daily.total||0);
     $('d-date').textContent = 'Fecha: ' + (state.daily.date||'—');
     if($('d-count')) $('d-count').textContent = state.sales.length;
-    [...state.sales].reverse().forEach(s => {
-      const d = document.createElement('div'); d.className = 'bill-card';
-      d.innerHTML = `
-        <div class="b-head">
-          <span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span>
-        </div>
-        <div class="b-body" style="font-size:0.78rem">
-          <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
-          ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
-        </div>
-        <div style="padding:10px 14px;border-top:1px solid var(--border)">
-          <button class="q-btn wide" style="margin:0;width:100%;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ EDITAR PAGO / DIVIDIR</button>
-        </div>`;
-      dt.appendChild(d);
-    });
+    
+    const dt = $('d-txs'); 
+    if (dt) {
+      dt.innerHTML = '';
+      [...state.sales].reverse().forEach(s => {
+        const d = document.createElement('div'); d.className = 'bill-card';
+        d.innerHTML = `
+          <div class="b-head">
+            <span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span>
+          </div>
+          <div class="b-body" style="font-size:0.78rem">
+            <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
+            ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
+          </div>
+          <div style="padding:10px 14px;border-top:1px solid var(--border)">
+            <button class="q-btn wide" style="margin:0;width:100%;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ EDITAR PAGO / DIVIDIR</button>
+          </div>`;
+        dt.appendChild(d);
+      });
+    }
 
     // Render Monitor Tab
     if ($('v-monitor').classList.contains('active')) {
