@@ -21,6 +21,7 @@ app.use(express.static(path.join(__dirname)));
    ══════════════════════════════════════════════ */
 const activeOrders = new Map();   // id → order
 const tableBills   = new Map();   // mesa → bill
+let   dispatchedOrders = [];      // Cola de los últimos 20 pedidos despachados
 let   orderCounter = 0;
 let   inventory    = {};
 let   dailySales   = [];
@@ -474,6 +475,12 @@ io.on('connection', (socket) => {
       };
       dailySales.push(transaction);
       activeOrders.delete(orderId);
+      
+      // Registrar en el monitor de despachados
+      dispatchedOrders.unshift({ ...order, closedAt: transaction.closedAt });
+      if (dispatchedOrders.length > 20) dispatchedOrders.pop();
+      io.emit('all-dispatched-orders', dispatchedOrders);
+
       io.emit('order-dispatched', {id:orderId, mesa:'Yaneth', mesero:'Yaneth'});
       io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
       console.log(`💎 Consumo Yaneth registrado — ${formatCOP(finalTotal)}`);
@@ -497,6 +504,12 @@ io.on('connection', (socket) => {
     }
 
     activeOrders.delete(orderId);
+    
+    // Registrar en el monitor de despachados
+    dispatchedOrders.unshift({ ...order, closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true}) });
+    if (dispatchedOrders.length > 20) dispatchedOrders.pop();
+    io.emit('all-dispatched-orders', dispatchedOrders);
+
     io.emit('order-dispatched', {id:orderId, mesa:order.mesa, mesero:order.mesero});
     io.emit('all-bills', Object.fromEntries(tableBills));
     console.log(`✅ Pedido #${orderId} despachado — Mesa ${order.mesa}`);

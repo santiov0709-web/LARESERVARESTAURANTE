@@ -257,6 +257,7 @@
       <div class="caja-tab act" id="tab-cuentas"    onclick="switchCaja('cuentas')">Cuentas</div>
       <div class="caja-tab"     id="tab-dashboard"  onclick="switchCaja('dashboard')">Dashboard</div>
       <div class="caja-tab"     id="tab-venta"      onclick="switchCaja('venta')">Venta</div>
+      <div class="caja-tab"     id="tab-monitor"    onclick="switchCaja('monitor')">Monitor</div>
       <div class="caja-tab"     id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
       <div class="caja-tab"     id="tab-config"     onclick="switchCaja('config')">Menú</div>
       <button class="btn-full" style="margin:0 0 0 auto; background: linear-gradient(135deg, #9b59b6, #8e44ad); border:none; padding:4px 12px; font-size:0.75rem; width:auto; height:32px" onclick="openYModal()">💎 CRÉDITO YANETH</button>
@@ -298,6 +299,19 @@
     </div>
     <div class="sec-title" style="margin-top:8px">Transacciones</div>
     <div id="d-txs"></div>
+  </section>
+
+  <section class="app-view sub-view" id="v-monitor">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; height:100%">
+      <div>
+        <div class="sec-title" style="color:var(--gold)">⏳ En Cocina</div>
+        <div id="m-pending" style="display:flex; flex-direction:column; gap:10px"></div>
+      </div>
+      <div>
+        <div class="sec-title" style="color:var(--emerald)">✅ Despachados</div>
+        <div id="m-completed" style="display:flex; flex-direction:column; gap:10px"></div>
+      </div>
+    </div>
   </section>
 
   <section class="app-view sub-view" id="v-inventario">
@@ -522,7 +536,7 @@ if (mode === 'landing') {
 
 /* ── State ── */
 let MENU = {}, PR = {};
-let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'}, inv:{} };
+let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'}, inv:{}, dispatched:[] };
 let selTb = null, curCat = '', myOrder = {}, myName = '', searchTerm = '';
 let payTb = null;
 
@@ -546,6 +560,7 @@ socket.on('menu-updated', m => {
 socket.on('all-bills',    b => { state.bills = b; render(); });
 socket.on('active-orders',o => { state.orders = o; render(); });
 socket.on('all-inventory',iv => { state.inv = iv; render(); });
+socket.on('all-dispatched-orders', d => { state.dispatched = d; render(); });
 socket.on('daily-sales-update', s => {
   state.daily = s; state.sales = s.transactions || [];
   $('d-count') && ($('d-count').textContent = state.sales.length);
@@ -818,7 +833,6 @@ function render() {
     $('d-tot').textContent  = fc(state.daily.total||0);
     $('d-date').textContent = 'Fecha: ' + (state.daily.date||'—');
     if($('d-count')) $('d-count').textContent = state.sales.length;
-    const dt = $('d-txs'); dt.innerHTML = '';
     [...state.sales].reverse().forEach(s => {
       const d = document.createElement('div'); d.className = 'bill-card';
       d.innerHTML = `
@@ -834,6 +848,44 @@ function render() {
         </div>`;
       dt.appendChild(d);
     });
+
+    // Render Monitor Tab
+    if ($('v-monitor').classList.contains('active')) {
+      const p = $('m-pending'); p.innerHTML = '';
+      const c = $('m-completed'); c.innerHTML = '';
+      
+      state.orders.forEach(o => {
+        const d = document.createElement('div'); d.className = 'bill-card';
+        d.style.borderColor = o.isYaneth ? '#9b59b6' : 'var(--border)';
+        d.innerHTML = `
+          <div class="b-head" style="font-size:0.75rem; padding:8px 12px">
+            <span>${o.isYaneth ? '💎 YANETH' : 'Mesa ' + o.mesa}</span>
+            <span style="color:var(--txt3)">${o.hora}</span>
+          </div>
+          <div class="b-body" style="padding:8px 12px; font-size:0.78rem">
+            ${o.items.map(it => `<div>${it.qty}x ${it.name}</div>`).join('')}
+          </div>`;
+        p.appendChild(d);
+      });
+
+      state.dispatched.forEach(o => {
+        const d = document.createElement('div'); d.className = 'bill-card';
+        d.style.opacity = '0.7';
+        d.innerHTML = `
+          <div class="b-head" style="font-size:0.75rem; padding:8px 12px; color:var(--emerald)">
+            <span>${o.isYaneth ? '💎 YANETH' : 'Mesa ' + o.mesa}</span>
+            <span style="color:var(--txt3)">Out: ${o.closedAt||''}</span>
+          </div>
+          <div class="b-body" style="padding:8px 12px; font-size:0.78rem">
+            ${o.items.map(it => `<div>${it.qty}x ${it.name}</div>`).join('')}
+          </div>`;
+        c.appendChild(d);
+      });
+
+      if (state.orders.length===0 && state.dispatched.length===0) {
+        p.innerHTML = '<div style="text-align:center; padding:20px; color:var(--txt3); font-size:0.8rem">Sin actividad reciente</div>';
+      }
+    }
 
     // Inventario — con botones -5 -1 +1 +5
     const ic = $('cj-inv'); ic.innerHTML = '';
