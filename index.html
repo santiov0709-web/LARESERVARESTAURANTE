@@ -384,7 +384,7 @@
   
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="btn-full" style="background:#25D366;margin:0;flex:1" onclick="shareBill()">📲 WhatsApp</button>
-    <button class="btn-full" style="background:#7f8c8d;margin:0;flex:1" onclick="printBill()">🖨️ Imprimir</button>
+    <button class="btn-full" style="background:#7f8c8d;margin:0;flex:1" onclick="printBill()">🖨️ Pre-Factura</button>
   </div>
   <select id="pm-method" class="select-box" style="margin-bottom:10px">
     <option value="Efectivo">💵 Efectivo</option>
@@ -435,7 +435,7 @@
   <div class="tk-deco-line"></div>
   <div class="tk-logo-sub">Buena Comida</div>
   <div class="tk-deco-line" style="margin-bottom:3pt"></div>
-  <div class="tk-c tk-meta">Comprobante de Venta</div>
+  <div class="tk-c tk-meta" id="tk-title">Comprobante de Venta</div>
   <div class="tk-c tk-meta" id="tk-head"></div>
   <div class="tk-line"></div>
   <div class="tk-j tk-b"><span>CANT  DETALLE</span><span>TOTAL</span></div>
@@ -847,7 +847,10 @@ function render() {
           ${(b.items||[]).map((it, idx)=>`
             <div class="m-item" style="flex-direction:column;align-items:flex-start">
               <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
-                <span>${it.name} ×${it.qty} <button class="q-btn" style="width:24px;height:24px;font-size:0.7rem;color:var(--red);border-color:var(--red);margin-left:6px;display:inline-flex" onclick="deleteItemFromCuentas(${m}, ${idx})">🗑️</button></span><span>${fc((it.price||0)*it.qty)}</span>
+                <span>${it.name} ×${it.qty}
+                  <button class="q-btn" style="width:24px;height:24px;font-size:0.7rem;color:var(--blue);border-color:var(--blue);margin-left:4px;display:inline-flex" onclick="openChangeItem(${m}, ${idx})" title="Cambiar producto">🔄</button>
+                  <button class="q-btn" style="width:24px;height:24px;font-size:0.7rem;color:var(--red);border-color:var(--red);margin-left:2px;display:inline-flex" onclick="deleteItemFromCuentas(${m}, ${idx})">🗑️</button>
+                </span><span>${fc((it.price||0)*it.qty)}</span>
               </div>
               ${it.note?`<div style="font-size:0.7rem;color:var(--txt2)">📝 ${it.note}</div>`:''}
             </div>`).join('')}
@@ -877,8 +880,9 @@ function render() {
             <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
             ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
           </div>
-          <div style="padding:10px 14px;border-top:1px solid var(--border)">
-            <button class="q-btn wide" style="margin:0;width:100%;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ EDITAR PAGO / DIVIDIR</button>
+          <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px">
+            <button class="q-btn wide" style="margin:0;flex:1;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ EDITAR PAGO / DIVIDIR</button>
+            <button class="q-btn wide" style="margin:0;flex:0 0 auto;color:#7f8c8d;border-color:#7f8c8d" onclick="printSale(${s.timestamp})">🖨️ Factura</button>
           </div>`;
         dt.appendChild(d);
       });
@@ -1192,22 +1196,52 @@ window.cancelOrder = id => {
   }
 };
 window.removeItemFromBill = (mesa, idx) => {
-  if (confirm('¿Eliminar este ítem de la cuenta?')) {
-    socket.emit('remove-item-bill', { mesa, idx });
-    setTimeout(() => {
-      if (state.bills[mesa] && state.bills[mesa].items.length > 0) {
-        openP(mesa);
-      } else {
-        closeM('payModal');
-      }
-    }, 200);
+  const b = state.bills[mesa];
+  if (!b || !b.items[idx]) return;
+  const item = b.items[idx];
+  const maxQty = item.qty;
+
+  let qty;
+  if (maxQty === 1) {
+    if (!confirm(`¿Eliminar "${item.name}" de la cuenta?`)) return;
+    qty = 1;
+  } else {
+    const raw = prompt(`¿Cuántas unidades de "${item.name}" deseas eliminar? (hay ${maxQty} en cuenta)`, maxQty);
+    if (raw === null) return; // canceló
+    qty = parseInt(raw);
+    if (isNaN(qty) || qty <= 0) { showToast('⚠️ Cantidad inválida'); return; }
+    if (qty > maxQty) qty = maxQty;
   }
+
+  socket.emit('remove-item-bill', { mesa, idx, qty });
+  setTimeout(() => {
+    if (state.bills[mesa] && state.bills[mesa].items.length > 0) {
+      openP(mesa);
+    } else {
+      closeM('payModal');
+    }
+  }, 200);
 };
 
 window.deleteItemFromCuentas = (mesa, idx) => {
-  if (confirm('¿Seguro que deseas eliminar permanentemente esta comanda de la cuenta?')) {
-    socket.emit('remove-item-bill', { mesa, idx });
+  const b = state.bills[mesa];
+  if (!b || !b.items[idx]) return;
+  const item = b.items[idx];
+  const maxQty = item.qty;
+
+  let qty;
+  if (maxQty === 1) {
+    if (!confirm(`¿Eliminar "${item.name}" de la cuenta?`)) return;
+    qty = 1;
+  } else {
+    const raw = prompt(`¿Cuántas unidades de "${item.name}" deseas eliminar? (hay ${maxQty} en cuenta)`, maxQty);
+    if (raw === null) return;
+    qty = parseInt(raw);
+    if (isNaN(qty) || qty <= 0) { showToast('⚠️ Cantidad inválida'); return; }
+    if (qty > maxQty) qty = maxQty;
   }
+
+  socket.emit('remove-item-bill', { mesa, idx, qty });
 };
 
 let chartCat = null;
@@ -1299,8 +1333,9 @@ function renderPayModal() {
     if (pps.qtyToPay < pps.maxQty) isPartial = true;
     return `
     <div class="m-item" style="flex-direction:column;align-items:flex-start;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;margin-bottom:6px;position:relative">
+      <button class="m-close" style="top:5px;right:28px;font-size:0.8rem;color:var(--blue)" onclick="openChangeItem(${payTb}, ${idx})" title="Cambiar producto">🔄</button>
       <button class="m-close" style="top:5px;right:5px;font-size:0.8rem;color:var(--red)" onclick="removeItemFromBill(${payTb}, ${idx})">🗑️</button>
-      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:25px">
+      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:52px">
         <span style="font-size:0.8rem;font-weight:${pps.qtyToPay>0?'600':'400'}">${it.name} (Tot: ${it.qty})</span>
         <div class="q-ctrl" style="gap:4px">
           <button class="q-btn" style="width:26px;height:26px;font-size:1rem" onclick="updatePartialQty(${idx}, -1)" ${pps.qtyToPay<=0?'disabled':''}>-</button>
@@ -1362,11 +1397,12 @@ window.shareBill = () => {
 };
 
 window.printBill = () => {
+  // PRE-FACTURA: cuenta abierta, sin método de pago
   const b = state.bills[payTb]; if(!b) return;
   const now = new Date();
   const d = now.toLocaleDateString('es-CO', {timeZone:'America/Bogota', day:'2-digit', month:'2-digit', year:'numeric'});
   const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:true});
-  const method = $('pm-method') ? $('pm-method').value : '';
+  if($('tk-title')) $('tk-title').textContent = 'PRE-FACTURA';
   $('tk-head').innerHTML = `Mesa ${payTb} &nbsp;|&nbsp; ${b.mesero||'—'}<br>${d} &nbsp; ${t}`;
   $('tk-items').innerHTML = (b.items||[]).map(i=>`
     <div class="tk-j" style="margin-bottom:3pt">
@@ -1374,7 +1410,33 @@ window.printBill = () => {
       <span>${fc((i.price||0)*i.qty)}</span>
     </div>`).join('');
   $('tk-tot').textContent = fc(b.total||0);
-  if($('tk-method')) $('tk-method').textContent = method || '—';
+  // Ocultar método de pago en pre-factura
+  const tkPay = document.querySelector('.tk-pay');
+  if(tkPay) tkPay.style.display = 'none';
+  window.print();
+  // Restaurar para próxima impresión
+  if(tkPay) tkPay.style.display = '';
+  if($('tk-title')) $('tk-title').textContent = 'Comprobante de Venta';
+};
+
+window.printSale = (ts) => {
+  // FACTURA CERRADA: con método de pago
+  const s = state.sales.find(x => x.timestamp === ts); if(!s) return;
+  const now = new Date(ts);
+  const d = now.toLocaleDateString('es-CO', {timeZone:'America/Bogota', day:'2-digit', month:'2-digit', year:'numeric'});
+  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:true});
+  if($('tk-title')) $('tk-title').textContent = 'Comprobante de Venta';
+  $('tk-head').innerHTML = `Mesa ${s.mesa} &nbsp;|&nbsp; ${s.mesero||'—'}<br>${d} &nbsp; ${t}`;
+  $('tk-items').innerHTML = (s.items||[]).map(i=>`
+    <div class="tk-j" style="margin-bottom:3pt">
+      <span style="width:68%">${i.qty}x ${i.name}${i.note?'<br><span style="font-size:7pt;padding-left:8pt">↳ '+i.note+'</span>':''}</span>
+      <span>${fc((i.price||0)*i.qty)}</span>
+    </div>`).join('');
+  $('tk-tot').textContent = fc(s.total||0);
+  // Mostrar método de pago en factura cerrada
+  const tkPay = document.querySelector('.tk-pay');
+  if(tkPay) tkPay.style.display = '';
+  if($('tk-method')) $('tk-method').textContent = s.paymentMethod || '—';
   window.print();
 };
 
@@ -1510,6 +1572,52 @@ window.confirmDivideSale = () => {
     showToast('✅ Pedido para Yaneth enviado a cocina.');
   };
 
+  /* ── Cambiar Producto (Admin) ── */
+  let changeItemMesa = null;
+  let changeItemIdx  = null;
+
+  window.openChangeItem = (mesa, idx) => {
+    const b = state.bills[mesa];
+    if (!b || !b.items[idx]) return;
+    changeItemMesa = mesa;
+    changeItemIdx  = idx;
+    const item = b.items[idx];
+
+    $('ci-title').innerHTML = `Reemplazar: "${item.name}" ×${item.qty}<button class="m-close" style="float:right" onclick="closeM('changeItemModal')">✕</button>`;
+
+    // Renderizar menú completo
+    const g = $('ci-menu'); g.innerHTML = '';
+    Object.entries(MENU).forEach(([cat, its]) => {
+      const catDiv = document.createElement('div');
+      catDiv.className = 'subcat';
+      catDiv.textContent = cat;
+      g.appendChild(catDiv);
+      its.forEach(it => {
+        const btn = document.createElement('div');
+        btn.className = 'item';
+        btn.style.cursor = 'pointer';
+        btn.innerHTML = `<div style="flex:1"><div class="i-name">${it.n}</div><div class="i-price">${fc(it.p)}</div></div><span style="font-size:1.2rem;color:var(--emerald)">❯</span>`;
+        btn.onclick = () => selectReplacementItem(it.n, it.p);
+        g.appendChild(btn);
+      });
+    });
+
+    openM('changeItemModal');
+  };
+
+  window.selectReplacementItem = (newName, newPrice) => {
+    if (changeItemMesa === null || changeItemIdx === null) return;
+    const mesa = changeItemMesa;
+    socket.emit('replace-item-bill', { mesa, idx: changeItemIdx, newName, newPrice });
+    closeM('changeItemModal');
+    showToast(`✅ Cambiado a "${newName}"`);
+    changeItemMesa = null; changeItemIdx = null;
+    // Re-renderizar modal de cobro si estaba abierto
+    setTimeout(() => {
+      if ($('payModal').classList.contains('open') && state.bills[mesa]) openP(mesa);
+    }, 250);
+  };
+
 } // end mode check
 </script>
 
@@ -1560,5 +1668,15 @@ window.confirmDivideSale = () => {
       <div class="y-grid" id="y-menu-grid"></div>
     </div>
   </div>
+
+<!-- MODAL CAMBIAR PRODUCTO -->
+<div id="changeItemModal" class="modal">
+  <div class="m-content" style="max-height:85vh;overflow-y:auto;max-width:450px">
+    <div class="m-head" id="ci-title" style="font-size:1rem">Cambiar Producto <button class="m-close" onclick="closeM('changeItemModal')">✕</button></div>
+    <div style="font-size:0.75rem;color:var(--txt2);margin-bottom:12px;text-align:center">Selecciona el nuevo producto que reemplazará al actual. La cantidad se mantiene.</div>
+    <div id="ci-menu"></div>
+  </div>
+</div>
+
 </body>
 </html>

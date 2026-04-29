@@ -624,27 +624,63 @@ io.on('connection', (socket) => {
   });
 
   /* ── Remove item from bill (Admin) ── */
-  socket.on('remove-item-bill', ({mesa, idx}) => {
+  socket.on('remove-item-bill', ({mesa, idx, qty}) => {
     mesa = Number(mesa);
     const bill = tableBills.get(mesa);
     if (!bill || !bill.items[idx]) return;
 
     const item = bill.items[idx];
-    bill.total -= (item.price * item.qty);
-    bill.items.splice(idx, 1);
+    const removeQty = (qty && qty > 0 && qty < item.qty) ? qty : item.qty;
 
-    if (bill.items.length === 0 && (bill.abono || 0) <= 0) {
-      tableBills.delete(mesa);
-    } else {
+    bill.total -= (item.price * removeQty);
+
+    if (removeQty < item.qty) {
+      // Reducir cantidad parcialmente
+      item.qty -= removeQty;
       tableBills.set(mesa, bill);
+      console.log(`✂️ Mesa ${mesa}: -${removeQty}x ${item.name} (quedan ${item.qty})`);
+    } else {
+      // Eliminar ítem completo
+      bill.items.splice(idx, 1);
+      if (bill.items.length === 0 && (bill.abono || 0) <= 0) {
+        tableBills.delete(mesa);
+      } else {
+        tableBills.set(mesa, bill);
+      }
+      console.log(`🗑️ Item eliminado de Mesa ${mesa}: ${item.name}`);
     }
 
     io.emit('all-bills', Object.fromEntries(tableBills));
-    console.log(`🗑️ Item eliminado de Mesa ${mesa}: ${item.name}`);
 
     persist(async () => {
       if (!tableBills.has(mesa)) await Bill.deleteOne({mesa});
       else await Bill.findOneAndUpdate({mesa}, {items: bill.items, total: bill.total});
+    });
+  });
+
+  /* ── Replace item in bill (Admin) ── */
+  socket.on('replace-item-bill', ({mesa, idx, newName, newPrice}) => {
+    mesa = Number(mesa);
+    const bill = tableBills.get(mesa);
+    if (!bill || !bill.items[idx]) return;
+
+    const item = bill.items[idx];
+    const oldCost = item.price * item.qty;
+    const newCost  = newPrice   * item.qty;
+
+    // Adjust total and replace item fields
+    bill.total = bill.total - oldCost + newCost;
+    const oldName = item.name;
+    item.name  = newName;
+    item.price = newPrice;
+    // Keep qty and note unchanged
+
+    tableBills.set(mesa, bill);
+    io.emit('all-bills', Object.fromEntries(tableBills));
+    console.log(`🔄 Mesa ${mesa}: "${oldName}" → "${newName}" (${bill.items[idx].qty}x)`);
+
+    persist(async () => {
+      await Bill.findOneAndUpdate({mesa}, {items: bill.items, total: bill.total});
     });
   });
 
