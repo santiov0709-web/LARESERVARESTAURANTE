@@ -13,8 +13,13 @@ const io     = new Server(server);
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 ['/', '/mesero', '/cocina', '/caja'].forEach(r =>
-  app.get(r, (req, res) => res.sendFile(path.join(__dirname, 'index.html')))
+  app.get(r, (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(path.join(__dirname, 'index.html'));
+  })
 );
+
+console.log('🚀 RESERVA POS v1.5 - CARGANDO...');
 
 /* ══════════════════════════════════════════════
    IN-MEMORY STATE  (source of truth, always works)

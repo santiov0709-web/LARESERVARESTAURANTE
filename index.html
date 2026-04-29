@@ -70,30 +70,33 @@
     .mesa-btn.sel { outline:3px solid var(--emerald-d); outline-offset:2px; }
     @keyframes pulse-mesa { 0%,100%{box-shadow:0 0 0 0 rgba(240,192,64,.4)} 50%{box-shadow:0 0 0 8px rgba(240,192,64,0)} }
 
-    /* ── Tabs ── */
-    .tabs { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; -webkit-overflow-scrolling:touch; }
-    .tabs::-webkit-scrollbar { display:none; }
-    .tab { padding:8px 16px; border-radius:20px; border:1px solid var(--border); background:var(--bg-card); color:var(--txt2); font-size:0.8rem; white-space:nowrap; cursor:pointer; transition:var(--tr); flex-shrink:0; }
-    .tab.act { background:var(--emerald-d); color:#fff; border-color:var(--emerald-d); }
+    /* ── Menú Interactivo (Grid) ── */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 16px; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--tr);
+            min-height: 180px; justify-content: space-between; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .card:hover { border-color: var(--emerald-d); background: var(--bg-card-h); transform: translateY(-3px); }
+    .card.has { border-color: var(--emerald); background: rgba(46,204,113,0.1); box-shadow: 0 8px 15px rgba(46,204,113,0.15); }
+    
+    .c-icon { font-size: 2.2rem; margin-bottom: 10px; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
+    .c-name { font-size: 0.9rem; font-weight: 700; line-height: 1.2; margin-bottom: 6px; color: var(--txt1); }
+    .c-price { font-size: 0.8rem; color: var(--gold); font-weight: 600; margin-bottom: 10px; }
+    .c-note-btn { font-size: 0.7rem; color: var(--gold); font-weight: 700; margin-bottom: 12px; cursor: pointer; text-decoration: underline; background: rgba(240,192,64,0.1); padding: 4px 8px; border-radius: 6px; }
 
-    /* ── Subcategory ── */
-    .subcat { font-size:0.7rem; color:var(--emerald); text-transform:uppercase; letter-spacing:1px; margin:12px 0 8px; font-weight:600; }
+    .c-qty-wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; background: var(--bg-surface); padding: 6px; border-radius: 14px; border: 1px solid var(--border); }
+    .c-qty-btn { width: 38px; height: 38px; border-radius: 12px; border: none; background: var(--bg-card); color: var(--emerald); font-size: 1.4rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .c-qty-btn:active:not([disabled]) { transform: scale(0.9); background: var(--emerald-d); color: #fff; }
+    .c-qty-btn[disabled] { opacity: 0.2; }
+    .c-qty-val { font-weight: 800; color: var(--emerald); font-size: 1.1rem; min-width: 24px; }
 
-    /* ── Menu items ── */
-    .item { display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; transition:var(--tr); }
-    .item:hover { border-color:var(--border-b); }
-    .item.has { border-color:var(--emerald-d); background:rgba(46,204,113,.06); }
-    .i-name { font-size:0.88rem; font-weight:500; }
-    .i-price { font-size:0.72rem; color:var(--gold); margin-top:2px; }
-    .i-note { font-size:0.67rem; color:var(--gold); margin-top:4px; cursor:pointer; font-weight:600; }
-
-    /* ── Qty controls ── */
-    .q-ctrl { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-    .q-btn { width:30px; height:30px; border-radius:50%; border:1px solid var(--border); background:var(--bg-surface); color:var(--emerald); font-weight:700; cursor:pointer; transition:var(--tr); display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
-    .q-btn:hover:not([disabled]) { background:var(--emerald-d); color:#fff; border-color:var(--emerald-d); }
-    .q-btn[disabled] { opacity:.3; cursor:not-allowed; }
-    .q-btn.wide { width:auto; padding:0 8px; border-radius:8px; font-size:0.75rem; }
-    .q-val { min-width:22px; text-align:center; color:var(--emerald); font-weight:700; }
+    /* Pestañas de Categoría (Cards Modernas) */
+    .cat-tabs { display: flex; gap: 12px; overflow-x: auto; padding: 10px 0 20px; margin-bottom: 10px; -webkit-overflow-scrolling: touch; }
+    .cat-card { min-width: 110px; padding: 16px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+                display: flex; flex-direction: column; align-items: center; gap: 8px; transition: var(--tr); cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .cat-card.act { background: var(--emerald-d); border-color: var(--emerald); box-shadow: 0 6px 15px rgba(46,204,113,0.3); transform: scale(1.05); }
+    .cat-card.act .cat-label { color: #fff; }
+    .cat-card .cat-emoji { font-size: 1.8rem; }
+    .cat-card .cat-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--txt2); text-align: center; }
 
     /* ── Summary bar ── */
     .summary { position:fixed; bottom:0; left:0; right:0; background:var(--bg-deep); padding:14px 16px; display:none; border-top:1px solid var(--border); z-index:150; }
@@ -196,13 +199,53 @@
     .y-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; }
     .y-item:hover { background: rgba(155, 89, 182, 0.2); border-color: #9b59b6; }
     .y-q { background: #9b59b6; color: white; padding: 0 6px; border-radius: 10px; font-size: 0.8rem; margin-left: 5px; }
+
+    /* ── Favoritos Rápidos ── */
+    .favs-title { font-size:0.62rem; color:var(--gold); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:8px; opacity:.9; margin-top: 5px; }
+    .favs-grid  { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:18px; }
+    .fav-btn    { padding:10px 4px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+                  color:var(--txt1); font-size:0.72rem; font-weight:600; cursor:pointer; transition:var(--tr);
+                  display:flex; flex-direction:column; align-items:center; gap:3px; line-height:1.2; position:relative; min-height: 60px; justify-content: center; }
+    .fav-btn:hover:not([disabled]) { border-color:var(--emerald); background:var(--bg-card-h); transform: translateY(-2px); }
+    .fav-btn:active:not([disabled]) { transform:scale(.93); background:rgba(46,204,113,.15); }
+    .fav-btn .fav-icon { font-size:1.4rem; margin-bottom: 2px; }
+    .fav-btn .fav-price { font-size:0.6rem; color:var(--gold); font-weight: 400; }
+    .fav-btn[disabled] { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+
+    /* ── Menú Interactivo (Grid) ── */
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 14px; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--tr);
+            min-height: 160px; justify-content: space-between; position: relative; }
+    .card:hover { border-color: var(--emerald-d); background: var(--bg-card-h); }
+    .card.has { border-color: var(--emerald); background: rgba(46,204,113,0.08); box-shadow: 0 4px 12px rgba(46,204,113,0.1); }
+    
+    .c-icon { font-size: 2rem; margin-bottom: 8px; }
+    .c-name { font-size: 0.85rem; font-weight: 600; line-height: 1.2; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .c-price { font-size: 0.75rem; color: var(--gold); margin-bottom: 8px; }
+    .c-note-btn { font-size: 0.65rem; color: var(--gold); font-weight: 700; margin-bottom: 8px; cursor: pointer; text-decoration: underline; }
+
+    .c-qty-wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; background: var(--bg-surface); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+    .c-qty-btn { width: 34px; height: 34px; border-radius: 10px; border: none; background: var(--bg-card); color: var(--emerald); font-size: 1.2rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .c-qty-btn:active:not([disabled]) { transform: scale(0.9); }
+    .c-qty-btn[disabled] { opacity: 0.2; }
+    .c-qty-val { font-weight: 800; color: var(--emerald); font-size: 0.95rem; }
+
+    /* Pestañas de Categoría Gigantes */
+    .cat-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+    .cat-card { min-width: 100px; padding: 12px 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+                display: flex; flex-direction: column; align-items: center; gap: 6px; transition: var(--tr); cursor: pointer; }
+    .cat-card.act { background: var(--emerald-d); border-color: var(--emerald); box-shadow: 0 4px 12px rgba(46,204,113,0.25); }
+    .cat-card.act .cat-label { color: #fff; }
+    .cat-card .cat-emoji { font-size: 1.6rem; }
+    .cat-card .cat-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--txt2); text-align: center; white-space: normal; }
   </style>
 </head>
 <body>
 
 <!-- LANDING -->
 <div id="landing" class="landing">
-  <div class="land-logo">La Reserva</div>
+  <div class="land-logo">La Reserva <small style="font-size:0.4em;opacity:0.6;vertical-align:middle">v2</small></div>
   <div class="land-sub">Sistema de Comandas</div>
   <a href="/mesero" class="land-card">
     <div class="land-icon">📋</div>
@@ -229,14 +272,20 @@
   <section class="app-view">
     <div class="sec-title">📍 Mesa</div>
     <div class="grid" id="m-grid"></div>
-    <div class="sec-title">🍽️ Menú</div>
+    
+    <div id="favs-wrap" style="display:none">
+      <div class="favs-title">⚡ Acceso Rápido</div>
+      <div class="favs-grid" id="favs-grid"></div>
+    </div>
+
+    <div class="sec-title">🍽️ Menú Interactivo (v2)</div>
     <div class="search-container">
       <span class="search-icon">🔍</span>
-      <input type="text" id="m-search" class="search-input" placeholder="Buscar producto..." oninput="handleSearch(this.value)">
+      <input type="text" id="m-search" class="search-input" placeholder="¿Qué busca el cliente?..." oninput="handleSearch(this.value)">
       <button id="search-clear" class="search-clear" style="display:none" onclick="clearSearch()">✕</button>
     </div>
-    <div class="tabs" id="m-cats"></div>
-    <div id="m-menu"></div>
+    <div class="cat-tabs" id="m-cats"></div>
+    <div class="menu-grid" id="m-menu"></div>
   </section>
   <div class="summary" id="m-sum">
     <div class="sum-bar" onclick="openOrderModal()">
@@ -569,6 +618,66 @@ let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'},
 let selTb = null, curCat = '', myOrder = {}, myName = '', searchTerm = '';
 let payTb = null;
 
+/* ── Favoritos (estática basada en popularidad) ── */
+const FAVS = [
+  { n: 'Poker',              icon: '🍺' },
+  { n: 'Águila',             icon: '🍺' },
+  { n: 'Club Colombia',      icon: '🍺' },
+  { n: 'Coca-Cola',          icon: '🥤' },
+  { n: 'PICADA',             icon: '🥩' },
+  { n: 'PECHUGA',            icon: '🍗' },
+  { n: 'Choricitos La Reserva', icon: '🌮' },
+  { n: 'Salchipapa',         icon: '🍟' },
+  { n: 'Adicional (General)', icon: '➕' },
+  { n: 'Hamburguesa',        icon: '🍔' },
+];
+
+const CAT_ICONS = {
+  'ENTRADAS': '🌮',
+  'CERVEZAS': '🍺',
+  'GASEOSAS': '🥤',
+  'PLATOS FUERTES (Principales)': '🥩',
+  'PASTAS': '🍝',
+  'COMIDA RÁPIDA / INFANTIL': '🍔',
+  'LICORES (Botellas)': '🍾',
+  'EXTRAS Y EMPAQUES': '🍱'
+};
+
+const ITEM_ICONS = {
+  // Cervezas
+  'Poker': '🍺', 'Águila': '🍺', 'Club Colombia': '🍺', 'Corona': '🍺', 'Stella Artois': '🍺', 'Pilsen': '🍺',
+  // Gaseosas
+  'Coca-Cola': '🥤', 'Tamarindo': '🥤', 'Manzana': '🥤', 'Colombiana': '🥤', 'Granizado': '🍧',
+  // Platos
+  'PICADA': '🥩', 'PECHUGA': '🍗', 'CHURRASCO': '🥩', 'COSTILLAS': '🍖', 'SALMON': '🐟', 'ROBALO': '🐟', 'CAZUELA': '🥘',
+  'PUNTA DE ANCA': '🥩', 'BABY BEFF': '🥩', 'CORDON BLU': '🍗', 'CHULETA': '🥩', 'SOBREBARRIGA': '🥩',
+  // Pasta
+  'Carbonada': '🍝', 'Bologñesa': '🍝', 'En Camarón': '🍝', 'Marinera': '🍝',
+  // Rapida
+  'Hamburguesa': '🍔', 'Salchipapa': '🍟', 'Papas Maxi': '🍟', 'Árabe': '🌯', 'Creps': '🥞', 'Patacón': '🍌'
+};
+
+function renderFavs() {
+  const wrap = $('favs-wrap'), grid = $('favs-grid');
+  if (!wrap || !grid) return;
+  if (!selTb) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  grid.innerHTML = '';
+  FAVS.forEach(fav => {
+    const price = PR[fav.n];
+    if (!price) return;
+    const isTracked = state.inv[fav.n] !== undefined;
+    const left = isTracked ? state.inv[fav.n] : 999;
+    const ex = isTracked && left <= 0;
+    const btn = document.createElement('button');
+    btn.className = 'fav-btn';
+    if (ex) btn.disabled = true;
+    btn.innerHTML = `<span class="fav-icon">${fav.icon}</span><span>${fav.n.split(' ')[0]}</span><span class="fav-price">${fc(price)}</span>`;
+    btn.onclick = () => { if(!ex) { cQ(fav.n, 1); beep(1200, 0, 0.05); } };
+    grid.appendChild(btn);
+  });
+}
+
 /* ── Load menu from API (then update from socket) ── */
 fetch('/api/menu').then(r => r.json()).then(m => {
   MENU = m; PR = {};
@@ -727,27 +836,26 @@ function render() {
       tg.appendChild(b);
     }
 
-    // Category tabs
+    // Category tabs (Cards)
     const tc = $('m-cats'); tc.innerHTML = '';
     Object.keys(MENU).forEach(c => {
-      const b = document.createElement('button');
-      b.className = 'tab' + (curCat===c?' act':'');
-      b.textContent = c; b.onclick = () => { curCat=c; render(); };
-      tc.appendChild(b);
+      const card = document.createElement('div');
+      card.className = 'cat-card' + (curCat===c?' act':'');
+      const icon = CAT_ICONS[c] || '🍽️';
+      card.innerHTML = `<div class="cat-emoji">${icon}</div><div class="cat-label">${c}</div>`;
+      card.onclick = () => { curCat=c; render(); };
+      tc.appendChild(card);
     });
 
-    // Menu items
+    // Menu grid items
     const tm = $('m-menu'); tm.innerHTML = '';
     let itemsToRender = [];
     
     if (searchTerm) {
-      // Search across all categories
       Object.values(MENU).flat().forEach(it => {
-        if (it.n.toLowerCase().includes(searchTerm.toLowerCase())) {
-          itemsToRender.push(it);
-        }
+        if (it.n.toLowerCase().includes(searchTerm.toLowerCase())) itemsToRender.push(it);
       });
-      $('m-cats').style.display = 'none'; // Hide categories while searching
+      $('m-cats').style.display = 'none';
     } else {
       itemsToRender = MENU[curCat] || [];
       $('m-cats').style.display = 'flex';
@@ -763,27 +871,30 @@ function render() {
       const ex  = isTracked && left <= 0;
       const maxed = isTracked && q >= left;
 
+      // Buscar icono por nombre o usar default
+      let emoji = '🍴';
+      for(let key in ITEM_ICONS){ if(it.n.includes(key)) { emoji = ITEM_ICONS[key]; break; } }
+
       const d = document.createElement('div');
-      d.className = 'item' + (q>0?' has':'');
+      d.className = 'card' + (q>0?' has':'');
       d.innerHTML = `
-        <div style="flex:1;min-width:0">
-          <div class="i-name">${it.n}
-            ${ex ? '<span style="color:var(--red);font-size:0.7rem;margin-left:6px;font-weight:700">AGOTADO</span>'
-                 : (isTracked ? `<span style="color:var(--txt2);font-size:0.7rem;margin-left:6px">Quedan ${left}</span>` : '')}
-          </div>
-          <div class="i-price">${fc(it.p)}</div>
-          ${q>0 ? `<div class="i-note" onclick="addNote('${it.n}')">📝 ${note||'Añadir nota...'}</div>` : ''}
+        <div class="c-icon">${emoji}</div>
+        <div class="c-name">${it.n}</div>
+        <div class="c-price">${fc(it.p)}</div>
+        <div style="flex:1">
+          ${q>0 ? `<div class="c-note-btn" onclick="addNote('${it.n}')">📝 ${note||'Nota'}</div>` : ''}
+          ${isTracked ? `<div style="font-size:0.6rem;color:var(--txt3);margin-top:2px">Stock: ${left}</div>`:''}
         </div>
-        <div class="q-ctrl">
-          <button class="q-btn" onclick="cQ('${it.n}',-1)" ${q===0?'disabled':''}>−</button>
-          <span class="q-val">${q}</span>
-          <button class="q-btn" onclick="cQ('${it.n}',1)"  ${ex||maxed?'disabled':''}>+</button>
+        <div class="c-qty-wrap">
+          <button class="c-qty-btn" onclick="cQ('${it.n}',-1)" ${q===0?'disabled':''}>−</button>
+          <span class="c-qty-val">${q}</span>
+          <button class="c-qty-btn" onclick="cQ('${it.n}',1)"  ${ex||maxed?'disabled':''}>+</button>
         </div>`;
       tm.appendChild(d);
     });
 
     if (searchTerm && itemsToRender.length === 0) {
-      tm.innerHTML = '<div style="text-align:center;padding:40px;color:var(--txt3)">No se encontraron productos</div>';
+      tm.innerHTML = '<div style="text-align:center;padding:40px;color:var(--txt3);grid-column:1/-1">No se encontraron productos</div>';
     }
 
     // Summary bar
@@ -795,6 +906,9 @@ function render() {
       $('s-cnt').textContent = `${cnt} ítems | Mesa ${selTb||'?'}`;
       $('s-tot').textContent = fc(tot);
     } else { sw.classList.remove('vis'); }
+
+    // Render quick-access bar
+    renderFavs();
   }
 
   /* COCINA */
