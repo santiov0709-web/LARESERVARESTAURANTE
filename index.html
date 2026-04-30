@@ -271,7 +271,10 @@
   </header>
   <section class="app-view">
     <div class="sec-title">📍 Mesa</div>
-    <div class="grid" id="m-grid"></div>
+    <div style="display:flex; gap:8px; margin-bottom:12px">
+      <div class="grid" id="m-grid" style="flex:1; margin-bottom:0"></div>
+      <button class="mesa-btn" id="btn-domicilio" style="width:100px; height:auto; aspect-ratio:auto; background:var(--bg-card); border-color:var(--emerald-d); color:var(--emerald)" onclick="selectDomicilio()">🛵<br><span style="font-size:0.65rem">DOMICILIO</span></button>
+    </div>
     
     <div id="favs-wrap" style="display:none">
       <div class="favs-title">⚡ Acceso Rápido</div>
@@ -605,6 +608,10 @@ function queueSpeech(text) {
   };
   
   // Nativamente el navegador encola los mensajes uno tras otro
+  utterance.volume = 1.0;
+  utterance.rate = 1.0; // Velocidad estándar para mayor claridad
+  utterance.pitch = 1.0;
+  
   window.speechSynthesis.speak(utterance);
 }
 
@@ -735,9 +742,15 @@ socket.on('order-received', o => {
   state.orders.push(o);
   if (mode === 'cocina') { 
     beep(700, 900); 
-    showToast('🔔 Nuevo pedido — Mesa ' + o.mesa); 
+    showToast('🔔 Nuevo pedido — ' + (o.isDelivery ? '🛵 DOMICILIO' : 'Mesa ' + o.mesa)); 
     if ('speechSynthesis' in window) {
-      const text = `Atención. Nuevo pedido, mesa ${o.mesa}. ` + o.items.map(i => {
+      let text = '';
+      if (o.isDelivery) {
+        text = "¡Atención! ¡Atención! ¡Esto es un domicilio! ";
+      } else {
+        text = `Nuevo pedido, mesa ${o.mesa}. `;
+      }
+      text += o.items.map(i => {
         return `${i.qty} ${i.name}` + (i.note ? `. Nota: ${i.note}` : '');
       }).join('. ');
       queueSpeech(text);
@@ -842,7 +855,7 @@ function render() {
       const lbl = tienePedido ? 'En cocina' : tieneCuenta ? 'Ocupada' : 'Libre';
       b.className = cls;
       b.innerHTML = `${i}<span>${lbl}</span>`;
-      b.onclick = () => { selTb=i; render(); };
+      b.onclick = () => { selTb=i; $('btn-domicilio').classList.remove('sel'); render(); };
       tg.appendChild(b);
     }
 
@@ -913,7 +926,8 @@ function render() {
     const sw = $('m-sum');
     if (cnt > 0) {
       sw.classList.add('vis');
-      $('s-cnt').textContent = `${cnt} ítems | Mesa ${selTb||'?'}`;
+      const label = selTb === 99 ? '🛵 DOMICILIO' : `Mesa ${selTb||'?'}`;
+      $('s-cnt').textContent = `${cnt} ítems | ${label}`;
       $('s-tot').textContent = fc(tot);
     } else { sw.classList.remove('vis'); }
 
@@ -931,7 +945,7 @@ function render() {
       d.className = 'bill-card' + (o.isYaneth ? ' yaneth' : '');
       d.innerHTML = `
         <div class="b-head">
-          <span>${o.isYaneth ? '<span class="badge-yaneth">PEDIDO PARA YANETH</span>' : 'Mesa ' + o.mesa}</span>
+          <span>${o.isDelivery ? '<span style="color:var(--emerald)">🛵 DOMICILIO</span>' : o.isYaneth ? '<span class="badge-yaneth">PEDIDO PARA YANETH</span>' : 'Mesa ' + o.mesa}</span>
           <span style="color:var(--txt2);font-size:0.8rem">${o.mesero} · ${o.hora}</span>
         </div>
         <div class="b-body">
@@ -964,7 +978,7 @@ function render() {
       const d = document.createElement('div'); d.className = 'bill-card';
       d.innerHTML = `
         <div class="b-head">
-          <span>Mesa ${m}</span>
+          <span>${m == 99 ? '🛵 DOMICILIO' : 'Mesa ' + m}</span>
           <span style="color:var(--txt2);font-size:0.78rem">${b.mesero||''} | ${b.openedAt||''}</span>
         </div>
         <div class="b-body">
@@ -998,7 +1012,7 @@ function render() {
         const d = document.createElement('div'); d.className = 'bill-card';
         d.innerHTML = `
           <div class="b-head">
-            <span>Mesa ${s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span>
+            <span>${s.mesa == 99 ? '🛵 DOMICILIO' : 'Mesa ' + s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span>
           </div>
           <div class="b-body" style="font-size:0.78rem">
             <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
@@ -1201,6 +1215,14 @@ window.clearSearch = () => {
   render();
 };
 
+window.selectDomicilio = () => {
+  selTb = 99;
+  // Deseleccionar mesas
+  document.querySelectorAll('.mesa-btn').forEach(b => b.classList.remove('sel'));
+  $('btn-domicilio').classList.add('sel');
+  render();
+};
+
 /* ── Actions ── */
 window.cQ = (n, d) => {
   if (!myOrder[n]) myOrder[n] = {qty:0,note:''};
@@ -1235,8 +1257,10 @@ window.sendOrder = () => {
   if (!selTb || !Object.keys(myOrder).length) { showToast('Pedido vacío'); return; }
   socket.emit('new-order', {
     mesa: selTb, mesero: myName,
+    isDelivery: selTb === 99,
     items: Object.entries(myOrder).map(([n,md])=>({name:n,qty:md.qty,price:PR[n]||0,note:md.note}))
   });
+  if (selTb === 99) $('btn-domicilio').classList.remove('sel');
   myOrder = {}; selTb = null;
   closeM('orderModal'); showToast('✅ Pedido enviado a cocina'); render();
 };
