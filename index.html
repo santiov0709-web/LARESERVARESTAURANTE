@@ -276,10 +276,6 @@
       <button class="mesa-btn" id="btn-domicilio" style="width:100px; height:auto; aspect-ratio:auto; background:var(--bg-card); border-color:var(--emerald-d); color:var(--emerald)" onclick="selectDomicilio()">🛵<br><span style="font-size:0.65rem">DOMICILIO</span></button>
     </div>
     
-    <div id="favs-wrap" style="display:none">
-      <div class="favs-title">⚡ Acceso Rápido</div>
-      <div class="favs-grid" id="favs-grid"></div>
-    </div>
 
     <div class="sec-title">🍽️ Menú Interactivo (v2)</div>
     <div class="search-container">
@@ -634,19 +630,6 @@ let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'},
 let selTb = null, curCat = '', myOrder = {}, myName = '', searchTerm = '';
 let payTb = null, creditPayWaiter = null;
 
-/* ── Favoritos (estática basada en popularidad) ── */
-const FAVS = [
-  { n: 'Poker',              icon: '🍺' },
-  { n: 'Águila',             icon: '🍺' },
-  { n: 'Club Colombia',      icon: '🍺' },
-  { n: 'Coca-Cola',          icon: '🥤' },
-  { n: 'PICADA',             icon: '🥩' },
-  { n: 'PECHUGA',            icon: '🍗' },
-  { n: 'Choricitos La Reserva', icon: '🌮' },
-  { n: 'Salchipapa',         icon: '🍟' },
-  { n: 'Adicional (General)', icon: '➕' },
-  { n: 'Hamburguesa',        icon: '🍔' },
-];
 
 const CAT_ICONS = {
   'ENTRADAS': '🌮',
@@ -673,26 +656,6 @@ const ITEM_ICONS = {
   'Hamburguesa': '🍔', 'Salchipapa': '🍟', 'Papas Maxi': '🍟', 'Árabe': '🌯', 'Creps': '🥞', 'Patacón': '🍌'
 };
 
-function renderFavs() {
-  const wrap = $('favs-wrap'), grid = $('favs-grid');
-  if (!wrap || !grid) return;
-  if (!selTb) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  grid.innerHTML = '';
-  FAVS.forEach(fav => {
-    const price = PR[fav.n];
-    if (!price) return;
-    const isTracked = state.inv[fav.n] !== undefined;
-    const left = isTracked ? state.inv[fav.n] : 999;
-    const ex = isTracked && left <= 0;
-    const btn = document.createElement('button');
-    btn.className = 'fav-btn';
-    if (ex) btn.disabled = true;
-    btn.innerHTML = `<span class="fav-icon">${fav.icon}</span><span>${fav.n.split(' ')[0]}</span><span class="fav-price">${fc(price)}</span>`;
-    btn.onclick = () => { if(!ex) { cQ(fav.n, 1); beep(1200, 0, 0.05); } };
-    grid.appendChild(btn);
-  });
-}
 
 /* ── Load menu from API (then update from socket) ── */
 fetch('/api/menu').then(r => r.json()).then(m => {
@@ -931,8 +894,6 @@ function render() {
       $('s-tot').textContent = fc(tot);
     } else { sw.classList.remove('vis'); }
 
-    // Render quick-access bar
-    renderFavs();
   }
 
   /* COCINA */
