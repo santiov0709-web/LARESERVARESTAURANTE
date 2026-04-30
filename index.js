@@ -37,40 +37,33 @@ let MENU = {
     { n: 'Tostadas de Ajo', p: 25000 },
     { n: 'Canastas de Plátano', p: 25000 }
   ],
-  'CERVEZAS': [
-    { n: 'Corona', p: 12000 },
-    { n: 'Stella Artois', p: 12000 },
-    { n: 'Club Colombia', p: 10000 },
-    { n: 'Águila Light', p: 7000 },
-    { n: 'Poker', p: 7000 },
-    { n: 'Pilsen', p: 7000 },
-    { n: 'Águila', p: 7000 }
+  'RESERVA DE LA CASA': [
+    { n: 'Pechuga Clasica', p: 48000 },
+    { n: 'Pechuga Tropical', p: 48000 },
+    { n: 'Cordon Blue', p: 48000 },
+    { n: 'Filet Mignon', p: 62000 },
+    { n: 'Stroganoff de Res', p: 62000 },
+    { n: 'Solomito al Vino', p: 62000 },
+    { n: 'Philadelphia Steak', p: 55000 },
+    { n: 'Chuleta de Cerdo', p: 48000 },
+    { n: 'Chuleta Apanada', p: 50000 },
+    { n: 'Medallones de Cerdo', p: 48000 },
+    { n: 'Sobrebarriga', p: 48000 }
   ],
-  'GASEOSAS': [
-    { n: 'Coca-Cola', p: 5000 },
-    { n: 'Tamarindo', p: 5000 },
-    { n: 'Manzana', p: 5000 },
-    { n: 'Colombiana', p: 5000 },
-    { n: 'Granizado Mandarina', p: 9000 }
+  'PARRILLA': [
+    { n: 'Picada La Reserva', p: 60000 },
+    { n: 'Parrillada La Reserva', p: 60000 },
+    { n: 'Punta de Anca', p: 53000 },
+    { n: 'Churrasco', p: 53000 },
+    { n: 'Costillas BBQ', p: 45000 },
+    { n: 'Baby Beff', p: 55000 }
   ],
-  'PLATOS FUERTES (Principales)': [
-    { n: 'FILET MIGNONT', p: 62000 },
-    { n: 'STROGANOF', p: 62000 },
-    { n: 'SOLOMITO', p: 62000 },
-    { n: 'PARRILLADA', p: 60000 },
-    { n: 'PICADA', p: 60000 },
-    { n: 'SALMON', p: 55000 },
-    { n: 'ROBALO', p: 55000 },
-    { n: 'CAZUELA', p: 55000 },
-    { n: 'CHURRASCO', p: 53000 },
-    { n: 'PUNTA DE ANCA', p: 53000 },
-    { n: 'BABY BEFF', p: 53000 },
-    { n: 'PECHUGA', p: 48000 },
-    { n: 'CORDON BLU', p: 48000 },
-    { n: 'CHULETA', p: 48000 },
-    { n: 'SOBREBARRIGA', p: 48000 },
-    { n: 'COSTILLAS BBQ', p: 45000 },
-    { n: 'CEVICHE', p: 43000 }
+  'RESERVA DEL MAR': [
+    { n: 'Cazuela de Mariscos', p: 53000 },
+    { n: 'Salmon en Salsa de Queso', p: 55000 },
+    { n: 'Ceviche o Coctel', p: 43000 },
+    { n: 'Trucha Tres Quesos', p: 53000 },
+    { n: 'Robalo a la Marinera', p: 55000 }
   ],
   'PASTAS': [
     { n: 'Carbonada', p: 50000 },
@@ -78,30 +71,72 @@ let MENU = {
     { n: 'En Camarón', p: 50000 },
     { n: 'Marinera', p: 50000 }
   ],
-  'COMIDA RÁPIDA / INFANTIL': [
-    { n: 'Papas Maxi', p: 45000 },
-    { n: 'Árabe', p: 38000 },
+  'LIGERA RESERVA': [
     { n: 'Cajita Feliz', p: 37000 },
     { n: 'Hamburguesa', p: 35000 },
-    { n: 'Salchipapa', p: 35000 },
+    { n: 'Creppe Mixto', p: 35000 },
     { n: 'Desgranado', p: 35000 },
-    { n: 'Creps', p: 35000 },
     { n: 'Patacón', p: 35000 },
+    { n: 'Papas Especiales', p: 35000 },
+    { n: 'Papas Maxi', p: 45000 },
+    { n: 'Árabe', p: 38000 },
+    { n: 'Menú Pechuga', p: 35000 },
     { n: 'Menú Muslitos', p: 35000 },
-    { n: 'Menú Pechuga', p: 35000 }
+    { n: 'Salchipapa', p: 35000 }
+  ],
+  'BEBIDAS': [
+    { n: 'Agua Natural', p: 4000 },
+    { n: 'Agua con Gas', p: 4000 },
+    { n: 'Agua Manantial', p: 7000 },
+    { n: 'Te Hatsu', p: 13000 },
+    { n: 'Soda Hatsu', p: 10000 },
+    { n: 'Jugos Naturales', p: 9000 },
+    { n: 'Jugos en Leche', p: 10000 },
+    { n: 'Limonada de Coco', p: 13000 },
+    { n: 'Limonada Hierbabuena', p: 13000 },
+    { n: 'Limonada Cereza', p: 13000 },
+    { n: 'Sodas Saborizadas', p: 13000 },
+    { n: 'Jugos Hit', p: 5000 },
+    { n: 'Mister Tea', p: 5000 },
+    { n: 'Coca-Cola', p: 5000 },
+    { n: 'Tamarindo', p: 5000 },
+    { n: 'Manzana', p: 5000 },
+    { n: 'Colombiana', p: 5000 },
+    { n: 'Granizado Mandarina', p: 9000 }
+  ],
+  'CERVEZAS': [
+    { n: 'Corona', p: 12000 },
+    { n: 'Stella Artois', p: 12000 },
+    { n: 'Club Colombia', p: 10000 },
+    { n: 'Águila Light', p: 7000 },
+    { n: 'Poker', p: 7000 },
+    { n: 'Pilsen', p: 7000 },
+    { n: 'Águila', p: 7000 },
+    { n: 'Reds', p: 7000 }
+  ],
+  'VINOS': [
+    { n: 'Casillero del Diablo', p: 150000 },
+    { n: 'Undurraga', p: 110000 },
+    { n: 'Santa Rita 120', p: 110000 },
+    { n: 'Frontera', p: 90000 },
+    { n: 'Gato Negro', p: 90000 },
+    { n: 'Lazo', p: 90000 }
+  ],
+  'APERITIVOS': [
+    { n: 'Dubonnet', p: 120000 },
+    { n: 'Manischewitz', p: 120000 },
+    { n: 'Baileys', p: 120000 }
+  ],
+  'CHAMPAÑAS': [
+    { n: 'Piterlongo', p: 220000 },
+    { n: 'JP Chenet', p: 100000 },
+    { n: 'Champaña Precidencial', p: 90000 }
   ],
   'LICORES (Botellas)': [
     { n: 'Buchanans', p: 190000 },
-    { n: 'Casillero', p: 150000 },
-    { n: 'Dubonnet', p: 120000 },
-    { n: 'Manischewitz', p: 120000 },
-    { n: 'Baileys', p: 120000 },
     { n: 'Chivas Regal', p: 110000 },
     { n: 'Old Parr', p: 110000 },
-    { n: 'JP Chenet', p: 100000 },
-    { n: 'Sello Rojo', p: 95000 },
-    { n: 'Lazo', p: 90000 },
-    { n: 'Gato Negro', p: 90000 }
+    { n: 'Sello Rojo', p: 95000 }
   ],
   'EXTRAS Y EMPAQUES': [
     { n: 'Crema de Pollo', p: 12000 },
