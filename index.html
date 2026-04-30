@@ -137,6 +137,19 @@
     .caja-tab.act { background:var(--blue); color:#fff; border-color:var(--blue); }
     .sub-view { display:none; } .sub-view.active { display:block; }
 
+    /* ── Admin & Inventory Elements ── */
+    .subcat { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); margin:20px 0 10px; padding-bottom:5px; border-bottom:1px solid var(--border); font-weight:700; display:flex; align-items:center; width:100%; }
+    .item { display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); padding:10px 14px; border-radius:10px; border:1px solid var(--border); margin-bottom:8px; transition:var(--tr); box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .item:hover { border-color:var(--emerald); background:var(--bg-card-h); transform:translateY(-1px); }
+    .i-name { font-size:0.85rem; font-weight:600; color:var(--txt1); flex:1; }
+    .i-price { font-size:0.75rem; color:var(--gold); font-weight:700; }
+    .q-ctrl { display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.2); padding:4px; border-radius:8px; border:1px inset rgba(255,255,255,0.05); }
+    .q-btn { background:linear-gradient(145deg, var(--bg-card), var(--bg-deep)); color:var(--emerald); border:1px solid var(--border); padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer; transition:var(--tr); font-size:0.85rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2); text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+    .q-btn:hover { background:var(--emerald); color:var(--bg-deep); border-color:var(--emerald-d); text-shadow:none; box-shadow:0 4px 10px rgba(46,204,113,0.3); transform:translateY(-1px); }
+    .q-btn:active { transform:scale(0.92); }
+    .q-btn.wide { padding:6px 16px; min-width:40px; }
+    .q-val { font-weight:800; color:var(--gold); font-size:1rem; text-align:center; min-width:32px; text-shadow:0 2px 4px rgba(0,0,0,0.4); }
+
     /* ── Daily stats ── */
     .daily-header { background:var(--bg-card); padding:18px; border-radius:12px; border:1px solid var(--border); margin-bottom:16px; text-align:center; }
     .daily-title { font-size:0.78rem; color:var(--txt2); text-transform:uppercase; letter-spacing:2px; }
@@ -558,8 +571,7 @@
   <div class="tk-line"></div>
 
   <div class="tk-c" style="font-size:6.5pt; margin-top:8pt; line-height:1.2">
-    Unidades de medida: C58 = newton segundo por metro, EA = cada<br><br>
-    Software DATAICO fabricado por Proveedor Tecnológico DATAICO SAS<br>901223648
+    Unidades de medida: C58 = newton segundo por metro, EA = cada
   </div>
 </div>
 
@@ -1631,36 +1643,8 @@ window.printSale = (ts) => {
 };
 
 window.printSaleElectronic = (ts) => {
-  // FACTURA ELECTRÓNICA (DATAICO FORMAT)
-  const s = state.sales.find(x => x.timestamp === ts); if(!s) return;
-  const now = new Date(ts);
-  const d = now.toLocaleDateString('es-CO', {timeZone:'America/Bogota', day:'2-digit', month:'2-digit', year:'numeric'});
-  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:false});
-  
-  $('tk-title').textContent = 'Factura Electrónica de Venta';
-  $('tk-legal-dataico').style.display = 'block';
-  $('tk-cliente-dataico').style.display = 'block';
-  $('tk-cufe-block').style.display = 'block';
-  // Generar un número falso visual consistente
-  const fakeV = Math.floor((ts % 10000000) / 1000);
-  $('tk-num').textContent = `FVE${fakeV}`;
-  $('tk-head-date').textContent = `${d} ${t}`;
-  $('tk-head-venc').textContent = `${d} ${t}`;
-  $('tk-method').textContent = s.paymentMethod || 'Contado';
-  $('tk-ref-mesa').textContent = `Mesa ${s.mesa} / ${s.mesero||'—'}`;
-  
-  $('tk-items').innerHTML = (s.items||[]).map(i=>`
-    <tr>
-      <td style="vertical-align:top; width:20%"><b>${i.qty}</b> C58</td>
-      <td style="vertical-align:top; width:50%; padding-right:5px">${i.name}${i.note?`<br><span style="font-size:6.5pt;font-weight:normal">(${i.note})</span>`:''}</td>
-      <td style="vertical-align:top; width:30%; text-align:right">${fc((i.price||0)*i.qty)}</td>
-    </tr>
-  `).join('');
-  
-  $('tk-subtot').textContent = fc(s.total||0);
-  $('tk-tot').textContent = fc(s.total||0);
-  
-  window.print();
+  // Redirigir directamente a la página de Dataico para facturación electrónica real
+  window.open('https://dataico.com', '_blank');
 };
 
 window.confirmPayment = () => {
