@@ -482,30 +482,84 @@
   <button class="btn-full" style="font-size:1.05rem;padding:16px" onclick="closeM('dispatchAlertModal')">ACEPTAR</button>
 </div></div>
 
-<!-- TICKET IMPRESIÓN POS-80C -->
+<!-- TICKET IMPRESIÓN POS-80C (DATAICO) -->
 <div id="ticket">
-  <div class="tk-logo-banner">&#9679; PUERTO BOYAC&#193; &#9679;</div>
-  <div class="tk-deco-line" style="margin:3pt 0"></div>
-  <div class="tk-logo-main">RESERVA</div>
-  <div class="tk-deco-line"></div>
-  <div class="tk-logo-sub">Buena Comida</div>
-  <div class="tk-deco-line" style="margin-bottom:3pt"></div>
-  <div class="tk-c tk-meta" id="tk-title">Comprobante de Venta</div>
-  <div class="tk-c tk-meta" id="tk-head"></div>
-  <div class="tk-line"></div>
-  <div class="tk-j tk-b"><span>CANT  DETALLE</span><span>TOTAL</span></div>
-  <div class="tk-line"></div>
-  <div id="tk-items"></div>
-  <div class="tk-line"></div>
-  <div class="tk-j tk-b" style="font-size:10pt;margin-top:3pt">
-    <span>TOTAL A PAGAR:</span><span id="tk-tot"></span>
+  <div class="tk-c" style="margin-bottom: 2pt;">
+    <img src="/logo-ticket.png.jpeg" style="width: 35mm; max-width: 100%; margin-bottom: 6pt; filter: grayscale(100%);">
+    <div style="font-weight:900; font-size:10pt;">JULIA YANETH VELANDIA<br>TARAZONA</div>
+    <div style="font-weight:900; font-size:11pt; margin-top:2pt">RESTAURANTE BAR LA RESERVA</div>
+    <div class="tk-meta" style="margin-top:2pt">CC 37542233</div>
+    <div class="tk-meta">RESPONSABLE DE IVA</div>
+    <div class="tk-meta">TEL. 3105760206</div>
+    <div class="tk-meta">lareserva.yv@gmail.com</div>
+    <div class="tk-meta" style="margin-bottom:4pt">CR 3 17 07, PUERTO BOYACA (BOYACA)</div>
   </div>
-  <div class="tk-j tk-pay" style="margin-top:3pt">
-    <span>Forma de pago:</span><span id="tk-method"></span>
+
+  <div class="tk-c" style="font-weight:900; font-size:10pt; margin:4pt 0" id="tk-title">Factura Electrónica de Venta</div>
+  
+  <div class="tk-c tk-meta" style="font-size:6.5pt; line-height:1.3; margin-bottom:4pt">
+    Autorización Numeración de Facturación<br>
+    No. 18764100376598 de 21/10/2025 - 21/04/2026<br>
+    autoriza FVE - 311 a FVE - 1,000<br><br>
+    No somos gran contribuyente<br>
+    No somos agente retenedor del Impuesto sobre las Ventas - IVA<br>
+    No somos autorretenedor del Impuesto sobre la Renta y Complementarios
   </div>
+
   <div class="tk-line"></div>
-  <div class="tk-thanks">&#8212; Gracias por su visita &#8212;</div>
-  <div class="tk-c" style="font-size:6.5pt;margin-top:4pt;letter-spacing:0.5pt">La Reserva &mdash; Puerto Boyac&aacute;</div>
+  
+  <div class="tk-meta" style="margin:4pt 0; text-align:left; font-size:7.5pt">
+    <div id="tk-cufe-block">
+      <b>CUFE:</b><br><span style="word-break:break-all; font-size:6pt">160eae5d05a0e9ae5b46aae9de930ea69ff25a64147f63f1576cdd55422f390092a96cbc3c7463b7240e127b0972913d</span><br>
+    </div>
+    <table style="width:100%; font-size:7.5pt; margin-top:2pt">
+      <tr><td><b>Número</b></td><td style="text-align:right" id="tk-num">FVE452</td></tr>
+      <tr><td><b>Tipo de Operación</b></td><td style="text-align:right">Estandar</td></tr>
+      <tr><td><b>Fecha de Generación</b></td><td style="text-align:right" id="tk-head-date"></td></tr>
+      <tr><td><b>Fecha de Vencimiento</b></td><td style="text-align:right" id="tk-head-venc"></td></tr>
+      <tr><td><b>Forma de Pago</b></td><td style="text-align:right">Contado</td></tr>
+      <tr><td><b>Medio de Pago</b></td><td style="text-align:right" id="tk-method"></td></tr>
+      <tr><td><b>Moneda</b></td><td style="text-align:right">COP</td></tr>
+      <tr><td><b>Mesa / Ref</b></td><td style="text-align:right" id="tk-ref-mesa"></td></tr>
+    </table>
+  </div>
+
+  <div class="tk-line"></div>
+
+  <div class="tk-meta" style="font-size:7.5pt; margin:4pt 0; text-align:left; line-height:1.3">
+    <b>CLIENTE</b><br><span id="tk-cli-name">CONSUMIDOR FINAL</span><br>
+    <b>NIT/CC</b><br><span id="tk-cli-id">222222222222</span><br>
+    <b>EMAIL</b><br><span id="tk-cli-mail">consumidor@dataico.com</span><br>
+    <b>TELÉFONO</b><br><span id="tk-cli-tel">415 555 1212</span><br>
+    <b>DIRECCIÓN</b><br><span id="tk-cli-dir">CR 3 17 07</span><br>
+    <b>CIUDAD, DEP.</b><br>PUERTO BOYACA, BOYACA (CO)
+  </div>
+
+  <div class="tk-line"></div>
+  
+  <table style="width:100%; font-size:8pt; text-align:left; border-collapse:collapse; margin:4pt 0">
+    <thead>
+      <tr style="border-bottom:1.5pt solid #000; font-weight:900">
+        <th style="padding-bottom:2pt" colspan="2">CT U/M DESCRIPCION</th>
+        <th style="text-align:right; padding-bottom:2pt">VALOR</th>
+      </tr>
+    </thead>
+    <tbody id="tk-items"></tbody>
+  </table>
+
+  <div class="tk-line"></div>
+
+  <table style="width:100%; font-size:9pt; margin:4pt 0">
+    <tr style="font-weight:700"><td>Subtotal</td><td style="text-align:right" id="tk-subtot"></td></tr>
+    <tr style="font-weight:900; font-size:12pt"><td>TOTAL a PAGAR</td><td style="text-align:right" id="tk-tot"></td></tr>
+  </table>
+
+  <div class="tk-line"></div>
+
+  <div class="tk-c" style="font-size:6.5pt; margin-top:8pt; line-height:1.2">
+    Unidades de medida: C58 = newton segundo por metro, EA = cada<br><br>
+    Software DATAICO fabricado por Proveedor Tecnológico DATAICO SAS<br>901223648
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -1516,22 +1570,31 @@ window.printBill = () => {
   const b = state.bills[payTb]; if(!b) return;
   const now = new Date();
   const d = now.toLocaleDateString('es-CO', {timeZone:'America/Bogota', day:'2-digit', month:'2-digit', year:'numeric'});
-  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:true});
-  if($('tk-title')) $('tk-title').textContent = 'PRE-FACTURA';
-  $('tk-head').innerHTML = `Mesa ${payTb} &nbsp;|&nbsp; ${b.mesero||'—'}<br>${d} &nbsp; ${t}`;
+  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:false});
+  
+  $('tk-title').innerHTML = 'PRE-FACTURA<br><span style="font-size:7pt;font-weight:400">(Documento informativo, no es factura)</span>';
+  $('tk-cufe-block').style.display = 'none'; // Sin CUFE para prefactura
+  $('tk-num').textContent = '—';
+  $('tk-head-date').textContent = `${d} ${t}`;
+  $('tk-head-venc').textContent = `${d} ${t}`;
+  $('tk-method').textContent = '—';
+  $('tk-ref-mesa').textContent = `Mesa ${payTb} / ${b.mesero||'A'}`;
+  
   $('tk-items').innerHTML = (b.items||[]).map(i=>`
-    <div class="tk-j" style="margin-bottom:3pt">
-      <span style="width:68%">${i.qty}x ${i.name}${i.note?'<br><span style="font-size:7pt;padding-left:8pt">↳ '+i.note+'</span>':''}</span>
-      <span>${fc((i.price||0)*i.qty)}</span>
-    </div>`).join('');
+    <tr>
+      <td style="vertical-align:top; width:20%"><b>${i.qty}</b> C58</td>
+      <td style="vertical-align:top; width:50%; padding-right:5px">${i.name}${i.note?`<br><span style="font-size:6.5pt;font-weight:normal">(${i.note})</span>`:''}</td>
+      <td style="vertical-align:top; width:30%; text-align:right">${fc((i.price||0)*i.qty)}</td>
+    </tr>
+  `).join('');
+  
+  $('tk-subtot').textContent = fc(b.total||0);
   $('tk-tot').textContent = fc(b.total||0);
-  // Ocultar método de pago en pre-factura
-  const tkPay = document.querySelector('.tk-pay');
-  if(tkPay) tkPay.style.display = 'none';
+  
   window.print();
-  // Restaurar para próxima impresión
-  if(tkPay) tkPay.style.display = '';
-  if($('tk-title')) $('tk-title').textContent = 'Comprobante de Venta';
+  
+  // Restore para factura real
+  $('tk-cufe-block').style.display = 'block';
 };
 
 window.printSale = (ts) => {
@@ -1539,19 +1602,29 @@ window.printSale = (ts) => {
   const s = state.sales.find(x => x.timestamp === ts); if(!s) return;
   const now = new Date(ts);
   const d = now.toLocaleDateString('es-CO', {timeZone:'America/Bogota', day:'2-digit', month:'2-digit', year:'numeric'});
-  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:true});
-  if($('tk-title')) $('tk-title').textContent = 'Comprobante de Venta';
-  $('tk-head').innerHTML = `Mesa ${s.mesa} &nbsp;|&nbsp; ${s.mesero||'—'}<br>${d} &nbsp; ${t}`;
+  const t = now.toLocaleTimeString('es-CO', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hour12:false});
+  
+  $('tk-title').textContent = 'Factura Electrónica de Venta';
+  $('tk-cufe-block').style.display = 'block';
+  // Generar un número falso visual consistente para la factura
+  const fakeV = Math.floor((ts % 10000000) / 1000);
+  $('tk-num').textContent = `FVE${fakeV}`;
+  $('tk-head-date').textContent = `${d} ${t}`;
+  $('tk-head-venc').textContent = `${d} ${t}`;
+  $('tk-method').textContent = s.paymentMethod || 'Contado';
+  $('tk-ref-mesa').textContent = `Mesa ${s.mesa} / ${s.mesero||'—'}`;
+  
   $('tk-items').innerHTML = (s.items||[]).map(i=>`
-    <div class="tk-j" style="margin-bottom:3pt">
-      <span style="width:68%">${i.qty}x ${i.name}${i.note?'<br><span style="font-size:7pt;padding-left:8pt">↳ '+i.note+'</span>':''}</span>
-      <span>${fc((i.price||0)*i.qty)}</span>
-    </div>`).join('');
+    <tr>
+      <td style="vertical-align:top; width:20%"><b>${i.qty}</b> C58</td>
+      <td style="vertical-align:top; width:50%; padding-right:5px">${i.name}${i.note?`<br><span style="font-size:6.5pt;font-weight:normal">(${i.note})</span>`:''}</td>
+      <td style="vertical-align:top; width:30%; text-align:right">${fc((i.price||0)*i.qty)}</td>
+    </tr>
+  `).join('');
+  
+  $('tk-subtot').textContent = fc(s.total||0);
   $('tk-tot').textContent = fc(s.total||0);
-  // Mostrar método de pago en factura cerrada
-  const tkPay = document.querySelector('.tk-pay');
-  if(tkPay) tkPay.style.display = '';
-  if($('tk-method')) $('tk-method').textContent = s.paymentMethod || '—';
+  
   window.print();
 };
 
