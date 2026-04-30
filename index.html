@@ -615,7 +615,7 @@ if (PATH === '/mesero') mode = 'mesero';
 else if (PATH === '/cocina') mode = 'cocina';
 else if (PATH === '/caja') mode = 'caja';
 
-const WAITERS = ['Andres', 'Ximena', 'Sebastian', 'Yaniris', 'Fabiola', 'Yolanda', 'Sandra'];
+const WAITERS = ['Andres', 'Ximena', 'Sebastian'];
 
 if (mode === 'landing') {
   $('landing').style.display = 'flex';
@@ -1754,8 +1754,15 @@ window.confirmDivideSale = () => {
   function renderCredits() {
     const g = $('credits-summary'); if(!g) return;
     g.innerHTML = '';
-    WAITERS.forEach(name => {
+    
+    // Mostrar los 3 fijos + cualquiera que tenga deuda activa (por si acaso)
+    const existingWithDebt = Object.keys(state.credits).filter(n => state.credits[n].totalDebt > 0);
+    const toRender = [...new Set([...WAITERS, ...existingWithDebt])];
+
+    toRender.forEach(name => {
       const data = state.credits[name] || { totalDebt: 0, items: [] };
+      if (data.totalDebt <= 0 && !WAITERS.includes(name)) return; // No mostrar extras sin deuda
+
       const card = document.createElement('div');
       card.className = 'bill-card';
       card.style.padding = '15px'; card.style.textAlign = 'center';
