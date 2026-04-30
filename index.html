@@ -326,6 +326,7 @@
       <div class="caja-tab"     id="tab-monitor"    onclick="switchCaja('monitor')">Monitor</div>
       <div class="caja-tab"     id="tab-inventario" onclick="switchCaja('inventario')">Inventario</div>
       <div class="caja-tab"     id="tab-config"     onclick="switchCaja('config')">Menú</div>
+      <div class="caja-tab"     id="tab-credits"    onclick="switchCaja('credits')">Créditos Meseros</div>
       <button class="btn-full" style="margin:0 0 0 auto; background: linear-gradient(135deg, #9b59b6, #8e44ad); border:none; padding:4px 12px; font-size:0.75rem; width:auto; height:32px" onclick="openYModal()">💎 CRÉDITO YANETH</button>
     </div>
   </header>
@@ -390,6 +391,12 @@
     <div id="cj-menu-edit"></div>
     <button class="btn-full" style="background:#8fa89a;margin-top:24px;color:var(--bg-deep)" onclick="menuAddCat()">➕ AÑADIR CATEGORÍA</button>
     <button class="btn-full" style="background:#34495e;margin-top:12px" onclick="saveMenuToServer()">💾 GUARDAR MENÚ GLOBAL</button>
+  </section>
+
+  <section class="app-view sub-view" id="v-credits">
+    <div class="sec-title">Gestión de Créditos Meseros</div>
+    <div id="credits-summary" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:12px; margin-bottom:20px"></div>
+    <button class="btn-full btn-blue" onclick="openWModal()">➕ REGISTRAR CONSUMO MESERO</button>
   </section>
 </div>
 
@@ -608,15 +615,17 @@ if (PATH === '/mesero') mode = 'mesero';
 else if (PATH === '/cocina') mode = 'cocina';
 else if (PATH === '/caja') mode = 'caja';
 
+const WAITERS = ['Andres', 'Ximena', 'Sebastian', 'Yaniris', 'Fabiola', 'Yolanda', 'Sandra'];
+
 if (mode === 'landing') {
   $('landing').style.display = 'flex';
 } else {
 
 /* ── State ── */
 let MENU = {}, PR = {};
-let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'}, inv:{}, dispatched:[] };
+let state = { bills:{}, orders:[], sales:[], daily:{total:0,count:0,date:'—'}, inv:{}, dispatched:[], credits:{} };
 let selTb = null, curCat = '', myOrder = {}, myName = '', searchTerm = '';
-let payTb = null;
+let payTb = null, creditPayWaiter = null;
 
 /* ── Favoritos (estática basada en popularidad) ── */
 const FAVS = [
@@ -699,6 +708,7 @@ socket.on('all-bills',    b => { state.bills = b; render(); });
 socket.on('active-orders',o => { state.orders = o; render(); });
 socket.on('all-inventory',iv => { state.inv = iv; render(); });
 socket.on('all-dispatched-orders', d => { state.dispatched = d; render(); });
+socket.on('all-waiter-credits', c => { state.credits = c; renderCredits(); });
 socket.on('daily-sales-update', s => {
   state.daily = s; state.sales = s.transactions || [];
   $('d-count') && ($('d-count').textContent = state.sales.length);
@@ -1409,13 +1419,14 @@ function updateDashboard() {
 }
 
 window.switchCaja = t => {
-  ['cuentas','dashboard','venta','inventario','config'].forEach(x => {
+  ['cuentas','dashboard','venta','monitor','inventario','config','credits'].forEach(x => {
     $('v-'+x)?.classList.remove('active');
     $('tab-'+x)?.classList.remove('act');
   });
   $('v-'+t)?.classList.add('active');
   $('tab-'+t)?.classList.add('act');
   if (t === 'dashboard') requestAnimationFrame(updateDashboard);
+  if (t === 'credits') socket.emit('get-all-waiter-credits');
   render();
 };
 
@@ -1686,6 +1697,111 @@ window.confirmDivideSale = () => {
     showToast('✅ Pedido para Yaneth enviado a cocina.');
   };
 
+  /* ── Créditos Meseros ── */
+  let wOrder = {};
+  window.openWModal = () => {
+    wOrder = {};
+    const sel = $('w-select');
+    sel.innerHTML = '<option value="">-- Seleccionar Mesero --</option>' + 
+      WAITERS.map(n => `<option value="${n}">${n}</option>`).join('');
+    renderWMenu();
+    $('w-selection-summary').style.display = 'none';
+    openM('waiter-modal');
+  };
+  window.closeWModal = () => closeM('waiter-modal');
+
+  function renderWMenu() {
+    const g = $('w-menu-grid'); g.innerHTML = '';
+    Object.keys(MENU).forEach(cat => {
+      const div = document.createElement('div');
+      div.style.gridColumn = '1 / -1'; div.style.color = 'var(--emerald)'; div.style.fontSize = '0.8rem';
+      div.style.textTransform = 'uppercase'; div.style.marginTop = '15px';
+      div.style.borderBottom = '1px solid var(--border)'; div.style.paddingBottom = '5px';
+      div.textContent = cat;
+      g.appendChild(div);
+      MENU[cat].forEach(it => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'y-item';
+        const q = wOrder[it.n] ? wOrder[it.n].qty : 0;
+        itemDiv.innerHTML = `<div>${it.n}</div><div style="font-size:0.75rem; color:var(--txt3)">${fc(it.p)} ${q>0?`<span class="y-q" style="background:var(--emerald)">${q}</span>`:''}</div>`;
+        itemDiv.onclick = () => {
+          if(!wOrder[it.n]) wOrder[it.n] = { name: it.n, qty: 1, price: it.p };
+          else wOrder[it.n].qty++;
+          updateWSummary();
+          renderWMenu();
+        };
+        g.appendChild(itemDiv);
+      });
+    });
+  }
+  function updateWSummary() {
+    const s = $('w-selection-summary'); const list = $('w-items-list');
+    const items = Object.values(wOrder);
+    if(items.length === 0) { s.style.display = 'none'; return; }
+    s.style.display = 'block';
+    list.innerHTML = items.map(it => `<div>• ${it.name} <strong>×${it.qty}</strong></div>`).join('');
+  }
+  window.sendWOrder = () => {
+    const items = Object.values(wOrder);
+    const w = $('w-select').value;
+    if(!w) { alert('Selecciona un mesero'); return; }
+    if(items.length === 0) return;
+    socket.emit('new-order', { mesa: 0, items: items, mesero: w, isWaiterCredit: true });
+    closeM('waiter-modal');
+    showToast(`✅ Pedido para ${w} enviado y cargado a su crédito.`);
+  };
+
+  function renderCredits() {
+    const g = $('credits-summary'); if(!g) return;
+    g.innerHTML = '';
+    WAITERS.forEach(name => {
+      const data = state.credits[name] || { totalDebt: 0, items: [] };
+      const card = document.createElement('div');
+      card.className = 'bill-card';
+      card.style.padding = '15px'; card.style.textAlign = 'center';
+      card.innerHTML = `
+        <div style="color:var(--emerald); font-weight:700; font-size:1.1rem; margin-bottom:5px">${name}</div>
+        <div style="color:var(--gold); font-size:1.3rem; font-weight:800; margin-bottom:10px">${fc(data.totalDebt)}</div>
+        <div style="display:flex; gap:6px">
+          <button class="btn-full" style="margin:0; font-size:0.7rem; padding:8px; flex:1" onclick="openDetailsW('${name}')" ${data.totalDebt<=0?'disabled':''}>DETALLE</button>
+          <button class="btn-full" style="margin:0; font-size:0.7rem; padding:8px; flex:1; background:var(--emerald); color:var(--bg-deep)" onclick="openPW('${name}', ${data.totalDebt})" ${data.totalDebt<=0?'disabled':''}>ABONAR</button>
+        </div>
+      `;
+      g.appendChild(card);
+    });
+  }
+
+  window.openDetailsW = (name) => {
+    const data = state.credits[name];
+    if(!data || !data.items) return;
+    const cont = $('wd-list'); cont.innerHTML = '';
+    data.items.forEach(it => {
+      cont.innerHTML += `
+        <div class="m-item">
+          <span>${it.name} ×${it.qty}</span>
+          <span>${fc(it.price * it.qty)}</span>
+        </div>`;
+    });
+    $('wd-title').textContent = `Detalle de Deuda: ${name}`;
+    openM('waiterDetailsModal');
+  };
+
+  window.openPW = (name, debt) => {
+    creditPayWaiter = name;
+    $('pwm-title').textContent = `Abonar Deuda: ${name}`;
+    $('pwm-debt').textContent = fc(debt);
+    $('pwm-amount').value = debt;
+    openM('payWaiterModal');
+  };
+  window.confirmPW = () => {
+    const amt = parseInt($('pwm-amount').value) || 0;
+    const method = $('pwm-method').value;
+    if(amt <= 0) return;
+    socket.emit('pay-waiter-credit', { waiterName: creditPayWaiter, amount: amt, method });
+    closeM('payWaiterModal');
+    showToast(`✅ Pago de ${fc(amt)} registrado para ${creditPayWaiter}`);
+  };
+
   /* ── Cambiar Producto (Admin) ── */
   let changeItemMesa = null;
   let changeItemIdx  = null;
@@ -1782,6 +1898,52 @@ window.confirmDivideSale = () => {
       <div class="y-grid" id="y-menu-grid"></div>
     </div>
   </div>
+
+  <!-- MODAL CRÉDITO MESERO -->
+  <div id="waiter-modal" class="modal">
+    <div class="m-content" style="max-width:800px">
+      <div class="m-head" style="color:var(--emerald)">💳 Crédito Mesero <button class="m-close" onclick="closeWModal()">✕</button></div>
+      <div style="padding:10px; background:var(--bg-surface); border-radius:12px; border:1px solid var(--border); margin-bottom:15px">
+        <label style="font-size:0.7rem; color:var(--txt3); text-transform:uppercase; display:block; margin-bottom:5px">Seleccionar Mesero:</label>
+        <select id="w-select" class="select-box" style="margin:0"></select>
+      </div>
+      
+      <div id="w-selection-summary" style="background:rgba(46, 204, 113, 0.1); padding:15px; border-radius:12px; margin:15px 0; border:1px dashed var(--emerald); display:none">
+        <div id="w-items-list" style="font-size:0.9rem; margin-bottom:10px"></div>
+        <button class="btn-full" style="background:var(--emerald); color:var(--bg-deep); margin:0" onclick="sendWOrder()">REGISTRAR CRÉDITO PARA MESERO</button>
+      </div>
+
+      <div class="y-grid" id="w-menu-grid"></div>
+    </div>
+  </div>
+
+  <!-- MODAL PAGO MESERO -->
+  <div id="payWaiterModal" class="modal"><div class="m-content">
+    <div class="m-head" id="pwm-title">Abonar a Deuda <button class="m-close" onclick="closeM('payWaiterModal')">✕</button></div>
+    <div style="background:var(--bg-surface); padding:15px; border-radius:12px; border:1px solid var(--border); margin-bottom:15px; text-align:center">
+      <div id="pwm-debt" style="font-size:1.8rem; color:var(--gold); font-weight:700">$0</div>
+      <div style="font-size:0.75rem; color:var(--txt3)">Deuda Actual Pendiente</div>
+    </div>
+    
+    <label style="font-size:0.7rem; color:var(--txt3); text-transform:uppercase; margin-bottom:5px; display:block">Monto a pagar:</label>
+    <input type="number" id="pwm-amount" class="input-text" placeholder="Ej: 20000">
+    
+    <label style="font-size:0.7rem; color:var(--txt3); text-transform:uppercase; margin-bottom:5px; display:block">Método de pago:</label>
+    <select id="pwm-method" class="select-box">
+      <option value="Efectivo">💵 Efectivo</option>
+      <option value="Nequi">📱 Nequi</option>
+      <option value="Daviplata">📱 Daviplata</option>
+    </select>
+    
+    <button class="btn-full" onclick="confirmPW()">REGISTRAR PAGO</button>
+  </div></div>
+
+  <!-- MODAL DETALLE MESERO -->
+  <div id="waiterDetailsModal" class="modal"><div class="m-content">
+    <div class="m-head" id="wd-title">Detalle de Deuda <button class="m-close" onclick="closeM('waiterDetailsModal')">✕</button></div>
+    <div id="wd-list" style="max-height:60vh; overflow-y:auto; margin-bottom:15px"></div>
+    <button class="btn-full" onclick="closeM('waiterDetailsModal')">CERRAR</button>
+  </div></div>
 
 <!-- MODAL CAMBIAR PRODUCTO -->
 <div id="changeItemModal" class="modal">

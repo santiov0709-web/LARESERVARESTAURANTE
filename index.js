@@ -30,6 +30,7 @@ let   dispatchedOrders = [];      // Cola de los últimos 20 pedidos despachados
 let   orderCounter = 0;
 let   inventory    = {};
 let   dailySales   = [];
+const waiterCredits = new Map(); // waiterName → { waiterName, totalDebt, items }
 let MENU = {
   'ENTRADAS': [
     { n: 'Choricitos La Reserva', p: 25000 },
@@ -149,6 +150,7 @@ try {
       Sale      = mongoose.model('Sale',      new mongoose.Schema({mesa:Number,mesero:String,items:Array,total:Number,paymentMethod:String,openedAt:String,closedAt:String,timestamp:{type:Number,default:Date.now}}));
       Inventory = mongoose.model('Inventory', new mongoose.Schema({itemName:{type:String,unique:true},stock:{type:Number,default:0}}));
       Config    = mongoose.model('Config',    new mongoose.Schema({key:{type:String,unique:true},value:Object}));
+      WaiterCredit = mongoose.model('WaiterCredit', new mongoose.Schema({waiterName:{type:String,unique:true},totalDebt:{type:Number,default:0},items:Array}));
 
       const splitsForFix = await Sale.find({ "items.name": "Abono dividido (Retroactivo)" });
       for (const sp of splitsForFix) {
@@ -176,6 +178,9 @@ try {
       invDocs.forEach(d => { inventory[d.itemName] = d.stock; });
       if(cfgMenu && cfgMenu.value) MENU = cfgMenu.value;
       dailySales = sales.map(s => s.toObject());
+
+      const wCredits = await WaiterCredit.find();
+      wCredits.forEach(wc => waiterCredits.set(wc.waiterName, wc.toObject()));
 
       console.log(`📦 Estado restaurado de Mongo: ${activeOrders.size} pedidos, ${tableBills.size} cuentas, ${Object.keys(inventory).length} items`);
       isServerEmpty = false;
@@ -430,6 +435,7 @@ io.on('connection', (socket) => {
       items: data.items,
       mesero: data.mesero || 'Mesero',
       isYaneth: data.isYaneth || false,
+      isWaiterCredit: data.isWaiterCredit || false,
       hora: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
       timestamp: Date.now()
     };
@@ -496,6 +502,44 @@ io.on('connection', (socket) => {
       persist(async () => {
         await Order.deleteOne({id:orderId});
         await new Sale(transaction).save();
+      });
+      return;
+    }
+
+    if (order.isWaiterCredit) {
+      const finalTotal = order.items.reduce((s,it)=>s+(it.price*it.qty),0);
+      const waiter = order.mesero;
+      
+      let wc = waiterCredits.get(waiter) || { waiterName: waiter, totalDebt: 0, items: [] };
+      wc.totalDebt += finalTotal;
+      order.items.forEach(it => {
+        wc.items.push({ ...it, timestamp: Date.now() });
+      });
+      waiterCredits.set(waiter, wc);
+
+      const transaction = {
+        mesa: 0, mesero: `CRÉDITO: ${waiter}`,
+        items: [...order.items], total: finalTotal,
+        paymentMethod: 'Crédito Mesero', openedAt: order.hora,
+        closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+        timestamp: Date.now()
+      };
+      dailySales.push(transaction);
+      activeOrders.delete(orderId);
+
+      dispatchedOrders.unshift({ ...order, closedAt: transaction.closedAt });
+      if (dispatchedOrders.length > 20) dispatchedOrders.pop();
+      
+      io.emit('all-dispatched-orders', dispatchedOrders);
+      io.emit('order-dispatched', {id:orderId, mesa:'Crédito', mesero:waiter});
+      io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+      io.emit('all-waiter-credits', Object.fromEntries(waiterCredits));
+
+      console.log(`👤 Crédito registrado para ${waiter} — ${formatCOP(finalTotal)}`);
+      persist(async () => {
+        await Order.deleteOne({id:orderId});
+        await new Sale(transaction).save();
+        await WaiterCredit.findOneAndUpdate({waiterName:waiter}, wc, {upsert:true});
       });
       return;
     }
@@ -626,6 +670,37 @@ io.on('connection', (socket) => {
         console.log(`✏️ Método de pago editado a ${newMethod} en RAM`);
       }
     }
+  });
+
+  socket.on('get-all-waiter-credits', () => {
+    socket.emit('all-waiter-credits', Object.fromEntries(waiterCredits));
+  });
+
+  socket.on('pay-waiter-credit', async ({waiterName, amount, method}) => {
+    let wc = waiterCredits.get(waiterName);
+    if (!wc) return;
+
+    const payAmt = Math.min(amount, wc.totalDebt);
+    wc.totalDebt -= payAmt;
+    waiterCredits.set(waiterName, wc);
+
+    const transaction = {
+      mesa: 0, mesero: `PAGO CRÉDITO: ${waiterName}`,
+      items: [{ name: `Pago Crédito Mesero (${waiterName})`, qty: 1, price: payAmt }],
+      total: payAmt, paymentMethod: method,
+      openedAt: '—',
+      closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+      timestamp: Date.now()
+    };
+    dailySales.push(transaction);
+    
+    io.emit('daily-sales-update', {total:getDailyTotal(),count:dailySales.length,date:dailyDate,transactions:dailySales});
+    io.emit('all-waiter-credits', Object.fromEntries(waiterCredits));
+    
+    persist(async () => {
+      await new Sale(transaction).save();
+      await WaiterCredit.findOneAndUpdate({waiterName}, wc, {upsert:true});
+    });
   });
 
   /* ── Remove item from bill (Admin) ── */
