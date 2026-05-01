@@ -335,6 +335,7 @@ app.get('/api/export-daily', async (req, res) => {
 
           (tx.items || []).forEach(it => {
             const name = it.name;
+            if (name.includes('Abono parcial') || name.includes('Abono dividido')) return;
             if (!productTotals[name]) {
                productTotals[name] = { qty: 0, total: 0 };
             }
@@ -833,9 +834,12 @@ io.on('connection', (socket) => {
     const bill = tableBills.get(mesa);
     if (!bill || amount <= 0) return;
 
+    const newAbonoTotal = (bill.abono || 0) + amount;
+    const isClosed = (newAbonoTotal >= bill.total);
+
     const transaction = {
       mesa: bill.mesa, mesero: bill.mesero,
-      items: [{ name: 'Abono parcial', qty: 1, price: amount }],
+      items: isClosed ? [...bill.items] : [{ name: 'Abono parcial', qty: 1, price: amount }],
       total: amount, paymentMethod, openedAt: bill.openedAt,
       closedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
       timestamp: Date.now()
@@ -843,10 +847,9 @@ io.on('connection', (socket) => {
     dailySales.push(transaction);
     
     // Update abono
-    bill.abono = (bill.abono || 0) + amount;
+    bill.abono = newAbonoTotal;
     
     // Check if fully paid
-    const isClosed = (bill.abono >= bill.total);
     if (isClosed) {
       tableBills.delete(mesa);
       io.emit('account-closed', {mesa, bill:transaction});
