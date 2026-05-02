@@ -211,9 +211,13 @@ try {
       orders.forEach(o => { activeOrders.set(o.id, o.toObject()); if(o.id>=orderCounter) orderCounter=o.id; });
       bills.forEach(b => tableBills.set(b.mesa, b.toObject()));
       invDocs.forEach(d => { inventory[d.itemName] = d.stock; });
-      // FORZAR ACTUALIZACION DEL MENU: Ignoramos el antiguo de Mongo y guardamos el nuevo estructurado
-      // if(cfgMenu && cfgMenu.value) MENU = cfgMenu.value;
-      await Config.findOneAndUpdate({key:'menu'},{value:MENU},{upsert:true});
+      // Cargar el menú de la base de datos (para preservar los que el admin agrega manualmente)
+      if (cfgMenu && cfgMenu.value) {
+        MENU = cfgMenu.value;
+      } else {
+        // Solo si la base de datos no tiene un menú, guardamos el base
+        await Config.findOneAndUpdate({key:'menu'}, {value:MENU}, {upsert:true});
+      }
       dailySales = sales.map(s => s.toObject());
 
       const wCredits = await WaiterCredit.find();
