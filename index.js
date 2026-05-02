@@ -416,6 +416,57 @@ app.get('/api/fix-retro', async (req, res) => {
 });
 
 /* ══════════════════════════════════════════════
+   FILTRO DE COCINA
+   Determina qué ítems deben ir a la pantalla de cocina.
+   Las bebidas simples, licores, desechables y sumo de limón
+   se añaden directo a la cuenta sin pasar por cocina.
+   ══════════════════════════════════════════════ */
+
+// Categorías cuyos ítems NUNCA van a cocina
+const NON_KITCHEN_CATEGORIES = new Set([
+  'CERVEZAS', 'VINOS', 'APERITIVOS', 'CHAMPAÑAS', 'LICORES (Botellas)'
+]);
+
+// Ítems específicos dentro de BEBIDAS que SÍ van a cocina (preparación requerida)
+const BEBIDAS_TO_KITCHEN = new Set([
+  'Jugos Naturales', 'Jugos en Leche',
+  'Limonada de Coco', 'Limonada Hierbabuena', 'Limonada Cereza'
+]);
+
+// Ítems específicos de cualquier categoría que NUNCA van a cocina
+const NON_KITCHEN_ITEMS = new Set([
+  'Sumo de Limón', 'Desechable de Caja', 'Desechable Plástico'
+]);
+
+/**
+ * Retorna true si el ítem debe ir a la cocina.
+ * Busca en el menú actual para determinar la categoría del ítem.
+ */
+function isKitchenItem(itemName) {
+  // Primero: si es un ítem explícitamente excluido, no va a cocina
+  if (NON_KITCHEN_ITEMS.has(itemName)) return false;
+
+  // Buscar en qué categoría del menú está este ítem
+  for (const [cat, items] of Object.entries(MENU)) {
+    if (items.some(i => i.n === itemName)) {
+      // Si es de una categoría excluida, no va a cocina
+      if (NON_KITCHEN_CATEGORIES.has(cat)) return false;
+      // Si es de BEBIDAS, solo va a cocina si está en la lista permitida
+      if (cat === 'BEBIDAS') return BEBIDAS_TO_KITCHEN.has(itemName);
+      // Cualquier otra categoría (ENTRADAS, PARRILLA, PASTAS, etc.) sí va a cocina
+      return true;
+    }
+  }
+
+  // Si el ítem no está en el menú (adición manual), verificar por nombre
+  // Si el nombre contiene palabras clave de bebidas/licores, excluir
+  const lower = itemName.toLowerCase();
+  if (lower.includes('desechable') || lower.includes('sumo de limón') || lower.includes('sumo de limon')) return false;
+  // Por defecto: si no se reconoce, SÍ va a cocina (no perder pedidos de comida)
+  return true;
+}
+
+/* ══════════════════════════════════════════════
    SOCKET.IO  — 100% in-memory, never blocked by DB
    ══════════════════════════════════════════════ */
 io.on('connection', (socket) => {
@@ -470,49 +521,83 @@ io.on('connection', (socket) => {
 
   /* ── New order ── */
   socket.on('new-order', (data) => {
-    orderCounter++;
-    const order = {
-      id: orderCounter,
-      mesa: data.mesa,
-      items: data.items,
-      mesero: data.mesero || 'Mesero',
-      isYaneth: data.isYaneth || false,
-      isWaiterCredit: data.isWaiterCredit || false,
-      hora: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
-      timestamp: Date.now()
-    };
-    activeOrders.set(order.id, order);
+    // Separar ítems: cocina vs directo a cuenta
+    // Los pedidos de Yaneth y créditos de mesero no se filtran (van todos a cocina)
+    const isSpecialOrder = data.isYaneth || data.isWaiterCredit;
+    const kitchenItems = isSpecialOrder ? data.items : data.items.filter(it => isKitchenItem(it.name));
+    const directItems  = isSpecialOrder ? [] : data.items.filter(it => !isKitchenItem(it.name));
 
-    // Descontar inventario
+    // Abrir cuenta si no existe (siempre, independientemente del tipo de ítems)
+    if (!tableBills.has(data.mesa)) {
+      tableBills.set(data.mesa, {
+        mesa: data.mesa, items: [], total: 0,
+        mesero: data.mesero || 'Mesero',
+        openedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})
+      });
+    }
+
+    // Descontar inventario de TODOS los ítems
     data.items.forEach(it => {
       if (inventory[it.name] !== undefined) {
         inventory[it.name] = Math.max(0, inventory[it.name] - it.qty);
       }
     });
 
-    // Abrir cuenta si no existe
-    if (!tableBills.has(order.mesa)) {
-      tableBills.set(order.mesa, {
-        mesa: order.mesa, items: [], total: 0,
-        mesero: data.mesero || 'Mesero',
-        openedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})
-      });
+    // Agregar ítems directos a la cuenta SIN pasar por cocina
+    if (directItems.length > 0) {
+      const bill = tableBills.get(data.mesa);
+      if (bill) {
+        directItems.forEach(item => {
+          const key = item.note ? `${item.name}_${item.note}` : item.name;
+          const ex  = bill.items.find(b => (b.note?`${b.name}_${b.note}`:b.name) === key);
+          if (ex) ex.qty += item.qty;
+          else bill.items.push({name:item.name, qty:item.qty, price:item.price, note:item.note||''});
+          bill.total += item.price * item.qty;
+        });
+        tableBills.set(data.mesa, bill);
+        console.log(`🥤 Directo a cuenta Mesa ${data.mesa}: ${directItems.map(i=>i.name).join(', ')}`);
+        persist(async () => {
+          await Bill.findOneAndUpdate({mesa:data.mesa},{items:tableBills.get(data.mesa)?.items, total:tableBills.get(data.mesa)?.total},{upsert:true});
+          for(const it of directItems){
+            await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
+          }
+        });
+      }
     }
 
-    // Broadcast immediately
-    io.emit('order-received', order);
+    // Solo crear orden de cocina si hay ítems que requieren preparación
+    if (kitchenItems.length > 0) {
+      orderCounter++;
+      const order = {
+        id: orderCounter,
+        mesa: data.mesa,
+        items: kitchenItems,           // Solo ítems de cocina
+        allItems: data.items,          // Todos los ítems (para billing al despachar)
+        mesero: data.mesero || 'Mesero',
+        isYaneth: data.isYaneth || false,
+        isWaiterCredit: data.isWaiterCredit || false,
+        hora: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+        timestamp: Date.now()
+      };
+      activeOrders.set(order.id, order);
+
+      io.emit('order-received', order);
+      console.log(`📋 Pedido #${order.id} → Cocina — Mesa ${order.mesa} (${order.mesero}): ${kitchenItems.length} ítems cocina`);
+
+      persist(async () => {
+        const o = new Order(order); await o.save();
+        await Bill.findOneAndUpdate({mesa:data.mesa},{$setOnInsert:{mesa:data.mesa,items:[],total:0,mesero:data.mesero||'Mesero',openedAt:new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})}},{upsert:true,new:true});
+        for(const it of kitchenItems){
+          await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
+        }
+      });
+    } else {
+      // No hay ítems de cocina: no incrementar orderCounter ni crear orden
+      console.log(`🧾 Pedido sin cocina — Mesa ${data.mesa}: todo directo a cuenta`);
+    }
+
     io.emit('all-bills',   Object.fromEntries(tableBills));
     io.emit('all-inventory', inventory);
-    console.log(`📋 Pedido #${order.id} — Mesa ${order.mesa} (${order.mesero}): ${order.items.length} ítems`);
-
-    // Async persist
-    persist(async () => {
-      const o = new Order(order); await o.save();
-      await Bill.findOneAndUpdate({mesa:order.mesa},{$setOnInsert:{mesa:order.mesa,items:[],total:0,mesero:order.mesero,openedAt:order.openedAt}},{upsert:true,new:true});
-      for(const it of data.items){
-        await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
-      }
-    });
   });
 
   /* ── Dispatch order → items go to bill ── */
