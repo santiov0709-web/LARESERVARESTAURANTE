@@ -472,17 +472,19 @@ function isKitchenItem(itemName) {
 io.on('connection', (socket) => {
   console.log(`🔌 Cliente: ${socket.id}`);
   // Normalización de emergencia: Asegurar que todas las mesas en memoria sean números
-  // Esto arregla el bug de "13" (texto) vs 13 (número)
+  // Esto arregla el bug de "13" (texto) vs 13 (número) y RESTAURA LOS PERMISOS
   for (let [k, v] of tableBills.entries()) {
-    if (typeof k !== 'number') {
-      const numK = Number(k);
-      if (!isNaN(numK)) {
+    const numK = Number(k);
+    if (!isNaN(numK)) {
+      if (typeof k !== 'number') {
         console.log(`🔧 Normalizando Mesa ${k} -> ${numK}`);
         const existing = tableBills.get(numK);
         if (existing) {
-          // Si ya existe el número, fusionar ítems
+          // Fusionar ítems
           existing.items = [...existing.items, ...v.items];
           existing.total += v.total;
+          // PRESERVAR NOMBRE REAL (Evitar que Sebastian sea reemplazado por "Mesero")
+          if (v.mesero && v.mesero !== 'Mesero') existing.mesero = v.mesero;
           tableBills.set(numK, existing);
         } else {
           v.mesa = numK;
@@ -492,6 +494,21 @@ io.on('connection', (socket) => {
       }
     }
   }
+
+  // REPARACIÓN DE DATOS ESPECÍFICA (Solicitada por el usuario)
+  // Devolver las mesas 1, 3, 13, 14, 15 a Sebastian si perdieron el nombre
+  const sebMesas = [1, 3, 13, 14, 15];
+  sebMesas.forEach(m => {
+    const bill = tableBills.get(m);
+    if (bill && (!bill.mesero || bill.mesero === 'Mesero')) {
+      console.log(`🛠️ Reparando Propiedad Mesa ${m} -> Sebastian`);
+      bill.mesero = 'Sebastian';
+      tableBills.set(m, bill);
+    }
+  });
+
+  // Re-emitir estado corregido inmediatamente
+  io.emit('all-bills', Object.fromEntries(tableBills));
 
   // Send full current state immediately
   socket.emit('menu-updated',       MENU);
