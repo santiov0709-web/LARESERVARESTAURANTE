@@ -496,13 +496,21 @@ io.on('connection', (socket) => {
   }
 
   // REPARACIÓN DE DATOS ESPECÍFICA (Solicitada por el usuario)
-  // Devolver las mesas 1, 3, 13, 14, 15 a Sebastian si perdieron el nombre
-  const sebMesas = [1, 3, 13, 14, 15];
-  sebMesas.forEach(m => {
+  // Devolver las mesas correspondientes si perdieron el nombre
+  [1, 13, 14, 15].forEach(m => {
     const bill = tableBills.get(m);
     if (bill && (!bill.mesero || bill.mesero === 'Mesero')) {
       console.log(`🛠️ Reparando Propiedad Mesa ${m} -> Sebastian`);
       bill.mesero = 'Sebastian';
+      tableBills.set(m, bill);
+    }
+  });
+
+  [3].forEach(m => {
+    const bill = tableBills.get(m);
+    if (bill && (!bill.mesero || bill.mesero === 'Mesero')) {
+      console.log(`🛠️ Reparando Propiedad Mesa ${m} -> Andres`);
+      bill.mesero = 'Andres';
       tableBills.set(m, bill);
     }
   });
