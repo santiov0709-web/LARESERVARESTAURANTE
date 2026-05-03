@@ -893,13 +893,19 @@ io.on('connection', (socket) => {
     const item = bill.items[idx];
     const removeQty = (qty && qty > 0 && qty < item.qty) ? qty : item.qty;
 
+    // Restaurar Inventario
+    if (inventory[item.name] !== undefined) {
+      inventory[item.name] += removeQty;
+      io.emit('inventory-update', inventory);
+    }
+
     bill.total -= (item.price * removeQty);
 
     if (removeQty < item.qty) {
       // Reducir cantidad parcialmente
       item.qty -= removeQty;
       tableBills.set(mesa, bill);
-      console.log(`✂️ Mesa ${mesa}: -${removeQty}x ${item.name} (quedan ${item.qty})`);
+      console.log(`✂️ Mesa ${mesa}: -${removeQty}x ${item.name} (quedan ${item.qty}) (Stock reintegrado)`);
     } else {
       // Eliminar ítem completo
       bill.items.splice(idx, 1);
@@ -908,7 +914,7 @@ io.on('connection', (socket) => {
       } else {
         tableBills.set(mesa, bill);
       }
-      console.log(`🗑️ Item eliminado de Mesa ${mesa}: ${item.name}`);
+      console.log(`🗑️ Item eliminado de Mesa ${mesa}: ${item.name} (Stock reintegrado)`);
     }
 
     io.emit('all-bills', Object.fromEntries(tableBills));
@@ -916,6 +922,7 @@ io.on('connection', (socket) => {
     persist(async () => {
       if (!tableBills.has(mesa)) await Bill.deleteOne({mesa});
       else await Bill.findOneAndUpdate({mesa}, {items: bill.items, total: bill.total});
+      if (dbReady) await Inventory.findOneAndUpdate({}, inventory, {upsert:true});
     });
   });
 
@@ -929,7 +936,12 @@ io.on('connection', (socket) => {
     const oldCost = item.price * item.qty;
     const newCost  = newPrice   * item.qty;
 
-    // Adjust total and replace item fields
+    // Restaurar stock del viejo y descontar del nuevo
+    if (inventory[item.name] !== undefined) inventory[item.name] += item.qty;
+    if (inventory[newName] !== undefined)   inventory[newName]   -= item.qty;
+    io.emit('inventory-update', inventory);
+
+    // Adj total and replace item fields
     bill.total = bill.total - oldCost + newCost;
     const oldName = item.name;
     item.name  = newName;
@@ -938,10 +950,50 @@ io.on('connection', (socket) => {
 
     tableBills.set(mesa, bill);
     io.emit('all-bills', Object.fromEntries(tableBills));
-    console.log(`🔄 Mesa ${mesa}: "${oldName}" → "${newName}" (${bill.items[idx].qty}x)`);
+    console.log(`🔄 Mesa ${mesa}: "${oldName}" → "${newName}" (${bill.items[idx].qty}x) (Stock ajustado)`);
 
     persist(async () => {
       await Bill.findOneAndUpdate({mesa}, {items: bill.items, total: bill.total});
+      if (dbReady) await Inventory.findOneAndUpdate({}, inventory, {upsert:true});
+    });
+  });
+
+  /* ── Remove item from closed sale (Retrospective Admin) ── */
+  socket.on('remove-item-sale', async ({timestamp, idx}) => {
+    const sale = dailySales.find(s => s.timestamp === timestamp);
+    if (!sale || !sale.items[idx]) return;
+
+    const item = sale.items[idx];
+    console.log(`🗑️ Eliminando de Venta Cerrada (${timestamp}): ${item.qty}x ${item.name}`);
+
+    // Adjust total
+    sale.total -= (item.price * item.qty);
+    
+    // Restore Inventory
+    if (inventory[item.name] !== undefined) {
+      inventory[item.name] += item.qty;
+      io.emit('inventory-update', inventory);
+    }
+
+    // Remove item
+    sale.items.splice(idx, 1);
+
+    // Update global daily total if needed (for display)
+    // Recalculate daily total from all sales
+    const getDailyTotal = () => dailySales.reduce((s, x) => s + (x.total || 0), 0);
+    
+    io.emit('daily-sales-update', {
+      total: getDailyTotal(),
+      count: dailySales.length,
+      date: dailyDate,
+      transactions: dailySales
+    });
+
+    persist(async () => {
+      if (dbReady) {
+        await Sale.findOneAndUpdate({timestamp}, {items: sale.items, total: sale.total});
+        await Inventory.findOneAndUpdate({}, inventory, {upsert:true});
+      }
     });
   });
 

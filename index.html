@@ -1068,8 +1068,15 @@ function render() {
             <span>${s.mesa == 99 ? '🛵 DOMICILIO' : 'Mesa ' + s.mesa}</span><span style="color:var(--gold)">${fc(s.total)}</span>
           </div>
           <div class="b-body" style="font-size:0.78rem">
-            <div style="color:var(--txt2);margin-bottom:4px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
-            ${(s.items||[]).map(i=>`${i.name} ×${i.qty}${i.note?' ('+i.note+')':''}`).join(', ')}
+            <div style="color:var(--txt2);margin-bottom:8px">${s.mesero||''} · ${s.closedAt||''} · ${s.paymentMethod||''}</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              ${(s.items||[]).map((it, idx) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(255,255,255,0.02);border-radius:4px">
+                  <span>${it.name} ×${it.qty}${it.note?' ('+it.note+')':''}</span>
+                  <button class="q-btn" style="width:22px;height:22px;font-size:0.65rem;color:var(--red);border-color:var(--red)" onclick="removeItemFromSale(${s.timestamp}, ${idx})" title="Eliminar de esta venta">🗑️</button>
+                </div>
+              `).join('')}
+            </div>
           </div>
           <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap">
             <button class="q-btn wide" style="margin:0;flex:1;min-width:100px;color:var(--blue);border-color:var(--blue)" onclick="openEditModal(${s.timestamp})">✏️ DIVIDIR</button>
@@ -1445,6 +1452,16 @@ window.removeItemFromBill = (mesa, idx) => {
       closeM('payModal');
     }
   }, 200);
+};
+
+window.removeItemFromSale = (timestamp, idx) => {
+  const sale = state.sales.find(s => s.timestamp === timestamp);
+  if (!sale || !sale.items[idx]) return;
+  const item = sale.items[idx];
+
+  if (confirm(`¿ELIMINAR "${item.name}" DE ESTA VENTA YA CERRADA?\n\nEsta acción devolverá ${item.qty} unidades al inventario y restará ${fc(item.price * item.qty)} del total de la venta.`)) {
+    socket.emit('remove-item-sale', { timestamp, idx });
+  }
 };
 
 window.deleteItemFromCuentas = (mesa, idx) => {

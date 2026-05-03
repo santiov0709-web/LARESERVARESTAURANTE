@@ -1,0 +1,102 @@
+JULIA YANETH VELANDIA
+TARAZONA
+ 
+ 
+RESTAURANTE BAR LA RESERVA
+ 
+CC 37542233
+ 
+RESPONSABLE DE IVA
+ 
+TEL. 3105760206
+ 
+lareserva.yv@gmail.com
+ 
+CR 3 17 07, PUERTO BOYACA (BOYACA)
+ 
+Factura Electrónica de Venta
+ 
+Autorización Numeración de Facturación
+No. 18764100376598 de 21/10/2025 - 21/04/2026
+autoriza FVE - 311 a FVE - 1,000
+ 
+No somos gran contribuyente
+ 
+No somos agente retenedor del Impuesto sobre las Ventas - IVA
+ 
+No somos autorretenedor del Impuesto sobre la Renta y Complementarios
+ 
+Software DATAICO fabricado por Proveedor Tecnológico DATAICO SAS
+901223648
+ 
+CUFE:
+160eae5d05a0e9ae5b46aae9de930ea69ff25a64147f63f1576cdd55
+422f390092a96cbc3c7463b7240e127b0972913d
+Número
+FVE452
+Tipo de Operación
+Estandar
+Fecha de Generación
+21/04/2026 21:08
+Fecha de Vencimiento 21/04/2026 21:08
+Forma de Pago
+Contado
+Medio de Pago
+Consignación bancaria
+Moneda
+COP
+CLIENTE
+CONSUMIDOR FINAL
+NIT/CC
+222222222222
+EMAIL
+consumidor@dataico.com
+TELÉFONO
+415 555 1212
+DIRECCIÓN
+CR 3 17 07
+CIUDAD, DEP.
+PUERTO BOYACA, BOYACA
+(CO)
+CT U/M
+DESCRIPCION
+VALOR
+1 C58
+FILET MIGNONT
+$62,000.00
+2 EA
+PECHUGA TROPICAL
+$96,000.00
+3 EA
+PUNTA ANCA
+$159,000.00
+1 EA
+PHILADELPHIA STEAK
+$55,000.00
+2 C58
+CHULETA
+$96,000.00
+1 C58
+SOBREBARRIGA
+$48,000.00
+1 C58
+CREPS
+$35,000.00
+1 C58
+PORCIO TROPI
+$12,000.00
+7 C58
+GASEOSA
+$35,000.00
+3 C58
+SODA SABORIZADA
+$39,000.00
+6 C58
+SUMO LIMON
+$18,000.00
+Subtotal
+$655,000.00
+TOTAL a PAGAR
+$655,000.00
+Unidades de medida: C58 = newton segundo por
+metro, EA = cada
