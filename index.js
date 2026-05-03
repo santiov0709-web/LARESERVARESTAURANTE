@@ -497,7 +497,7 @@ io.on('connection', (socket) => {
 
   // REPARACIÓN DE DATOS ESPECÍFICA (Solicitada por el usuario)
   // Devolver las mesas correspondientes si perdieron el nombre
-  [1, 13, 14, 15].forEach(m => {
+  [13, 14, 15].forEach(m => {
     const bill = tableBills.get(m);
     if (bill && (!bill.mesero || bill.mesero === 'Mesero')) {
       console.log(`🛠️ Reparando Propiedad Mesa ${m} -> Sebastian`);
@@ -506,7 +506,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  [3].forEach(m => {
+  [1, 3].forEach(m => {
     const bill = tableBills.get(m);
     if (bill && (!bill.mesero || bill.mesero === 'Mesero')) {
       console.log(`🛠️ Reparando Propiedad Mesa ${m} -> Andres`);
