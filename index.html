@@ -64,8 +64,9 @@
     /* Libre = gris (default) */
     /* Cuenta abierta = verde brillante */
     .mesa-btn.ocupada { background:rgba(46,204,113,.18); color:var(--emerald); border-color:var(--emerald); box-shadow:0 0 12px rgba(46,204,113,.3); }
-    /* Pedido en cocina = dorado pulsante */
     .mesa-btn.pedido  { background:rgba(240,192,64,.18); color:var(--gold); border-color:var(--gold); animation:pulse-mesa 1.8s infinite; }
+    /* Bloqueada por otro mesero */
+    .mesa-btn.lock { opacity:0.4; filter:grayscale(1); cursor:not-allowed; border-style:dashed; }
     /* Seleccionada = resaltado fuerte */
     .mesa-btn.sel { outline:3px solid var(--emerald-d); outline-offset:2px; }
     @keyframes pulse-mesa { 0%,100%{box-shadow:0 0 0 0 rgba(240,192,64,.4)} 50%{box-shadow:0 0 0 8px rgba(240,192,64,0)} }
@@ -416,8 +417,8 @@
 <div id="authModal" class="modal"><div class="m-content" id="authContent"></div></div>
 
 <div id="meseroListModal" class="modal"><div class="m-content">
-  <div class="m-head" style="font-size:1.1rem">Todas las Comandas Activas <button class="m-close" onclick="closeM('meseroListModal')">✕</button></div>
-  <div style="font-size:0.75rem;color:var(--txt3);margin-bottom:12px;text-align:center">Revisión global de pedidos por mesa en tiempo real.</div>
+  <div class="m-head" style="font-size:1.1rem">Mis Comandas Activas <button class="m-close" onclick="closeM('meseroListModal')">✕</button></div>
+  <div style="font-size:0.75rem;color:var(--txt3);margin-bottom:12px;text-align:center">Solo lectura. Revisión de tus pedidos por mesa.</div>
   <div id="ml-body" style="max-height:60vh;overflow-y:auto"></div>
   <button class="btn-full" onclick="closeM('meseroListModal')">CERRAR</button>
 </div></div>
@@ -880,17 +881,32 @@ function render() {
     // Mesa grid — 3 estados: libre / ocupada (cuenta) / pedido (en cocina)
     const tg = $('m-grid'); tg.innerHTML = '';
     for (let i = 1; i <= 19; i++) {
-      const tieneCuenta = !!state.bills[i];
+      const bill = state.bills[i];
+      const tieneCuenta = !!bill;
       const tienePedido = state.orders.some(o => o.mesa == i);
+      const isLocked = tieneCuenta && bill.mesero !== myName;
+
       const b = document.createElement('button');
       let cls = 'mesa-btn';
       if (selTb === i) cls += ' sel';
-      if (tienePedido)  cls += ' pedido';
+      if (isLocked) cls += ' lock';
+      else if (tienePedido) cls += ' pedido';
       else if (tieneCuenta) cls += ' ocupada';
-      const lbl = tienePedido ? 'En cocina' : tieneCuenta ? 'Ocupada' : 'Libre';
+
+      let lbl = tienePedido ? 'En cocina' : tieneCuenta ? 'Ocupada' : 'Libre';
+      if (isLocked) lbl = bill.mesero; 
+
       b.className = cls;
       b.innerHTML = `${i}<span>${lbl}</span>`;
-      b.onclick = () => { selTb=i; $('btn-domicilio').classList.remove('sel'); render(); };
+      b.onclick = () => { 
+        if (isLocked) {
+          showToast(`⚠️ Mesa de ${bill.mesero}`);
+          return;
+        }
+        selTb=i; 
+        $('btn-domicilio').classList.remove('sel'); 
+        render(); 
+      };
       tg.appendChild(b);
     }
 
@@ -1325,10 +1341,9 @@ function _refreshMeseroListContent() {
   container.innerHTML = '';
   
   const mesasMesero = new Set();
-  // Incluir todas las mesas con cuenta abierta
-  Object.values(state.bills).forEach(b => { mesasMesero.add(b.mesa); });
-  // O con pedidos en cocina
-  state.orders.forEach(o => { mesasMesero.add(o.mesa); });
+  // Mostrar solo las mesas que pertenecen al mesero actual
+  Object.values(state.bills).forEach(b => { if(b.mesero === myName) mesasMesero.add(b.mesa); });
+  state.orders.forEach(o => { if(o.mesero === myName) mesasMesero.add(o.mesa); });
   
   if (mesasMesero.size === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:30px 0">No tienes mesas activas.</div>';
@@ -1345,7 +1360,7 @@ function _refreshMeseroListContent() {
     
     let html = `
       <div class="b-head" style="background:rgba(46,204,113,.15);color:var(--txt1);border-bottom:1px solid var(--border)">
-        <span>${m === 99 ? '🛵 DOMICILIO' : 'Mesa ' + m} <small style="font-weight:400; font-size:0.7rem; color:var(--txt2)">(${bill.mesero || (pendingOrders[0] ? pendingOrders[0].mesero : '—')})</small></span>
+        <span>${m === 99 ? '🛵 DOMICILIO' : 'Mesa ' + m}</span>
         <span style="font-size:0.75rem;color:var(--emerald)">${bill.openedAt||''}</span>
       </div>
       <div class="b-body" style="padding:10px">
