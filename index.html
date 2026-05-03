@@ -966,6 +966,10 @@ function render() {
       $('s-tot').textContent = fc(tot);
     } else { sw.classList.remove('vis'); }
 
+    // Refrescar el modal de mis comandas si está abierto
+    if ($('meseroListModal').classList.contains('open')) {
+      _refreshMeseroListContent();
+    }
   }
 
   /* COCINA */
@@ -1300,71 +1304,94 @@ window.sendOrder = () => {
 };
 
 window.openMeseroList = () => {
+  _refreshMeseroListContent();
+  openM('meseroListModal');
+
+  // Auto-refresco cada 2s mientras el modal esté abierto para ver pedidos en tiempo real
+  clearInterval(window._meseroListInterval);
+  window._meseroListInterval = setInterval(() => {
+    if (!$('meseroListModal').classList.contains('open')) {
+      clearInterval(window._meseroListInterval);
+      return;
+    }
+    _refreshMeseroListContent();
+  }, 2000);
+};
+
+// Genera el contenido dinámico del modal de comandas del mesero
+function _refreshMeseroListContent() {
   const container = $('ml-body');
+  if (!container) return;
   container.innerHTML = '';
   
   const mesasMesero = new Set();
+  // Incluir mesas donde el mesero tiene una cuenta abierta
   Object.values(state.bills).forEach(b => { if(b.mesero === myName) mesasMesero.add(b.mesa); });
+  // O donde tiene un pedido activo en cocina
   state.orders.forEach(o => { if(o.mesero === myName) mesasMesero.add(o.mesa); });
   
   if (mesasMesero.size === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:30px 0">No tienes mesas activas.</div>';
-  } else {
-    Array.from(mesasMesero).sort((a,b)=>a-b).forEach(m => {
-      const d = document.createElement('div');
-      d.className = 'bill-card';
-      d.style.marginBottom = '12px';
-      
-      const bill = state.bills[m] || { items: [] };
-      const pendingOrders = state.orders.filter(o => o.mesa == m);
-      
-      let html = `
-        <div class="b-head" style="background:rgba(46,204,113,.15);color:var(--txt1);border-bottom:1px solid var(--border)">
-          <span>Mesa ${m}</span>
-          <span style="font-size:0.75rem;color:var(--emerald)">${bill.openedAt||''}</span>
-        </div>
-        <div class="b-body" style="padding:10px">
-      `;
-      
-      if (pendingOrders.length > 0) {
-        html += `<div style="font-size:0.7rem;color:var(--gold);margin-bottom:6px;font-weight:bold">⏳ EN COCINA (Preparando):</div>`;
-        pendingOrders.forEach(po => {
-          po.items.forEach(it => {
-            html += `
-              <div style="font-size:0.8rem;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);padding:4px 0;opacity:0.9">
-                <span><strong>${it.qty}x</strong> ${it.name}</span>
-                ${it.note ? `<span style="color:var(--gold);font-size:0.65rem;background:rgba(240,192,64,.1);padding:2px 4px;border-radius:4px">📝 ${it.note}</span>` : ''}
-              </div>
-            `;
-          });
-        });
-        html += `<div style="height:8px"></div>`;
-      }
-      
-      if (bill.items && bill.items.length > 0) {
-        html += `<div style="font-size:0.7rem;color:var(--emerald);margin-bottom:6px;font-weight:bold">✅ CONFIRMADOS (En Cuenta):</div>`;
-        bill.items.forEach(it => {
+    return;
+  }
+
+  Array.from(mesasMesero).sort((a,b)=>a-b).forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'bill-card';
+    d.style.marginBottom = '12px';
+    
+    const bill = state.bills[m] || { items: [] };
+    const pendingOrders = state.orders.filter(o => o.mesa == m);
+    
+    let html = `
+      <div class="b-head" style="background:rgba(46,204,113,.15);color:var(--txt1);border-bottom:1px solid var(--border)">
+        <span>${m === 99 ? '🛵 DOMICILIO' : 'Mesa ' + m}</span>
+        <span style="font-size:0.75rem;color:var(--emerald)">${bill.openedAt||''}</span>
+      </div>
+      <div class="b-body" style="padding:10px">
+    `;
+    
+    // 1. Mostrar lo que está en preparación (PEDIDOS DE COCINA)
+    if (pendingOrders.length > 0) {
+      html += `<div style="font-size:0.7rem;color:var(--gold);margin-bottom:6px;font-weight:bold">⏳ EN PREPARACIÓN (Cocina):</div>`;
+      pendingOrders.forEach(po => {
+        po.items.forEach(it => {
           html += `
-            <div style="font-size:0.85rem;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);padding:6px 0;align-items:center">
+            <div style="font-size:0.8rem;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);padding:4px 0;opacity:0.9">
               <span><strong>${it.qty}x</strong> ${it.name}</span>
-              ${it.note ? `<span style="color:var(--emerald);font-size:0.7rem;background:rgba(46,204,113,.1);padding:2px 6px;border-radius:4px">📝 ${it.note}</span>` : ''}
+              ${it.note ? `<span style="color:var(--gold);font-size:0.65rem;background:rgba(240,192,64,.1);padding:2px 4px;border-radius:4px">📝 ${it.note}</span>` : ''}
             </div>
           `;
         });
-      }
+      });
+      html += `<div style="height:8px"></div>`;
+    }
+    
+    // 2. Mostrar lo que ya está confirmado en la cuenta (BEBIDAS DIRECTAS Y COMIDA YA DESPACHADA)
+    if (bill.items && bill.items.length > 0) {
+      html += `<div style="font-size:0.7rem;color:var(--emerald);margin-bottom:6px;font-weight:bold">✅ EN CUENTA (Confirmados):</div>`;
+      bill.items.forEach(it => {
+        html += `
+          <div style="font-size:0.85rem;display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.05);padding:6px 0;align-items:center">
+            <span><strong>${it.qty}x</strong> ${it.name}</span>
+            ${it.note ? `<span style="color:var(--emerald);font-size:0.7rem;background:rgba(46,204,113,.1);padding:2px 6px;border-radius:4px">📝 ${it.note}</span>` : ''}
+          </div>
+        `;
+      });
       
-      if (pendingOrders.length === 0 && (!bill.items || bill.items.length === 0)) {
-        html += `<div style="font-size:0.8rem;color:var(--txt3);text-align:center;padding:4px 0">Ningún ítem registrado aún</div>`;
-      }
-      
-      html += `</div></div>`;
-      d.innerHTML = html;
-      container.appendChild(d);
-    });
-  }
-  
-  openM('meseroListModal');
-};
+      const subtotal = bill.items.reduce((s,i) => s+(i.price*i.qty),0);
+      html += `<div style="font-size:0.8rem;color:var(--gold);font-weight:700;text-align:right;margin-top:8px;padding-top:6px;border-top:1px solid var(--border)">Subtotal Mesa: ${fc(subtotal)}</div>`;
+    }
+    
+    if (pendingOrders.length === 0 && (!bill.items || bill.items.length === 0)) {
+      html += `<div style="font-size:0.8rem;color:var(--txt3);text-align:center;padding:4px 0">Ningún ítem registrado aún</div>`;
+    }
+    
+    html += `</div></div>`;
+    d.innerHTML = html;
+    container.appendChild(d);
+  });
+}
 
 window.disp = id => socket.emit('dispatch-order', id);
 window.removeDispatchedOrder = id => {
