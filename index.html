@@ -894,13 +894,13 @@ function render() {
       else if (tieneCuenta) cls += ' ocupada';
 
       let lbl = tienePedido ? 'En cocina' : tieneCuenta ? 'Ocupada' : 'Libre';
-      if (isLocked) lbl = bill.mesero; 
+      if (isLocked) lbl = bill.mesero || 'Ocupada'; 
 
       b.className = cls;
       b.innerHTML = `${i}<span>${lbl}</span>`;
       b.onclick = () => { 
         if (isLocked) {
-          showToast(`⚠️ Mesa de ${bill.mesero}`);
+          showToast(`⚠️ Mesa de ${bill.mesero || 'otro mesero'}`);
           return;
         }
         selTb=i; 

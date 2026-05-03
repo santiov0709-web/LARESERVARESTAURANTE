@@ -471,7 +471,27 @@ function isKitchenItem(itemName) {
    ══════════════════════════════════════════════ */
 io.on('connection', (socket) => {
   console.log(`🔌 Cliente: ${socket.id}`);
-  resetDailyIfNewDay();
+  // Normalización de emergencia: Asegurar que todas las mesas en memoria sean números
+  // Esto arregla el bug de "13" (texto) vs 13 (número)
+  for (let [k, v] of tableBills.entries()) {
+    if (typeof k !== 'number') {
+      const numK = Number(k);
+      if (!isNaN(numK)) {
+        console.log(`🔧 Normalizando Mesa ${k} -> ${numK}`);
+        const existing = tableBills.get(numK);
+        if (existing) {
+          // Si ya existe el número, fusionar ítems
+          existing.items = [...existing.items, ...v.items];
+          existing.total += v.total;
+          tableBills.set(numK, existing);
+        } else {
+          v.mesa = numK;
+          tableBills.set(numK, v);
+        }
+        tableBills.delete(k);
+      }
+    }
+  }
 
   // Send full current state immediately
   socket.emit('menu-updated',       MENU);
@@ -521,20 +541,24 @@ io.on('connection', (socket) => {
 
   /* ── New order ── */
   socket.on('new-order', (data) => {
+    const mesaId = Number(data.mesa);
+    if (isNaN(mesaId)) return;
+
     // Separar ítems: cocina vs directo a cuenta
-    // Los pedidos de Yaneth y créditos de mesero no se filtran (van todos a cocina)
     const isSpecialOrder = data.isYaneth || data.isWaiterCredit;
     const kitchenItems = isSpecialOrder ? data.items : data.items.filter(it => isKitchenItem(it.name));
     const directItems  = isSpecialOrder ? [] : data.items.filter(it => !isKitchenItem(it.name));
 
-    // Abrir cuenta si no existe (siempre, independientemente del tipo de ítems)
-    if (!tableBills.has(data.mesa)) {
-      tableBills.set(data.mesa, {
-        mesa: data.mesa, items: [], total: 0,
+    // Abrir cuenta si no existe
+    if (!tableBills.has(mesaId)) {
+      tableBills.set(mesaId, {
+        mesa: mesaId, items: [], total: 0,
         mesero: data.mesero || 'Mesero',
         openedAt: new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})
       });
     }
+
+    const bill = tableBills.get(mesaId);
 
     // Descontar inventario de TODOS los ítems
     data.items.forEach(it => {
@@ -544,25 +568,26 @@ io.on('connection', (socket) => {
     });
 
     // Agregar ítems directos a la cuenta SIN pasar por cocina
-    if (directItems.length > 0) {
-      const bill = tableBills.get(data.mesa);
-      if (bill) {
-        directItems.forEach(item => {
-          const key = item.note ? `${item.name}_${item.note}` : item.name;
-          const ex  = bill.items.find(b => (b.note?`${b.name}_${b.note}`:b.name) === key);
-          if (ex) ex.qty += item.qty;
-          else bill.items.push({name:item.name, qty:item.qty, price:item.price, note:item.note||''});
-          bill.total += item.price * item.qty;
-        });
-        tableBills.set(data.mesa, bill);
-        console.log(`🥤 Directo a cuenta Mesa ${data.mesa}: ${directItems.map(i=>i.name).join(', ')}`);
-        persist(async () => {
-          await Bill.findOneAndUpdate({mesa:data.mesa},{items:tableBills.get(data.mesa)?.items, total:tableBills.get(data.mesa)?.total},{upsert:true});
-          for(const it of directItems){
-            await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
-          }
-        });
-      }
+    if (directItems.length > 0 && bill) {
+      directItems.forEach(item => {
+        const key = item.note ? `${item.name}_${item.note}` : item.name;
+        const ex  = bill.items.find(b => (b.note?`${b.name}_${b.note}`:b.name) === key);
+        if (ex) ex.qty += item.qty;
+        else bill.items.push({name:item.name, qty:item.qty, price:item.price, note:item.note||''});
+        bill.total += item.price * item.qty;
+      });
+      tableBills.set(mesaId, bill);
+      
+      // CAPTURAR SNAPSHOT PARA PERSISTENCIA ASÍNCRONA
+      const itemsToSave = [...bill.items];
+      const totalToSave = bill.total;
+      
+      persist(async () => {
+        await Bill.findOneAndUpdate({mesa:mesaId},{items:itemsToSave, total:totalToSave, mesero:bill.mesero},{upsert:true});
+        for(const it of directItems){
+          await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
+        }
+      });
     }
 
     // Solo crear orden de cocina si hay ítems que requieren preparación
@@ -570,9 +595,9 @@ io.on('connection', (socket) => {
       orderCounter++;
       const order = {
         id: orderCounter,
-        mesa: data.mesa,
-        items: kitchenItems,           // Solo ítems de cocina
-        allItems: data.items,          // Todos los ítems (para billing al despachar)
+        mesa: mesaId,
+        items: kitchenItems,
+        allItems: data.items,
         mesero: data.mesero || 'Mesero',
         isYaneth: data.isYaneth || false,
         isWaiterCredit: data.isWaiterCredit || false,
@@ -582,18 +607,18 @@ io.on('connection', (socket) => {
       activeOrders.set(order.id, order);
 
       io.emit('order-received', order);
-      console.log(`📋 Pedido #${order.id} → Cocina — Mesa ${order.mesa} (${order.mesero}): ${kitchenItems.length} ítems cocina`);
+
+      // SNAPSHOT PARA SEGUNDA PERSISTENCIA
+      const itemsToSaveK = bill ? [...bill.items] : [];
+      const totalToSaveK = bill ? bill.total : 0;
 
       persist(async () => {
         const o = new Order(order); await o.save();
-        await Bill.findOneAndUpdate({mesa:data.mesa},{$setOnInsert:{mesa:data.mesa,items:[],total:0,mesero:data.mesero||'Mesero',openedAt:new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})}},{upsert:true,new:true});
+        await Bill.findOneAndUpdate({mesa:mesaId},{$setOnInsert:{mesa:mesaId,items:itemsToSaveK,total:totalToSaveK,mesero:order.mesero,openedAt:new Date().toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'2-digit',minute:'2-digit',hour12:true})}},{upsert:true,new:true});
         for(const it of kitchenItems){
           await Inventory.findOneAndUpdate({itemName:it.name},{stock:Math.max(0,(inventory[it.name]||0))},{upsert:true,new:true});
         }
       });
-    } else {
-      // No hay ítems de cocina: no incrementar orderCounter ni crear orden
-      console.log(`🧾 Pedido sin cocina — Mesa ${data.mesa}: todo directo a cuenta`);
     }
 
     io.emit('all-bills',   Object.fromEntries(tableBills));
@@ -671,7 +696,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const bill = tableBills.get(order.mesa);
+    const mesaId = Number(order.mesa);
+    const bill = tableBills.get(mesaId);
     if (bill) {
       order.items.forEach(item => {
         const key = item.note ? `${item.name}_${item.note}` : item.name;
@@ -680,7 +706,7 @@ io.on('connection', (socket) => {
         else bill.items.push({name:item.name,qty:item.qty,price:item.price,note:item.note||''});
         bill.total += item.price * item.qty;
       });
-      tableBills.set(order.mesa, bill);
+      tableBills.set(mesaId, bill);
     }
 
     activeOrders.delete(orderId);
@@ -690,13 +716,16 @@ io.on('connection', (socket) => {
     if (dispatchedOrders.length > 20) dispatchedOrders.pop();
     io.emit('all-dispatched-orders', dispatchedOrders);
 
-    io.emit('order-dispatched', {id:orderId, mesa:order.mesa, mesero:order.mesero});
+    io.emit('order-dispatched', {id:orderId, mesa:mesaId, mesero:order.mesero});
     io.emit('all-bills', Object.fromEntries(tableBills));
-    console.log(`✅ Pedido #${orderId} despachado — Mesa ${order.mesa}`);
+    
+    // SNAPSHOT PARA DESPACHO
+    const itemsToSaveD = bill ? [...bill.items] : [];
+    const totalToSaveD = bill ? bill.total : 0;
 
     persist(async () => {
       await Order.deleteOne({id:orderId});
-      if(bill) await Bill.findOneAndUpdate({mesa:order.mesa},{items:bill.items,total:bill.total},{upsert:true});
+      if(bill) await Bill.findOneAndUpdate({mesa:mesaId},{items:itemsToSaveD,total:totalToSaveD},{upsert:true});
     });
   });
 
